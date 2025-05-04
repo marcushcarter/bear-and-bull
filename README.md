@@ -12,7 +12,7 @@ Once these cards are in your hand, you can move them to either your weapon slot,
 
 I also had the idea of in the actaul game ui, becasue the game is based off of cards, most of the ui is card based. In the menus, the cursor you use is a little rotated spade icon (which can be costomized). Most of the ui are setup to look like cards. In the actuall game, the reticle looks like a spade (also customizable). The health bar, is a empty heart in the top left corner of the screen, that is filled up when you have full health and starts to leak red particles when you get hurt, start to die. In the bottom left corner of the screen is a hand that is holding a deck of cards (look of deck is customizable) and when you pause, it expands and almost looks like it opens up. In the bottom right corner of the game screen is the visual for whatever weapon you have equiped. And also in the top left are mini icons that show which cards you have equiped. When you find a card in the game world, it enlarges up in te middle of the screen, spins and then lerps to the hand holding the deck in the bottom left corner.
 
-I first want to kind of design the layout of the "pause menu" (but not really pausing). Im going to use just sdl to design the layout of the pause menu and card movement becasue im not too comfotable with OpenGL yet. So i have to make (hit)boxes for:
+I first want to kind of design the layout of the "pause menu" (but not really pausing). Im going to use just sdl to design the layout of the pause menu and card movement becasue im not too comfotable with OpenGL yet. So i have to make hitboxes (or at least the visuals) for:
 
 - the deck on the bottom left of the menu (just a visual) (number showing how many cards are in your deck)
 - the weapon equip slot (maximum 1 cards) (ex. <code>1/1</code> shows if the slot is filled)
@@ -22,3 +22,5 @@ I first want to kind of design the layout of the "pause menu" (but not really pa
 - the play zone
 - the delete zone
 - place for your pickup tickets to be shown
+
+So lets get started I guess :|
