@@ -27,4 +27,38 @@ So lets get started I guess :|
 
 First I wanted to make the window resizable but always keep the same aspect ratio. (it didnt work so for now the window will stay at 1920x1280 scaled down to 1500x1000). Im going to use % of the screen to render these boxes because thats how it works in OpenGL (window_width * 0.1)
 
-NOTE: I think im either not doing this right or i just suck at this
+**NOTE: I think im either not doing this right or i just suck at this**
+
+## Weapon Cards
+
+*2025-05-04*
+
+These are all the ideas of the cards that I have come up with for weapons, consumables, accesories, hand cards.
+
+- very-low - 1
+- low - 2
+- mid - 3
+- high - 4
+- very-high - 5
+
+common, uncommon, rare, legendary
+
+### Fists
+You punch at enemies with your bare fists. It is very-low range (1), high damage (4), high firerate (4), unlimited ammo and is very-low rarity (1). This is the weapon you start with. Looks like a fist clenched, attacking is extending the hand in a punch, there is no reload frame, it just goes back to normal idle.
+
+### Guentlets
+You punch at enemies with a metal geuntlet. It is very-low range (1), very-high damage (5), high firerate (4), unlimited ammo and is high rarity (4). Looks like a clenched geuntlet, attacking is extending the geuntlet in a punch, there is no reload frame, it just goes back to normal idle.
+
+### Finger Guns
+You make air guns with your fingers and fire bullets from them. It is mid range (3), low damage (2), mid firerate (3), unlimited ammo and is low rarity (2). These finger guns fire normal hit scan projectiles and have no other special attributes. Looks like a finger in a gun shape, when firing it shows a little flash at the tip of the finger and reload is almost pumping it back like a shotgun.
+
+### Hand Cannons
+
+### Fireball
+A magically fireball you shoot at the enemies. It has mid range (3), high damage (4), low firerate (2), unlimited ammo and is mid rarity (3). This fireball will bounce off of the floor up to 3 times and explodes on impact (either the third bounce or hitting an enemy). The amount of damage it does is based on how long you let it cool down (to a certain point). Looks like an open hand with a hovering wobbly orange fireball, when attacking the hand extended still open shooting the fireball motion and when the weapon is cooling down, the fireball will slowly get bigger until the fireball is completely cooled down and back to normal size.
+
+## Power Ups
+
+## Enemies
+
+All enemies
