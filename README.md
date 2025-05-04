@@ -33,29 +33,232 @@ First I wanted to make the window resizable but always keep the same aspect rati
 
 *2025-05-04*
 
-These are all the ideas of the cards that I have come up with for weapons, consumables, accesories, hand cards.
+### 8-Balls (RARE)
+A small blueish-black orb with a brighter blue screen on it. When you use it, it picks a random damage multiplier from 0.1x to 10x and that is the damage it will do if it hits an enemy. This is a medium ranged weapon with medium attack speed and somewhat fast movement speed. Just a normla enmpty hand when thrown. Reaches off screen for a new ball afterwards. 
 
-- very-low - 1
-- low - 2
-- mid - 3
-- high - 4
-- very-high - 5
+### Fireball (RARE)
+A glowing orange ball of fire that can set enemies on fire. When you use it, it can bounce off a surface once and then will explode on the second (or when it hits an enemy), which does damage, and also may give the enemy the burn effect. THis ball of flame floats in your hand until you choose to throw it. Then will it is cooling down, it will slowly grow bigger in your hand. This is a medium ranged weapon with a slow cooldown, but high damage 
 
-common, uncommon, rare, legendary
+### Fists (COMMON)
+You just punch enemies with your bare hands. They always said your hands should be registered as weapons. You just punch your enemies dum dum. A melee weapon with very fast movement speed, fast attack speed and medium damage.
 
-### Fists
-You punch at enemies with your bare fists. It is very-low range (1), high damage (4), high firerate (4), unlimited ammo and is very-low rarity (1). This is the weapon you start with. Looks like a fist clenched, attacking is extending the hand in a punch, there is no reload frame, it just goes back to normal idle.
+### Finger Guns (UNCOMMON)
+Since when did you have bullets coming out of your fingers. When you use this weapon, you will shoot fingernails out at your enemies. This is a medium ranged weapon with medium cooldown, medium damage and decent cooldown speed. This gun can only hold 5 fingernails at a time, then you have to reload. Just put your hand in a gun shape and fire (which makes a flash of light at the fingertip) and reloads like a pump shotgun.
+
+### Coin Toss (RARE)
+You flip a coin that can land on heads or tails. On heads, this will kill the nearest enemy to your location, if you land on tails, the coin will attack you and take 20% of your health. This is a special weapon with unlimited damage, no reload and high movement speed. It is a risk reward type of card. When attacking, the player will flip the coin in thier hand.
+
+### Pineapple (UNCOMMON)
+A prickly yellow pineapple. It is a short ranged weapon thatdoes very little damage but has a very high change of inflicting the impaled / bleeding effects. This pinapple just sits in your hand and you throw it. You get a new one off screen.
+
+## Playable Cards
+
+*2025-05-04*
+
+### CTRL + ALT + DELETE (EPIC)
+A little keyboard with only 3 keys (ctrl, alt, delete). When used, it kills all enemies within a certain radius but doesn't drop the items they may give you. When the card is used, a small explosion circle happens on the screen and the enemies all evaporate.
+
+### (Princess) Peach Juice (UNCOMMON)
+A juice label showing princess peach holding a bottle with the image of a peach on it. When used, you will gain some speed but lose some stamina. When used, the player looks like they take a sip of the drink and then the bottle is thrown as a projectile.
+
+### Fake ID (UNCOMMON)
+A little fake id card with the image of an ugly girl (just a normal id layout). Using it will raise your defense stat. When you use this item, it will look like you are showing someone in front of you your ID, pinting it away from the camera.
+
+### Lemon-Aide (RARE)
+A little juice box of lemonade. Using it will increase you hp and increase your maximum hp as well. Using it looks like squeezing the juice box and particles of lemonade squirting out everywhere.
+
+### Running Shoes (COMMON)
+A pair of limited edition running shoes. When used, they shoes increase your speed. The shoes will just move out of the bottom of the screen when they are equiped.
+
+### African Prince (EPIC)
+A little phone with the email from an African Prince. So remember that African Prince that wanted to gie you majority of his fortune? Yeah hes back. You imediately get a large number of Pickup Tickets. WHen you use it, you will cal the phone and a bunch of ticket particles will fall from the sky. 
+
+# I identify as he/he
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### Guentlets
-You punch at enemies with a metal geuntlet. It is very-low range (1), very-high damage (5), high firerate (4), unlimited ammo and is high rarity (4). Looks like a clenched geuntlet, attacking is extending the geuntlet in a punch, there is no reload frame, it just goes back to normal idle.
+### Rubber Ducky
+### Bananazooka
+### Sneeze Gun
+### Soda Pop Rocket
+### Pop rocks
+### Lucky Cahrm Gun
+### Toast
+### Acorn Slingshot
+### Hot Sauce
+### Microwave
+### Pizza Boomerang
+### CUpcake explosives
+### Crayon
+### Ban hammer
+### Rolling Pin
+### Mace
+### Teddy Bear
+### Candy Cane
+### Deck shuffler
+### Ace of Spades
+### Rubiks Cube
+### Spring Shoes
+### Trumpet
+### Saxaphone
+### Popcorn
+### Boom Box
+### Water Ballon
+### soggy sandwich
+### nerf gun
+### egg launcher
+### money gun
+### card launcher
+### spoon?
+### Yo-Yo
+### Soap Gun
+### Milk-Up (tiddy version)
+### Pogo Stick
+### wind up monkey
+### toothpaste
+### Lawn dart
+### Staple gun
+### Confetti
+### Slinky
+### Snowball
+### super soaker
+### skatebaord
+### sticky note
+### beez
+### foam sword
+### teeth
+### marshmallow
+### cookie
+### dice balster Random damage
+### ray gun
+### black hole?
+### RNGesus Can use any ability from your deck
+### Pinata
+### Eraser
+### Golden Goose
+### Ticket Vortex
+### jester/joke
+### sock
+### toy gun
+### actual gun
+### crusty sock?
+### glowstick
+### big red button
+### ktchup
+### truck
+### chewing gun
+### rocket launcher
+### tshirt cannon
+### cheeze wiz
+### dildo
+### doritos
+### magnet
+### gumball
+### jawbraker
+### finger of fate
+### clipboard
+### paintbrush
+### pine cone
+### traffic cone
+### tuba (instrument)
+### pineapple
+### deli cold cut meats
+### mood ring
 
-### Finger Guns
-You make air guns with your fingers and fire bullets from them. It is mid range (3), low damage (2), mid firerate (3), unlimited ammo and is low rarity (2). These finger guns fire normal hit scan projectiles and have no other special attributes. Looks like a finger in a gun shape, when firing it shows a little flash at the tip of the finger and reload is almost pumping it back like a shotgun.
+### fish
+### copy paste
+### grenade
+### dungeons and dragons dice 1d20
+### glitch stick
+### the "nope" button
+### fridge
+### googly eyes
+### dragon princess
+### she was a fairy
+### tralalero tralala
+### tung tung tung tung sahur
 
-### Hand Cannons
+### car keys
+### ana de armas
+### sydney sweeney
+### v8 engine
+### gambling tokens
+### spray paint
+### taco
+### 8 -ball
+### sir top hat
+### sundae
+### hairbrush
+### pretzel
+### charlotte merrit
+### cat ears
+### bras
+### fur coat
+### dumbell
+### birthday present
+### pillow fight
+### pom poms
+### goth mami
+### dirty magazine
+### nun
+### doctor
+### christmas elf (santas little helper)
+### nurse
+### microphone
+### greek goddess super gioffy
+### succubus
+### ak-47
+### hestia
+### zues
+### farmer
+### hinata
+### momo
+### maid
+### spellbook
+### madison sialtsis
+### magical wand
+### mermaid
+### hancuffs/police
+### freeze ray
+### alexstrasza
+### lucia ferrato
+### filia skullgirls
+### 2B / robot
+### St Louis
+### Isabella Messens
+### Alarm Clock
+### emojipancake
+### pop tart
+### eyballs
+### 
+### 
+### 
+### 
 
-### Fireball
-A magically fireball you shoot at the enemies. It has mid range (3), high damage (4), low firerate (2), unlimited ammo and is mid rarity (3). This fireball will bounce off of the floor up to 3 times and explodes on impact (either the third bounce or hitting an enemy). The amount of damage it does is based on how long you let it cool down (to a certain point). Looks like an open hand with a hovering wobbly orange fireball, when attacking the hand extended still open shooting the fireball motion and when the weapon is cooling down, the fireball will slowly get bigger until the fireball is completely cooled down and back to normal size.
+
+
+
+
+
+
+
+
+
 
 ## Power Ups
 
