@@ -43,13 +43,19 @@ A glowing orange ball of fire that can set enemies on fire. When you use it, it 
 You just punch enemies with your bare hands. They always said your hands should be registered as weapons. You just punch your enemies dum dum. A melee weapon with very fast movement speed, fast attack speed and medium damage.
 
 ### Finger Guns (UNCOMMON)
-Since when did you have bullets coming out of your fingers. When you use this weapon, you will shoot fingernails out at your enemies. This is a medium ranged weapon with medium cooldown, medium damage and decent cooldown speed. This gun can only hold 5 fingernails at a time, then you have to reload. Just put your hand in a gun shape and fire (which makes a flash of light at the fingertip) and reloads like a pump shotgun.
+Since when did you have bullets coming out of your fingers. When you use this weapon, you will shoot fingernails out at your enemies. This is a medium ranged weapon with medium cooldown, medium damage and decent cooldown speed and somewhat fast movement speed. This gun can only hold 5 fingernails at a time, then you have to reload. Just put your hand in a gun shape and fire (which makes a flash of light at the fingertip) and reloads like a pump shotgun.
 
 ### Coin Toss (RARE)
 You flip a coin that can land on heads or tails. On heads, this will kill the nearest enemy to your location, if you land on tails, the coin will attack you and take 20% of your health. This is a special weapon with unlimited damage, no reload and high movement speed. It is a risk reward type of card. When attacking, the player will flip the coin in thier hand.
 
 ### Pineapple (UNCOMMON)
 A prickly yellow pineapple. It is a short ranged weapon thatdoes very little damage but has a very high change of inflicting the impaled / bleeding effects. This pinapple just sits in your hand and you throw it. You get a new one off screen.
+
+### Traffic Cone (COMMON)
+A bright orang traffic cone. You just attack normally with it. A melee weapon with aomewhat fast move speed, higher damage than the fists and somewhat fast attack speed. You attack people with a orange traffic cone.
+
+### Deck Shuffler (LEGENDARY)
+Holds a card spread in your hand. Card looks like a deck of cards. When you use this weapon, it will pick a random card from your deck and use it as ammo. If you have no cards, you cant attack. These cards have unlimited range (until they hit a wall or enemy) and do a massive amount of damage. When used, it just looks like you throw a card ahead of you. Reload by grabbing a new card from your deck on the left side of the screen. Also has fast movement speed and decent reload time.
 
 ## Playable Cards
 
@@ -73,6 +79,9 @@ A pair of limited edition running shoes. When used, they shoes increase your spe
 ### African Prince (EPIC)
 A little phone with the email from an African Prince. So remember that African Prince that wanted to gie you majority of his fortune? Yeah hes back. You imediately get a large number of Pickup Tickets. WHen you use it, you will cal the phone and a bunch of ticket particles will fall from the sky. 
 
+### Mini V8 (LENEGDARY)
+A mini v8 engine block. When you use this item, it will give you a absolutely massive boost in speed and massive boost in stamina. When you use this item, it will flash blue, sdissapear and a "vroom vroom" sound will play.
+
 # I identify as he/he
 
 
@@ -91,177 +100,158 @@ A little phone with the email from an African Prince. So remember that African P
 
 
 
-### Guentlets
-### Rubber Ducky
-### Bananazooka
-### Sneeze Gun
-### Soda Pop Rocket
-### Pop rocks
-### Lucky Cahrm Gun
-### Toast
-### Acorn Slingshot
-### Hot Sauce
-### Microwave
-### Pizza Boomerang
-### CUpcake explosives
-### Crayon
-### Ban hammer
-### Rolling Pin
-### Mace
-### Teddy Bear
-### Candy Cane
-### Deck shuffler
-### Ace of Spades
-### Rubiks Cube
-### Spring Shoes
-### Trumpet
-### Saxaphone
-### Popcorn
-### Boom Box
-### Water Ballon
-### soggy sandwich
-### nerf gun
-### egg launcher
-### money gun
-### card launcher
-### spoon?
-### Yo-Yo
-### Soap Gun
-### Milk-Up (tiddy version)
-### Pogo Stick
-### wind up monkey
-### toothpaste
-### Lawn dart
-### Staple gun
-### Confetti
-### Slinky
-### Snowball
-### super soaker
-### skatebaord
-### sticky note
-### beez
-### foam sword
-### teeth
-### marshmallow
-### cookie
-### dice balster Random damage
-### ray gun
-### black hole?
-### RNGesus Can use any ability from your deck
-### Pinata
-### Eraser
-### Golden Goose
-### Ticket Vortex
-### jester/joke
-### sock
-### toy gun
-### actual gun
-### crusty sock?
-### glowstick
-### big red button
-### ktchup
-### truck
-### chewing gun
-### rocket launcher
-### tshirt cannon
-### cheeze wiz
-### dildo
-### doritos
-### magnet
-### gumball
-### jawbraker
-### finger of fate
-### clipboard
-### paintbrush
-### pine cone
-### traffic cone
-### tuba (instrument)
-### pineapple
-### deli cold cut meats
-### mood ring
+- Guentlets
+- Rubber Ducky
+ Bananazooka
+ Sneeze Gun
+ Soda Pop Rocket
+ Pop rocks
+ Lucky Cahrm Gun
+ Toast
+ Acorn Slingshot
+ Hot Sauce
+ Microwave
+Pizza Boomerang
+ CUpcake explosives
+ Crayon
+ Ban hammer
+ Rolling Pin
+ Mace
+ Teddy Bear
+ Candy Cane
 
-### fish
-### copy paste
-### grenade
-### dungeons and dragons dice 1d20
-### glitch stick
-### the "nope" button
-### fridge
-### googly eyes
-### dragon princess
-### she was a fairy
-### tralalero tralala
-### tung tung tung tung sahur
+ Ace of Spades
+ Rubiks Cube
+ Spring Shoes
+ Trumpet
+ Saxaphone
+ Popcorn
+ Boom Box
+ Water Ballon
+ soggy sandwich
+ nerf gun
+ egg launcher
+ money gun
+ card launcher
+ spoon?
+ Yo-Yo
+ Soap Gun
+ Milk-Up (tiddy version)
+ Pogo Stick
+ wind up monkey
+ toothpaste
+ Lawn dart
+ Staple gun
+ Confetti
+ Slinky
+ Snowball
+ super soaker
+ skatebaord
+ sticky note
+ beez
+ foam sword
+ teeth
+ marshmallow
+ cookie
+ dice balster Random damage
+ ray gun
+ black hole?
+ RNGesus Can use any ability from your deck
+ Pinata
+ Eraser
+ Golden Goose
+ Ticket Vortex
+ jester/joke
+ sock
+ toy gun
+ actual gun
+ crusty sock?
+ glowstick
+ big red button
+ ktchup
+ truck
+ chewing gun
+ rocket launcher
+ tshirt cannon
+ cheeze wiz
+ dildo
+ doritos
+ magnet
+ gumball
+ jawbraker
+ finger of fate
+ clipboard
+ paintbrush
+ pine cone
+ traffic cone
+ tuba (instrument)
 
-### car keys
-### ana de armas
-### sydney sweeney
-### v8 engine
-### gambling tokens
-### spray paint
-### taco
-### 8 -ball
-### sir top hat
-### sundae
-### hairbrush
-### pretzel
-### charlotte merrit
-### cat ears
-### bras
-### fur coat
-### dumbell
-### birthday present
-### pillow fight
-### pom poms
-### goth mami
-### dirty magazine
-### nun
-### doctor
-### christmas elf (santas little helper)
-### nurse
-### microphone
-### greek goddess super gioffy
-### succubus
-### ak-47
-### hestia
-### zues
-### farmer
-### hinata
-### momo
-### maid
-### spellbook
-### madison sialtsis
-### magical wand
-### mermaid
-### hancuffs/police
-### freeze ray
-### alexstrasza
-### lucia ferrato
-### filia skullgirls
-### 2B / robot
-### St Louis
-### Isabella Messens
-### Alarm Clock
-### emojipancake
-### pop tart
-### eyballs
-### 
-### 
-### 
-### 
+ deli cold cut meats
+ mood ring
 
+ fish
+ copy paste
+ grenade
+ dungeons and dragons dice 1d20
+ glitch stick
+ the "nope" button
+ fridge
+ googly eyes
+ dragon princess
+ she was a fairy
+ tralalero tralala
+ tung tung tung tung sahur
 
+ car keys
+ ana de armas
+ sydney sweeney
 
-
-
-
-
-
-
-
-
-## Power Ups
-
-## Enemies
-
-All enemies
+ gambling tokens
+ spray paint
+ taco
+ 8 -ball
+ sir top hat
+ sundae
+ hairbrush
+ pretzel
+ charlotte merrit
+ cat ears
+ bras
+ fur coat
+ dumbell
+ birthday present
+ pillow fight
+ pom poms
+ goth mami
+ dirty magazine
+ nun
+ doctor
+ christmas elf (santas little helper)
+ nurse
+ microphone
+ greek goddess super gioffy
+ succubus
+ ak-47
+ hestia
+ zues
+ farmer
+ hinata
+ momo
+ maid
+ spellbook
+ madison sialtsis
+ magical wand
+ mermaid
+ hancuffs/police
+ freeze ray
+ alexstrasza
+ lucia ferrato
+ filia skullgirls
+ 2B / robot
+ St Louis
+ Isabella Messens
+ Alarm Clock
+ emoji
+ pancake
+ pop tart
+ eyballs
