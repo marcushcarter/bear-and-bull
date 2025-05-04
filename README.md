@@ -52,10 +52,22 @@ You flip a coin that can land on heads or tails. On heads, this will kill the ne
 A prickly yellow pineapple. It is a short ranged weapon thatdoes very little damage but has a very high change of inflicting the impaled / bleeding effects. This pinapple just sits in your hand and you throw it. You get a new one off screen.
 
 ### Traffic Cone (COMMON)
-A bright orang traffic cone. You just attack normally with it. A melee weapon with aomewhat fast move speed, higher damage than the fists and somewhat fast attack speed. You attack people with a orange traffic cone.
+A bright orange traffic cone. You just attack normally with it. A melee weapon with aomewhat fast move speed, higher damage than the fists and somewhat fast attack speed. You attack people with a orange traffic cone.
 
 ### Deck Shuffler (LEGENDARY)
 Holds a card spread in your hand. Card looks like a deck of cards. When you use this weapon, it will pick a random card from your deck and use it as ammo. If you have no cards, you cant attack. These cards have unlimited range (until they hit a wall or enemy) and do a massive amount of damage. When used, it just looks like you throw a card ahead of you. Reload by grabbing a new card from your deck on the left side of the screen. Also has fast movement speed and decent reload time.
+
+### Magic Wand (RARE)
+A wooden magical wand that can cast spells. When you attack with this weapon, you will cast a random spell from the types of: fireball, ice, bubble, lightning, bleed (thorn) etc which has a medium chance to effect thos effects. This attack is a mid range attack and has faster movement speed, no reload, unlimited uses and minimal damage. The casting frame looks like the Avada Cadavra spell motion.
+
+### Hot Suace Pistol (RARE)
+A hot sauce bottle with a firing hammer and a trigger. Card looks like the outside of a hot sauce bottle. When attacking, this weapon has a chance to burn the enemy and also cuases higher damage. THis weapon is medium range and has medium move speed, slower reload and higher damage. You have to reload after every shot. Reload animation looks like a little injector you squirt hot sauce back into the bottle.
+
+### Toast (COMMON)
+Literally a piece of toast. Card looks like a piece of bread. This piece of toast slowly heals you over time. It is a melee weapon that does very small amount of damage, moves very very fast. animation just looks like youre hitting people with a piece of toast
+
+### FRENCH Toast (UNCOMMON)
+A piece of FRENCH Toast. Card looks like a piece of frnech toast. This french toast heals you over time. It is a melee weapon that does a bit more than very small amount of damage, moves very very fast. Animation just looks like you are hitting people with some soggy toast.
 
 ## Playable Cards
 
@@ -82,6 +94,9 @@ A little phone with the email from an African Prince. So remember that African P
 ### Mini V8 (LENEGDARY)
 A mini v8 engine block. When you use this item, it will give you a absolutely massive boost in speed and massive boost in stamina. When you use this item, it will flash blue, sdissapear and a "vroom vroom" sound will play.
 
+### Aphrodite's Kiss (Super Gioffy) (RARE)
+A card with a picture of aphrodite blowing a kiss with a little kiss particls. When used, it will give you a small boost in all stats (speed, strength, defense) and a larger increase in stamina (becasue aphrodite loves stamina). When you use this item, a bunch of kiss particles will spawn and circle around you and a kissing sound will play.
+
 # I identify as he/he
 
 
@@ -98,16 +113,16 @@ A mini v8 engine block. When you use this item, it will give you a absolutely ma
 
 
 
+### Other Ideas:
 
-
-- Guentlets
-- Rubber Ducky
+ Guentlets
+ Rubber Ducky
  Bananazooka
  Sneeze Gun
  Soda Pop Rocket
  Pop rocks
  Lucky Cahrm Gun
- Toast
+ 
  Acorn Slingshot
  Hot Sauce
  Microwave
@@ -209,7 +224,6 @@ Pizza Boomerang
  gambling tokens
  spray paint
  taco
- 8 -ball
  sir top hat
  sundae
  hairbrush
@@ -229,7 +243,7 @@ Pizza Boomerang
  christmas elf (santas little helper)
  nurse
  microphone
- greek goddess super gioffy
+ 
  succubus
  ak-47
  hestia
