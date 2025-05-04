@@ -1,7 +1,7 @@
 # === Configuration ===
 CXX := g++
 CXXFLAGS := -g -mwindows -Iinclude
-LDFLAGS := -Llib -lmingw32 -lSDL3
+LDFLAGS := -Llib -lmingw32 -lSDL3 -lSDL3_image -lSDL3_ttf
 SRCS := src/main.c include/glad/glad.c resources/resource.res
 OUT := main.exe
 
