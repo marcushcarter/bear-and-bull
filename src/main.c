@@ -1,6 +1,4 @@
 #include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h>
-#include <SDL3_ttf/SDL_ttf.h>
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -24,18 +22,7 @@ Uint32 currMouseState;
 Uint32 prevMouseState;
 float mousex, mousey;
 
-SDL_Texture* texture;
-TTF_Font* font;
-
-bool load_textures() {
-
-	texture = IMG_LoadTexture(renderer, "./path/to/image.png");
-	SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
-
-    font = TTF_OpenFont("./path/to/font.ttf", 24);
-
-	return true;
-}
+int wW = 1500, wH = 1000;
 
 clock_t previous_time = 0;
 float dt;
@@ -60,13 +47,13 @@ void control_fps(float target_fps) {
 int main(int argc, char* argv[]) {
 
     SDL_Init(SDL_INIT_VIDEO);
-    TTF_Init();
-    window = SDL_CreateWindow("main", 800, 600, SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("Retro FPS Deckbuilder", 1500, 1000, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    load_textures();
     setup();
+
+    SDL_HideCursor();
 
     running = true;
     while (running) {
@@ -85,7 +72,6 @@ void setup() {
     const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
-    // setup game
 }
 
 void inputs() {
@@ -100,12 +86,57 @@ void inputs() {
 }
 
 void update() {
-    // update the game logic
+    SDL_GetWindowSize(window, &wW, &wH);
 }
 
 void render() {
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
-    // render the game
+
+    int TYPE = 1;
+
+    // backround color
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_FRect background = {0, 0, (float)wW, (float)wW/1.5f};
+    SDL_RenderFillRect(renderer, &background);
+
+    if (TYPE == 1) {
+    
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+        // deck visual (bottom left corner)
+        SDL_FRect deck = {0, (float)(wW/1.5*0.5), (float)(wW*0.25), (float)(wW*0.5/1.5)};
+        SDL_RenderRect(renderer, &deck);
+
+        // weapon slot holder
+        SDL_FRect weapon = {0, 0, 0, 0};
+        SDL_RenderRect(renderer, &weapon);
+
+        // accessory slot holder
+        SDL_FRect hand = {(float)(wW*0.02), (float)(wW/1.5*0.02), (float)(wW*0.5), (float)(wW*0.25/1.5)};
+        SDL_RenderRect(renderer, &hand);
+
+        SDL_FRect play = {0, 0, 0, 0};
+        SDL_RenderRect(renderer, &play);
+
+        SDL_FRect del = {0, 0, 0, 0};
+        SDL_RenderRect(renderer, &del);
+
+        // pickup tickets visual
+        SDL_FRect pickuptix = {0, 0, 0, 0};
+        SDL_RenderRect(renderer, &pickuptix);
+
+        // menu cursor
+        SDL_FRect cursor = {mousex, mousey, (float)(wW*0.02f), (float)(wW*0.02f)};
+        SDL_RenderRect(renderer, &cursor);
+
+    } else {
+
+        // middle cursor
+        SDL_FRect cursor = {(float)(wW/2-wW*0.01), (float)(wH/2-wW*0.01), (float)(wW*0.02f), (float)(wW*0.02f)};
+        SDL_RenderRect(renderer, &cursor);
+
+    }
+
     SDL_RenderPresent(renderer);
 }

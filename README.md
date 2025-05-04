@@ -24,3 +24,7 @@ I first want to kind of design the layout of the "pause menu" (but not really pa
 - place for your pickup tickets to be shown
 
 So lets get started I guess :|
+
+First I wanted to make the window resizable but always keep the same aspect ratio. (it didnt work so for now the window will stay at 1920x1280 scaled down to 1500x1000). Im going to use % of the screen to render these boxes because thats how it works in OpenGL (window_width * 0.1)
+
+NOTE: I think im either not doing this right or i just suck at this
