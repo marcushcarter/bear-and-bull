@@ -49,7 +49,10 @@ typedef struct {
     float h[MAX_CARDS];
 
     int num;
-} Cards; Cards cards;
+} Cards; 
+
+Cards inplay;
+Cards indeck;
 
 #define CARD_HEIGHT 190
 #define CARD_WIDTH 142
@@ -65,7 +68,9 @@ typedef struct {
     int max_cards[MAX_ZONES];
     int num_cards[MAX_ZONES];
     float isActive[MAX_ZONES];
-} Zones; Zones zones;
+} Zones; 
+
+Zones pausezones;
 
 typedef enum {
     ZONE_DECK = 1,
@@ -74,7 +79,7 @@ typedef enum {
     ZONE_EQUIP_1,
     ZONE_EQUIP_2,
     ZONE_EQUIP_3,
-} ZoneID;
+} ZoneType;
 
 SDL_Texture* texture;
 
@@ -112,21 +117,21 @@ bool point_box_collision(float px, float py, float bx, float by, float bw, float
 
 void draw_cards(int num) {
     for (int i = 0; i < num; i++) {
-        if (zones.num_cards[ZONE_HAND] >= zones.max_cards[ZONE_HAND]) continue;
+        if (pausezones.num_cards[ZONE_HAND] >= pausezones.max_cards[ZONE_HAND]) continue;
         for (int k = 0; k < MAX_CARDS; k++) {
-            if (cards.isActive[k]) continue;
-            // if (zones.num_cards[2] >= zones.max_cards[2]) break;
+            if (inplay.isActive[k]) continue;
+            // if (pausezones.num_cards[2] >= pausezones.max_cards[2]) break;
 
-            cards.num+=1;
+            inplay.num+=1;
             // initialize a random card from the deck
             isDragging = true;
-            cards.zoneID[k] = ZONE_HAND;
-            zones.num_cards[ZONE_HAND]+=1;
-            cards.zoneNum[k]=zones.num_cards[ZONE_HAND];
-            cards.x[k] = (zones.x[ZONE_DECK]+zones.w[ZONE_DECK]/2)*window_scale;
-            cards.y[k] = (zones.y[ZONE_DECK]+zones.h[ZONE_DECK]/2)*window_scale;
-            cards.isDragging[k] = true;
-            cards.isActive[k]=true;
+            inplay.zoneID[k] = ZONE_HAND;
+            pausezones.num_cards[ZONE_HAND]+=1;
+            inplay.zoneNum[k]=pausezones.num_cards[ZONE_HAND];
+            inplay.x[k] = (pausezones.x[ZONE_DECK]+pausezones.w[ZONE_DECK]/2)*window_scale;
+            inplay.y[k] = (pausezones.y[ZONE_DECK]+pausezones.h[ZONE_DECK]/2)*window_scale;
+            inplay.isDragging[k] = true;
+            inplay.isActive[k]=true;
             printf("draw card\n");
             break;
         }
@@ -147,19 +152,19 @@ int main() {
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
 
-    cards.num = 0;
+    inplay.num = 0;
     for (int i = 0; i < MAX_CARDS; i++) {
-        cards.isActive[i] = false;
-        cards.zoneID[i] = -1;
-        cards.ID[i] = i;
-        cards.w[i]=CARD_WIDTH;
-        cards.h[i]=CARD_HEIGHT;
+        inplay.isActive[i] = false;
+        inplay.zoneID[i] = -1;
+        inplay.ID[i] = i;
+        inplay.w[i]=CARD_WIDTH;
+        inplay.h[i]=CARD_HEIGHT;
     }
 
     for (int i = 0; i < MAX_ZONES; i++) {
-        zones.isActive[i] = false;
-        zones.num_cards[i] = 0;
-        zones.max_cards[i]=0;
+        pausezones.isActive[i] = false;
+        pausezones.num_cards[i] = 0;
+        pausezones.max_cards[i]=0;
     }
 
     int running = 1;
@@ -172,40 +177,40 @@ int main() {
         int zone_num;
 
         zone_num = ZONE_DISCARD;
-        strcpy(zones.name[zone_num], "discard slot");
-        zones.max_cards[zone_num] = 1;
-        zones.x[zone_num]=(wW-((CARD_WIDTH+CARD_SPACING*2)+50)*1)*window_scale;
-        zones.y[zone_num]=50*window_scale;
-        zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*zones.max_cards[zone_num])*window_scale;
-        zones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
-        zones.isActive[zone_num]=true;
+        strcpy(pausezones.name[zone_num], "discard slot");
+        pausezones.max_cards[zone_num] = 1;
+        pausezones.x[zone_num]=(wW-((CARD_WIDTH+CARD_SPACING*2)+50)*1)*window_scale;
+        pausezones.y[zone_num]=50*window_scale;
+        pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*pausezones.max_cards[zone_num])*window_scale;
+        pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+        pausezones.isActive[zone_num]=true;
 
         zone_num = ZONE_HAND;
-        strcpy(zones.name[zone_num], "hand");
-        zones.max_cards[zone_num] = 5;
-        zones.x[zone_num]=50*window_scale;
-        zones.y[zone_num]=(wH-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
-        zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*zones.max_cards[zone_num])*window_scale;
-        zones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
-        zones.isActive[zone_num]=true;
+        strcpy(pausezones.name[zone_num], "hand");
+        pausezones.max_cards[zone_num] = 5;
+        pausezones.x[zone_num]=50*window_scale;
+        pausezones.y[zone_num]=(wH-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
+        pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*pausezones.max_cards[zone_num])*window_scale;
+        pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+        pausezones.isActive[zone_num]=true;
 
         zone_num = ZONE_EQUIP_1;
-        strcpy(zones.name[zone_num], "equip slot");
-        zones.max_cards[zone_num] = 1;
-        zones.x[zone_num]=(wW-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
-        zones.y[zone_num]=50*window_scale;
-        zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*zones.max_cards[zone_num])*window_scale;
-        zones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
-        zones.isActive[zone_num]=true;
+        strcpy(pausezones.name[zone_num], "equip slot");
+        pausezones.max_cards[zone_num] = 1;
+        pausezones.x[zone_num]=(wW-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
+        pausezones.y[zone_num]=50*window_scale;
+        pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*pausezones.max_cards[zone_num])*window_scale;
+        pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+        pausezones.isActive[zone_num]=true;
 
         zone_num = ZONE_DECK;
-        strcpy(zones.name[zone_num], "deck");
-        zones.max_cards[zone_num] = 0;
-        zones.x[zone_num]=50*window_scale;
-        zones.y[zone_num]=50*window_scale;
-        zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING))*window_scale;
-        zones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
-        zones.isActive[zone_num]=true;
+        strcpy(pausezones.name[zone_num], "deck");
+        pausezones.max_cards[zone_num] = 0;
+        pausezones.x[zone_num]=50*window_scale;
+        pausezones.y[zone_num]=50*window_scale;
+        pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING))*window_scale;
+        pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+        pausezones.isActive[zone_num]=true;
 
         dt = get_delta_time();
         
@@ -223,46 +228,46 @@ int main() {
 
         // move each card
         for (int i = 0; i < MAX_CARDS; i++) {
-            if (!cards.isActive[i]) continue;
+            if (!inplay.isActive[i]) continue;
 
             // if the cursor is not dragging anything, the card is not being dragged and the mouse clicks on the card, it will be picked up
-            if (!isDragging && !cards.isDragging[i] && point_box_collision(mousex, mousey, cards.x[i] - (cards.w[i] / 2), cards.y[i] - (cards.h[i] / 2), cards.w[i], cards.h[i]) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
-                cards.isDragging[i] = true;
+            if (!isDragging && !inplay.isDragging[i] && point_box_collision(mousex, mousey, inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
+                inplay.isDragging[i] = true;
                 isDragging = true;
             }
 
             // if the card is being dragged and it is let go of
-            if (cards.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
+            if (inplay.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
 
                 for (int j = 0; j < MAX_ZONES; j++) {
-                    if (!zones.isActive[j]) continue;
+                    if (!pausezones.isActive[j]) continue;
 
                     // if the cards is in a zone and the zone is not full, its origin position is set to that
-                    if (point_box_collision(cards.tx[i], cards.ty[i], zones.x[j], zones.y[j], zones.w[j], zones.h[j]) && (zones.num_cards[j] < zones.max_cards[j])) {
+                    if (point_box_collision(inplay.tx[i], inplay.ty[i], pausezones.x[j], pausezones.y[j], pausezones.w[j], pausezones.h[j]) && (pausezones.num_cards[j] < pausezones.max_cards[j])) {
 
                         for (int l = 0; l < MAX_CARDS; l++) {
                             // if the zone id is the one we move the card out of and is in the slot higher than the original, the card shifts down
-                            if (cards.zoneID[l] == cards.zoneID[i] && cards.zoneNum[l] > cards.zoneNum[i]) {
-                                cards.zoneNum[l] -=1;
+                            if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) {
+                                inplay.zoneNum[l] -=1;
                             }
                         }
                         
                         // subtract num cards for original deck
-                        zones.num_cards[cards.zoneID[i]]-=1;
+                        pausezones.num_cards[inplay.zoneID[i]]-=1;
 
                         if (j == ZONE_DISCARD) {
-                            cards.isActive[i] = false;
-                            cards.zoneID[i] = -1;
-                            cards.num-=1;
+                            inplay.isActive[i] = false;
+                            inplay.zoneID[i] = -1;
+                            inplay.num-=1;
                             
                             printf("discard card\n");
                         } else {
                             // fils up a slot in that zone
-                            zones.num_cards[j]+=1;
-                            cards.zoneNum[i]=zones.num_cards[j];
+                            pausezones.num_cards[j]+=1;
+                            inplay.zoneNum[i]=pausezones.num_cards[j];
 
                             // the cards zone id is set to the zone number
-                            cards.zoneID[i] = j;
+                            inplay.zoneID[i] = j;
                         }
 
                         break;
@@ -271,31 +276,31 @@ int main() {
                 }
 
                 // puts the card down / stops it from dragging
-                cards.isDragging[i] = false;
+                inplay.isDragging[i] = false;
                 isDragging = false;
             }
 
-            if (cards.isDragging[i]) {
+            if (inplay.isDragging[i]) {
                 // if you are dragging a card it goes to your mouse
-                cards.tx[i] = mousex;
-                cards.ty[i] = mousey;
+                inplay.tx[i] = mousex;
+                inplay.ty[i] = mousey;
             } else {
                 // if you are not dragging a card it goes back to its original position in its corresponding zone area
-                cards.tx[i] = zones.x[cards.zoneID[i]] + (CARD_WIDTH/2+CARD_SPACING+((cards.zoneNum[i]-1) * (CARD_WIDTH+CARD_SPACING)) ) * window_scale;
-                cards.ty[i] = zones.y[cards.zoneID[i]] + zones.h[cards.zoneID[i]]/2;
+                inplay.tx[i] = pausezones.x[inplay.zoneID[i]] + (CARD_WIDTH/2+CARD_SPACING+((inplay.zoneNum[i]-1) * (CARD_WIDTH+CARD_SPACING)) ) * window_scale;
+                inplay.ty[i] = pausezones.y[inplay.zoneID[i]] + pausezones.h[inplay.zoneID[i]]/2;
             }
 
-            cards.vx[i] = (cards.tx[i] - cards.x[i]) / lerp_speed;
-            cards.vy[i] = (cards.ty[i] - cards.y[i]) / lerp_speed;
-            cards.y[i] += cards.vy[i] * dt;
-            cards.x[i] += cards.vx[i] * dt;
+            inplay.vx[i] = (inplay.tx[i] - inplay.x[i]) / lerp_speed;
+            inplay.vy[i] = (inplay.ty[i] - inplay.y[i]) / lerp_speed;
+            inplay.y[i] += inplay.vy[i] * dt;
+            inplay.x[i] += inplay.vx[i] * dt;
 
-            cards.w[i] = CARD_WIDTH*window_scale;
-            cards.h[i] = CARD_HEIGHT*window_scale;
+            inplay.w[i] = CARD_WIDTH*window_scale;
+            inplay.h[i] = CARD_HEIGHT*window_scale;
 
-            SDL_FRect rect = {cards.x[i] - (cards.w[i] / 2), cards.y[i] - (cards.h[i] / 2), cards.w[i], cards.h[i]};
+            SDL_FRect rect = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
             SDL_FPoint center = {rect.w / 2, rect.h / 2}; // rotate around center of image
-            double angle = cards.vx[i]/30;
+            double angle = inplay.vx[i]/30;
 
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             // SDL_RenderRect(renderer, &rect);
@@ -304,13 +309,13 @@ int main() {
         }
 
         // drawing cards from your deck, finding an empty card slot
-        if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, zones.x[ZONE_DECK], zones.y[ZONE_DECK], zones.w[ZONE_DECK], zones.h[ZONE_DECK])) {
-            if (zones.num_cards[ZONE_HAND] < zones.max_cards[ZONE_HAND]) draw_cards(1);
+        if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, pausezones.x[ZONE_DECK], pausezones.y[ZONE_DECK], pausezones.w[ZONE_DECK], pausezones.h[ZONE_DECK])) {
+            if (pausezones.num_cards[ZONE_HAND] < pausezones.max_cards[ZONE_HAND]) draw_cards(1);
         }
 
         // ZONES
         for (int j = 0; j < MAX_ZONES; j++) {
-            if (!zones.isActive[j]) continue;
+            if (!pausezones.isActive[j]) continue;
 
             if (j == ZONE_DISCARD) {
                 SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -318,7 +323,7 @@ int main() {
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             }
             
-            SDL_FRect zone = {zones.x[j], zones.y[j], zones.w[j], zones.h[j]};
+            SDL_FRect zone = {pausezones.x[j], pausezones.y[j], pausezones.w[j], pausezones.h[j]};
             SDL_RenderRect(renderer, &zone);
         }
 
@@ -326,11 +331,11 @@ int main() {
         SDL_FRect cursor = {mousex, mousey, 30*window_scale, 30*window_scale};
         SDL_RenderRect(renderer, &cursor);
 
-        // if (cards.zoneID[0] != -1) {
-        //     printf("This card is in zone ID %d\n", cards.zoneID[0]);
+        // if (inplay.zoneID[0] != -1) {
+        //     printf("This card is in zone ID %d\n", inplay.zoneID[0]);
         // }
-        // printf("%d\n", cards.num);
-        // printf("Zone 3 cards: %d Card Number: %d\n", zones.num_cards[3], cards.zoneNum[0]);
+        // printf("%d\n", inplay.num);
+        // printf("Zone 3 cards: %d Card Number: %d\n", pausezones.num_cards[3], cards.zoneNum[0]);
 
         SDL_RenderPresent(renderer);
 
