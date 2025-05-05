@@ -98,7 +98,7 @@ bool point_box_collision(float px, float py, float bx, float by, float bw, float
 
 int main() {
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("Retro FPS Deckbuilder", 1500, 1000, SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("Retro FPS Deckbuilder", 1500, 1000, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -145,20 +145,30 @@ int main() {
     zones.y[3]=50;
     zones.w[3]=160;
     zones.h[3]=210;
-    zones.max_cards[3] = 1;
-    zones.zoneType[3] = ZONETYPE_NORMAL;
-    
-    // zone 4, deck
-    zones.isActive[4]=true;
-    zones.x[4]=50;
-    zones.y[4]=50;
-    zones.w[4]=160;
-    zones.h[4]=210;
-    zones.max_cards[4] = 0;
-    zones.zoneType[4] = ZONETYPE_DECK;
+    zones.max_cards[3] = 0;
+    zones.zoneType[3] = ZONETYPE_DECK;
+
+    // // zone 4, deck
+    // zones.isActive[4]=true;
+    // zones.x[4]=50;
+    // zones.y[4]=50;
+    // zones.w[4]=160;
+    // zones.h[4]=210;
+    // zones.max_cards[4] = 1;
+    // zones.zoneType[4] = ZONETYPE_NORMAL;
 
     int running = 1;
     while (running) {
+
+        // zone 4, deck
+        zones.isActive[4]=true;
+        zones.x[4]=wW*0.03;
+        zones.y[4]=wW*0.03/1.5;
+        zones.w[4]=wW*0.1;
+        zones.h[4]=wW*0.14;
+        zones.max_cards[4] = 1;
+        zones.zoneType[4] = ZONETYPE_NORMAL;
+
         dt = get_delta_time();
         
         // inputs
