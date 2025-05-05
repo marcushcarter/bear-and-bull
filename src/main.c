@@ -109,6 +109,7 @@ int main() {
 
     for (int i = 0; i < MAX_ZONES; i++) {
         zones.isActive[i] = false;
+        zones.num_cards[i] = 0;
     }
 
     // card 1
@@ -142,6 +143,7 @@ int main() {
     zones.y[0]=1000-210-50;
     zones.w[0]=1400;
     zones.h[0]=210;
+    zones.max_cards[0] = 5;
 
     // zone 2, delete pile
     zones.isActive[1]=true;
@@ -149,6 +151,7 @@ int main() {
     zones.y[1]=50;
     zones.w[1]=160;
     zones.h[1]=210;
+    zones.max_cards[1] = 1;
 
     int running = 1;
     while (running) {
@@ -183,16 +186,28 @@ int main() {
                 for (int j = 0; j < MAX_ZONES; j++) {
                     if (!zones.isActive[j]) continue;
 
-                    // if the cards is in a zone, its origin position is set to that
-                    if (point_box_collision(cards.tx[i], cards.ty[i], zones.x[j], zones.y[j], zones.w[j], zones.h[j])) {
+                    // if the cards is in a zone and the zone is not full, its origin position is set to that
+                    if (point_box_collision(cards.tx[i], cards.ty[i], zones.x[j], zones.y[j], zones.w[j], zones.h[j]) && (zones.num_cards[j] < zones.max_cards[j])) {
                         cards.px[i] = cards.tx[i];
                         cards.py[i] = cards.ty[i];
                         
+                        // the cards origin is set to the xones center
                         cards.px[i] = zones.x[j]+(zones.w[j]/2);
                         cards.py[i] = zones.y[j]+(zones.h[j]/2);
+
+                        // subtract num cards for original deck
+                        zones.num_cards[cards.zoneID[i]]-=1;
+
+                        // the cards zone id is set to the zone number
+                        cards.zoneID[i] = j;
+                        // fils up a slot in that zone
+                        zones.num_cards[j]+=1;
+
+                        break;
                     }
 
                 }
+
                 // puts the card down / stops it from dragging
                 cards.isDragging[i] = false;
                 isDragging = false;
