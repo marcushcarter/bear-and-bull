@@ -7,11 +7,6 @@
 #include <time.h>
 #include <unistd.h>
 
-void setup();
-void inputs();
-void update();
-void render();
-
 SDL_Window* window;
 SDL_Renderer* renderer;
 SDL_Event event;
@@ -25,6 +20,23 @@ Uint32 prevMouseState;
 float mousex, mousey;
 
 int wW = 1500, wH = 1000;
+
+bool isDragging;
+
+#define MAX_CARDS 20
+
+typedef struct {
+    int id[MAX_CARDS];
+    float x[MAX_CARDS];
+    float y[MAX_CARDS];
+    float vx[MAX_CARDS];
+    float vy[MAX_CARDS];
+    float tx[MAX_CARDS];
+    float ty[MAX_CARDS];
+    float px[MAX_CARDS];
+    float py[MAX_CARDS];
+    bool isDragging[MAX_CARDS];
+} Cards; Cards cards;
 
 SDL_Texture* texture;
 
@@ -56,76 +68,126 @@ void control_fps(float target_fps) {
 	}
 }
 
-int main(int argc, char* argv[]) {
+bool point_box_collision(float px, float py, float bx, float by, float bw, float bh) {
+    return (px >= bx && px <= bx + bw && py >= by && py <= by + bh);
+}
 
+int main() {
     SDL_Init(SDL_INIT_VIDEO);
     window = SDL_CreateWindow("Retro FPS Deckbuilder", 1500, 1000, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     load_textures();
-    setup();
-
     SDL_HideCursor();
 
-    running = true;
-    while (running) {
-        dt = get_delta_time();
-        inputs();
-        update();
-        render();
-        SDL_memcpy(prevKeyState, currKeyState, NUM_KEYS);
-        control_fps(120.0f);
-    }
-    
-    return 0;
-}
-
-float x, y, xvel, yvel;
-
-void setup() {
+    // setup keystates
     const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
-}
 
-void inputs() {
-    while (SDL_PollEvent(&event) != 0) {
-        if (event.type == SDL_EVENT_QUIT) running = false;
+    for (int i = 0; i < MAX_CARDS; i++) {
+        cards.id[i] = 0;
     }
-    const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
-    SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
+
+    // card 1
+    cards.id[0]=1;
+    cards.tx[0]=1500*0.5;
+    cards.ty[0]=1000*0.5;
+
+    // card 2
+    cards.id[1]=1;
+    cards.tx[1]=1500*0.2;
+    cards.ty[1]=1000*0.2;
     
-    prevMouseState = currMouseState;
-    currMouseState = SDL_GetMouseState(&mousex, &mousey);
-}
-
-void update() {
-    SDL_GetWindowSize(window, &wW, &wH);
-
-    xvel = (mousex - x) / 0.25;
-    yvel = (mousey - y) / 0.25;
-    y += yvel * dt;
-    x += xvel * dt;
-}
-
-void render() {
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderClear(renderer);
-    // render the game
-
-    SDL_FRect rect = {x - (142 / 2), y - (190 / 2), 142, 190};
-    SDL_FPoint center = {rect.w / 2, rect.h / 2}; // rotate around center of image
-    double angle = xvel/30; // rotate 45 degrees clockwise
+    // card 3
+    cards.id[2]=1;
+    cards.tx[2]=1500*0.2;
+    cards.ty[2]=1000*0.8;
     
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderRect(renderer, &rect);
-    SDL_RenderTextureRotated(renderer, texture, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+    // card 4
+    cards.id[3]=1;
+    cards.tx[3]=1500*0.8;
+    cards.ty[3]=1000*0.8;
 
-    // menu cursor
-    SDL_FRect cursor = {mousex, mousey, (float)(wW*0.02f), (float)(wW*0.02f)};
-    SDL_RenderRect(renderer, &cursor);
-    
+    // card 5
+    cards.id[4]=1;
+    cards.tx[4]=1500*0.8;
+    cards.ty[4]=1000*0.2;
 
-    SDL_RenderPresent(renderer);
+    int running = 1;
+    while (running) {
+        dt = get_delta_time();
+        
+        // inputs
+        while (SDL_PollEvent(&event) != 0) {
+            if (event.type == SDL_EVENT_QUIT) running = false;
+        }
+        const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
+        SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
+        
+        prevMouseState = currMouseState;
+        currMouseState = SDL_GetMouseState(&mousex, &mousey);
+
+        // updates
+        SDL_GetWindowSize(window, &wW, &wH);  
+        
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
+
+        for (int i = 0; i < MAX_CARDS; i++) {
+            if (cards.id[i] == 0) continue;
+
+            if (!isDragging && !cards.isDragging[i] && point_box_collision(mousex, mousey, cards.x[i] - (142 / 2), cards.y[i] - (190 / 2), 142, 190) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
+                cards.isDragging[i] = true;
+                isDragging = true;
+            }
+
+            if (cards.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
+                cards.px[i] = cards.tx[i];
+                cards.py[i] = cards.ty[i];
+                cards.isDragging[i] = false;
+                isDragging = false;
+            }
+
+            if (cards.isDragging[i]) {
+                cards.tx[i] = mousex;
+                cards.ty[i] = mousey;
+            } else {
+                
+                // cards.tx[i] = 0;
+                // cards.ty[i] = 0;
+            }
+
+            cards.vx[i] = (cards.tx[i] - cards.x[i]) / 0.25;
+            cards.vy[i] = (cards.ty[i] - cards.y[i]) / 0.25;
+            cards.y[i] += cards.vy[i] * dt;
+            cards.x[i] += cards.vx[i] * dt;
+
+            SDL_FRect rect = {cards.x[i] - (142 / 2), cards.y[i] - (190 / 2), 142, 190};
+            SDL_FPoint center = {rect.w / 2, rect.h / 2}; // rotate around center of image
+            double angle = cards.vx[i]/30; // rotate 45 degrees clockwise
+
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderRect(renderer, &rect);
+            SDL_RenderTextureRotated(renderer, texture, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+
+        }
+
+        // menu cursor
+        SDL_FRect cursor = {mousex, mousey, (float)(wW*0.02f), (float)(wW*0.02f)};
+        SDL_RenderRect(renderer, &cursor);
+        
+
+        SDL_RenderPresent(renderer);
+
+        // other
+        SDL_memcpy(prevKeyState, currKeyState, NUM_KEYS);
+        control_fps(120.0f);
+    }
+
+    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(renderer);
+    SDL_Quit();
+    return 0;
 }
