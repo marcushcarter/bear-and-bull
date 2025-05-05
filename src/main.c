@@ -20,6 +20,7 @@ Uint32 prevMouseState;
 float mousex, mousey;
 
 int wW = 1500, wH = 1000;
+double window_scale = 1.0f;
 
 bool isDragging;
 
@@ -173,60 +174,63 @@ int main() {
     int running = 1;
     while (running) {
 
-        // zone 1, delete pile
-        zones.isActive[1]=true;
-        zones.x[1]=wW*(1500-160-50)/1500;
-        zones.y[1]=wW*50/1500;
-        zones.w[1]=wW*160/1500;
-        zones.h[1]=wW*210/1500;
-        zones.max_cards[1] = 1;
-        zones.zoneType[1] = ZONETYPE_NORMAL;
+        // get window sizes and set window scaling coefficient 
+        SDL_GetWindowSize(window, &wW, &wH);  
+        window_scale = wW/1500.0f;
 
-        // zone 2, hand
+        // initialize zone 1 (delete pile)
+        zones.isActive[1]=true;
+        zones.x[1]=(1500-160-50)*window_scale;
+        zones.y[1]=50*window_scale;
+        zones.w[1]=160*window_scale;
+        zones.h[1]=210*window_scale;
+        zones.max_cards[1] = 1;
+        zones.zoneType[1] = ZONETYPE_DELETE;
+
+        // initialize zone 2 (hand)
         zones.isActive[2]=true;
-        zones.x[2]=wW*50/1500;
-        zones.y[2]=wW*(1000-210-50)/1500;
-        zones.w[2]=wW*1400/1500;
-        zones.h[2]=wW*210/1500;
+        zones.x[2]=50*window_scale;
+        zones.y[2]=(1000-210-50)*window_scale;
+        zones.w[2]=1400*window_scale;
+        zones.h[2]=210*window_scale;
         zones.max_cards[2] = 9;
         zones.zoneType[2] = ZONETYPE_NORMAL;
 
-        // zone 3, equip
+        // initialize zone 3 (equip)
         zones.isActive[3]=true;
-        zones.x[3]=wW*(1500-160-50-160-50)/1500;
-        zones.y[3]=wW*50/1500;
-        zones.w[3]=wW*160/1500;
-        zones.h[3]=wW*210/1500;
+        zones.x[3]=(1500-160-50-160-50)*window_scale;
+        zones.y[3]=50*window_scale;
+        zones.w[3]=160*window_scale;
+        zones.h[3]=210*window_scale;
         zones.max_cards[3] = 1;
         zones.zoneType[3] = ZONETYPE_NORMAL;
 
-        // zone 4, deck
+        // initialize zone 4 (deck)
         zones.isActive[4]=true;
-        zones.x[4]=wW*50/1500;
-        zones.y[4]=wW*50/1500;
-        zones.w[4]=wW*160/1500;
-        zones.h[4]=wW*210/1500;
-        zones.max_cards[4] = 1;
+        zones.x[4]=50*window_scale;
+        zones.y[4]=50*window_scale;
+        zones.w[4]=160*window_scale;
+        zones.h[4]=210*window_scale;
+        zones.max_cards[4] = 0;
         zones.zoneType[4] = ZONETYPE_DECK;
 
         dt = get_delta_time();
         
-        // inputs
+        // Get input states (mouse/keyboard)
         while (SDL_PollEvent(&event) != 0) {
             if (event.type == SDL_EVENT_QUIT) running = false;
         }
         const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
         SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
-        
         prevMouseState = currMouseState;
         currMouseState = SDL_GetMouseState(&mousex, &mousey);
 
         // updates
-        SDL_GetWindowSize(window, &wW, &wH);  
         
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
 
+        // move each card
         for (int i = 0; i < MAX_CARDS; i++) {
             if (!cards.isActive[i]) continue;
 
@@ -259,6 +263,8 @@ int main() {
                             cards.isActive[i] = false;
                             cards.zoneID[i] = -1;
                             cards.num-=1;
+                            
+                            printf("discard card\n");
                         } else {
                             
                             // the cards origin is set to the xones center
@@ -290,7 +296,7 @@ int main() {
             } else {
                 // if you are not dragging a card it goes back to its original position (which, if is in a zone area, becomes in the zone area)
                 // cards.tx[i] = zones.x[cards.zoneID[i]] + zones.w[cards.zoneID[i]]/2;
-                cards.tx[i] = zones.x[cards.zoneID[i]] + (81+((cards.zoneNum[i]-1) * 152) ) *wW/1500;
+                cards.tx[i] = zones.x[cards.zoneID[i]] + (81+((cards.zoneNum[i]-1) * 152) ) * window_scale;
                 cards.ty[i] = zones.y[cards.zoneID[i]] + zones.h[cards.zoneID[i]]/2;
             }
 
@@ -299,8 +305,8 @@ int main() {
             cards.y[i] += cards.vy[i] * dt;
             cards.x[i] += cards.vx[i] * dt;
 
-            cards.w[i] = CARD_WIDTH*wW/1500;
-            cards.h[i] = CARD_HEIGHT*wW/1500;
+            cards.w[i] = CARD_WIDTH*window_scale;
+            cards.h[i] = CARD_HEIGHT*window_scale;
 
             SDL_FRect rect = {cards.x[i] - (cards.w[i] / 2), cards.y[i] - (cards.h[i] / 2), cards.w[i], cards.h[i]};
             SDL_FPoint center = {rect.w / 2, rect.h / 2}; // rotate around center of image
@@ -326,11 +332,11 @@ int main() {
                 cards.zoneID[k] = 2;
                 zones.num_cards[cards.zoneID[k]]+=1;
                 cards.zoneNum[k]=zones.num_cards[cards.zoneID[k]];
-                cards.x[k] = zones.x[4]+71;
-                cards.y[k] = zones.y[4]+95;
+                cards.x[k] = (zones.x[4]+zones.w[4]/2)*window_scale;
+                cards.y[k] = (zones.y[4]+zones.h[4]/2)*window_scale;
                 cards.isDragging[k] = true;
                 cards.isActive[k]=true;
-                printf("new card\n");
+                printf("draw card\n");
                 break;
             }
         }
@@ -349,12 +355,8 @@ int main() {
             SDL_RenderRect(renderer, &zone);
         }
 
-        // zone 1
-        // SDL_FRect zone1 = {0, wH*0.5, 9000, 9000};
-        // SDL_RenderRect(renderer, &zone1);
-
-        // menu cursor
-        SDL_FRect cursor = {mousex, mousey, (float)(wW*0.02f), (float)(wW*0.02f)};
+        // render the cursor
+        SDL_FRect cursor = {mousex, mousey, 30*window_scale, 30*window_scale};
         SDL_RenderRect(renderer, &cursor);
 
         // if (cards.zoneID[0] != -1) {
@@ -362,11 +364,9 @@ int main() {
         // }
         // printf("%d\n", cards.num);
         // printf("Zone 3 cards: %d Card Number: %d\n", zones.num_cards[3], cards.zoneNum[0]);
-        
 
         SDL_RenderPresent(renderer);
 
-        // other
         SDL_memcpy(prevKeyState, currKeyState, NUM_KEYS);
         control_fps(120.0f);
     }
