@@ -40,8 +40,15 @@ typedef struct {
     bool isActive[MAX_CARDS];
     int zoneID[MAX_CARDS];
     int zoneNum[MAX_CARDS];
+
+    float w[MAX_CARDS];
+    float h[MAX_CARDS];
+
     int num;
 } Cards; Cards cards;
+
+#define CARD_HEIGHT 190
+#define CARD_WIDTH 142
 
 typedef enum {
     ZONETYPE_NORMAL,
@@ -117,6 +124,8 @@ int main() {
         cards.isActive[i] = false;
         cards.zoneID[i] = -1;
         cards.ID[i] = i;
+        cards.w[i]=CARD_WIDTH;
+        cards.h[i]=CARD_HEIGHT;
     }
 
     for (int i = 0; i < MAX_ZONES; i++) {
@@ -222,7 +231,7 @@ int main() {
             if (!cards.isActive[i]) continue;
 
             // if the cursor is not dragging anything, the card is not being dragged and the mouse clicks on the card, it will be picked up
-            if (!isDragging && !cards.isDragging[i] && point_box_collision(mousex, mousey, cards.x[i] - (142 / 2), cards.y[i] - (190 / 2), 142, 190) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
+            if (!isDragging && !cards.isDragging[i] && point_box_collision(mousex, mousey, cards.x[i] - (cards.w[i] / 2), cards.y[i] - (cards.h[i] / 2), cards.w[i], cards.h[i]) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
                 cards.isDragging[i] = true;
                 isDragging = true;
             }
@@ -236,6 +245,13 @@ int main() {
                     // if the cards is in a zone and the zone is not full, its origin position is set to that
                     if (point_box_collision(cards.tx[i], cards.ty[i], zones.x[j], zones.y[j], zones.w[j], zones.h[j]) && (zones.num_cards[j] < zones.max_cards[j])) {
 
+                        for (int l = 0; l < MAX_CARDS; l++) {
+                            // if the zone id is the one we move the card out of and is in the slot higher than the original, the card shifts down
+                            if (cards.zoneID[l] == cards.zoneID[i] && cards.zoneNum[l] > cards.zoneNum[i]) {
+                                cards.zoneNum[l] -=1;
+                            }
+                        }
+                        
                         // subtract num cards for original deck
                         zones.num_cards[cards.zoneID[i]]-=1;
 
@@ -283,7 +299,7 @@ int main() {
             cards.y[i] += cards.vy[i] * dt;
             cards.x[i] += cards.vx[i] * dt;
 
-            SDL_FRect rect = {cards.x[i] - (142 / 2), cards.y[i] - (190 / 2), 142, 190};
+            SDL_FRect rect = {cards.x[i] - (cards.w[i] / 2), cards.y[i] - (cards.h[i] / 2), cards.w[i]*wW/1500, cards.h[i]*wW/1500};
             SDL_FPoint center = {rect.w / 2, rect.h / 2}; // rotate around center of image
             double angle = cards.vx[i]/30; // rotate 45 degrees clockwise
 

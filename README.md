@@ -2,6 +2,11 @@
 
 Started working on this game on *2025-05-04* (May the force be with you :)
 
+## Update Log
+
+- *2025-05-04* started brainstorming, worked on moving cards around
+- *2025-05-05* worked on temporary card movement and zones,
+
 ## Opening Ideas / Thoughts
 
 *2025-05-04*
