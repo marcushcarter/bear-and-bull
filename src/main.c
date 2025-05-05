@@ -45,6 +45,7 @@ typedef enum {
     ZONETYPE_NORMAL,
     ZONETYPE_DELETE,
     ZONETYPE_PLAY,
+    ZONETYPE_DECK,
 } ZoneType;
 
 typedef struct {
@@ -171,6 +172,15 @@ int main() {
     zones.h[3]=210;
     zones.max_cards[3] = 1;
     zones.zoneType[3] = ZONETYPE_NORMAL;
+    
+    // zone 4, deck
+    zones.isActive[4]=true;
+    zones.x[4]=50;
+    zones.y[4]=50;
+    zones.w[4]=160;
+    zones.h[4]=210;
+    zones.max_cards[4] = 0;
+    zones.zoneType[4] = ZONETYPE_DECK;
 
     int running = 1;
     while (running) {
@@ -219,14 +229,14 @@ int main() {
                         // subtract num cards for original deck
                         zones.num_cards[cards.zoneID[i]]-=1;
 
-                        // the cards zone id is set to the zone number
-                        cards.zoneID[i] = j;
-
                         if (zones.zoneType[j] == ZONETYPE_DELETE) {
                             cards.isActive[i] = false;
                         } else {
                             // fils up a slot in that zone
                             zones.num_cards[j]+=1;
+
+                            // the cards zone id is set to the zone number
+                            cards.zoneID[i] = j;
                         }
 
                         break;
@@ -262,6 +272,26 @@ int main() {
             SDL_RenderRect(renderer, &rect);
             SDL_RenderTextureRotated(renderer, texture, NULL, &rect, angle, &center, SDL_FLIP_NONE);
 
+        }
+
+        // drawing cards from your deck, finding an empty card slot
+        if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, zones.x[4], zones.y[4], zones.w[4], zones.h[4])) {
+            // bool found_card = false;
+            for (int k = 0; k < MAX_CARDS; k++) {
+                if (cards.isActive[k]) continue;
+
+                    // initialize a random card from the deck
+                    isDragging = true;
+                    cards.x[k] = zones.x[4]+71;
+                    cards.y[k] = zones.y[4]+95;
+                    cards.isDragging[k] = true;
+                    cards.isActive[k]=true;
+                    cards.px[k]=1500*0.35;
+                    cards.py[k]=1000*0.35;
+                    printf("new card\n");
+                    break;
+                // }
+            }
         }
 
         // ZONES
