@@ -145,29 +145,56 @@ int main() {
     zones.y[3]=50;
     zones.w[3]=160;
     zones.h[3]=210;
-    zones.max_cards[3] = 0;
-    zones.zoneType[3] = ZONETYPE_DECK;
+    zones.max_cards[3] = 1;
+    zones.zoneType[3] = ZONETYPE_NORMAL;
 
-    // // zone 4, deck
+    // zone 4, deck
     // zones.isActive[4]=true;
     // zones.x[4]=50;
     // zones.y[4]=50;
     // zones.w[4]=160;
     // zones.h[4]=210;
-    // zones.max_cards[4] = 1;
-    // zones.zoneType[4] = ZONETYPE_NORMAL;
+    // zones.max_cards[4] = 0;
+    // zones.zoneType[4] = ZONETYPE_DECK;
 
     int running = 1;
     while (running) {
 
-        // zone 4, deck
-        zones.isActive[4]=true;
-        zones.x[4]=wW*0.03;
-        zones.y[4]=wW*0.03/1.5;
-        zones.w[4]=wW*0.1;
-        zones.h[4]=wW*0.14;
-        zones.max_cards[4] = 1;
-        zones.zoneType[4] = ZONETYPE_NORMAL;
+            // zone 1, hand
+            zones.isActive[2]=true;
+            zones.x[2]=wW*50/1500;
+            zones.y[2]=wW*(1000-210-50)/1500;
+            zones.w[2]=wW*1400/1500;
+            zones.h[2]=wW*210/1500;
+            zones.max_cards[2] = 5;
+            zones.zoneType[2] = ZONETYPE_NORMAL;
+
+            // zone 2, delete pile
+            zones.isActive[1]=true;
+            zones.x[1]=wW*(1500-160-50)/1500;
+            zones.y[1]=wW*50/1500;
+            zones.w[1]=wW*160/1500;
+            zones.h[1]=wW*210/1500;
+            zones.max_cards[1] = 1;
+            zones.zoneType[1] = ZONETYPE_DELETE;
+
+            // zone 3, equip
+            zones.isActive[3]=true;
+            zones.x[3]=wW*(1500-160-50-160-50)/1500;
+            zones.y[3]=wW*50/1500;
+            zones.w[3]=wW*160/1500;
+            zones.h[3]=wW*210/1500;
+            zones.max_cards[3] = 1;
+            zones.zoneType[3] = ZONETYPE_NORMAL;
+
+            // zone 4, deck
+            zones.isActive[4]=true;
+            zones.x[4]=wW*50/1500;
+            zones.y[4]=wW*50/1500;
+            zones.w[4]=wW*160/1500;
+            zones.h[4]=wW*210/1500;
+            zones.max_cards[4] = 0;
+            zones.zoneType[4] = ZONETYPE_DECK;
 
         dt = get_delta_time();
         
