@@ -282,12 +282,13 @@ int main() {
 
                     // initialize a random card from the deck
                     isDragging = true;
+                    cards.px[k] = zones.x[2]+(zones.w[2]/2);
+                    cards.py[k] = zones.y[2]+(zones.h[2]/2);
+                    cards.zoneID[k] = 2;
                     cards.x[k] = zones.x[4]+71;
                     cards.y[k] = zones.y[4]+95;
                     cards.isDragging[k] = true;
                     cards.isActive[k]=true;
-                    cards.px[k]=1500*0.35;
-                    cards.py[k]=1000*0.35;
                     printf("new card\n");
                     break;
                 // }
