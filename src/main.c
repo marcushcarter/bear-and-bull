@@ -106,6 +106,29 @@ bool point_box_collision(float px, float py, float bx, float by, float bw, float
     return (px >= bx && px <= bx + bw && py >= by && py <= by + bh);
 }
 
+void draw_cards(int num) {
+    for (int i = 0; i < num; i++) {
+        if (zones.num_cards[2] >= zones.max_cards[2]) continue;
+        for (int k = 0; k < MAX_CARDS; k++) {
+            if (cards.isActive[k]) continue;
+            // if (zones.num_cards[2] >= zones.max_cards[2]) break;
+
+            cards.num+=1;
+            // initialize a random card from the deck
+            isDragging = true;
+            cards.zoneID[k] = 2;
+            zones.num_cards[cards.zoneID[k]]+=1;
+            cards.zoneNum[k]=zones.num_cards[cards.zoneID[k]];
+            cards.x[k] = (zones.x[4]+zones.w[4]/2)*window_scale;
+            cards.y[k] = (zones.y[4]+zones.h[4]/2)*window_scale;
+            cards.isDragging[k] = true;
+            cards.isActive[k]=true;
+            printf("draw card\n");
+            break;
+        }
+    }
+}
+
 int main() {
     SDL_Init(SDL_INIT_VIDEO);
     window = SDL_CreateWindow("Retro FPS Deckbuilder", 1500, 1000, SDL_WINDOW_RESIZABLE);
@@ -313,32 +336,15 @@ int main() {
             double angle = cards.vx[i]/30; // rotate 45 degrees clockwise
 
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_RenderRect(renderer, &rect);
+            // SDL_RenderRect(renderer, &rect);
             SDL_RenderTextureRotated(renderer, texture, NULL, &rect, angle, &center, SDL_FLIP_NONE);
 
         }
 
         // drawing cards from your deck, finding an empty card slot
         if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, zones.x[4], zones.y[4], zones.w[4], zones.h[4])) {
-            // bool found_card = false;
             if (zones.num_cards[2] >= zones.max_cards[2]) continue;
-            for (int k = 0; k < MAX_CARDS; k++) {
-                if (cards.isActive[k]) continue;
-                // if (zones.num_cards[2] >= zones.max_cards[2]) break;
-
-                cards.num+=1;
-                // initialize a random card from the deck
-                isDragging = true;
-                cards.zoneID[k] = 2;
-                zones.num_cards[cards.zoneID[k]]+=1;
-                cards.zoneNum[k]=zones.num_cards[cards.zoneID[k]];
-                cards.x[k] = (zones.x[4]+zones.w[4]/2)*window_scale;
-                cards.y[k] = (zones.y[4]+zones.h[4]/2)*window_scale;
-                cards.isDragging[k] = true;
-                cards.isActive[k]=true;
-                printf("draw card\n");
-                break;
-            }
+            draw_cards(1);
         }
 
         // ZONES
@@ -356,7 +362,7 @@ int main() {
         }
 
         // render the cursor
-        SDL_FRect cursor = {mousex, mousey, 30*window_scale, 30*window_scale};
+        SDL_FRect cursor = {mousex, mousey, (float)(30*window_scale), (float)(30*window_scale)};
         SDL_RenderRect(renderer, &cursor);
 
         // if (cards.zoneID[0] != -1) {
