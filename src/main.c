@@ -112,7 +112,7 @@ int main() {
 
     for (int i = 0; i < MAX_CARDS; i++) {
         cards.isActive[i] = false;
-        cards.zoneID[i] = 0;
+        cards.zoneID[i] = -1;
         cards.ID[i] = i;
     }
 
@@ -219,19 +219,19 @@ int main() {
 
                     // if the cards is in a zone and the zone is not full, its origin position is set to that
                     if (point_box_collision(cards.tx[i], cards.ty[i], zones.x[j], zones.y[j], zones.w[j], zones.h[j]) && (zones.num_cards[j] < zones.max_cards[j])) {
-                        cards.px[i] = cards.tx[i];
-                        cards.py[i] = cards.ty[i];
-                        
-                        // the cards origin is set to the xones center
-                        cards.px[i] = zones.x[j]+(zones.w[j]/2);
-                        cards.py[i] = zones.y[j]+(zones.h[j]/2);
 
                         // subtract num cards for original deck
                         zones.num_cards[cards.zoneID[i]]-=1;
 
                         if (zones.zoneType[j] == ZONETYPE_DELETE) {
                             cards.isActive[i] = false;
+                            cards.zoneID[i] = -1;
                         } else {
+                            
+                            // the cards origin is set to the xones center
+                            cards.px[i] = zones.x[j]+(zones.w[j]/2);
+                            cards.py[i] = zones.y[j]+(zones.h[j]/2);
+
                             // fils up a slot in that zone
                             zones.num_cards[j]+=1;
 
@@ -316,7 +316,7 @@ int main() {
         SDL_FRect cursor = {mousex, mousey, (float)(wW*0.02f), (float)(wW*0.02f)};
         SDL_RenderRect(renderer, &cursor);
 
-        if (cards.zoneID[0] != 0) {
+        if (cards.zoneID[0] != -1) {
             printf("This card is in zone ID %d\n", cards.zoneID[0]);
         }
         
