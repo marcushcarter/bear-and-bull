@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <unistd.h>
+#include <string.h>
 
 SDL_Window* window;
 SDL_Renderer* renderer;
@@ -20,7 +21,9 @@ Uint32 prevMouseState;
 float mousex, mousey;
 
 int wW = 1500, wH = 1000;
-double window_scale = 1.0f;
+float window_scale = 1.0f;
+
+float lerp_speed = 0.25;
 
 bool isDragging;
 
@@ -50,6 +53,7 @@ typedef struct {
 
 #define CARD_HEIGHT 190
 #define CARD_WIDTH 142
+#define CARD_SPACING 10
 
 typedef enum {
     ZONETYPE_NORMAL,
@@ -60,6 +64,7 @@ typedef enum {
 
 typedef struct {
     int ID[MAX_ZONES];
+    char name[MAX_ZONES][256];
     float x[MAX_ZONES];
     float y[MAX_ZONES];
     float w[MAX_ZONES];
@@ -158,42 +163,6 @@ int main() {
         zones.max_cards[i]=0;
     }
 
-    // zone 1, delete pile
-    zones.isActive[1]=true;
-    zones.x[1]=1500-160-50;
-    zones.y[1]=50;
-    zones.w[1]=160;
-    zones.h[1]=210;
-    zones.max_cards[1] = 1;
-    zones.zoneType[1] = ZONETYPE_DELETE;
-
-    // zone 2, hand
-    zones.isActive[2]=true;
-    zones.x[2]=50;
-    zones.y[2]=1000-210-50;
-    zones.w[2]=1400;
-    zones.h[2]=210;
-    zones.max_cards[2] = 5;
-    zones.zoneType[2] = ZONETYPE_NORMAL;
-
-    // zone 3, equip
-    zones.isActive[3]=true;
-    zones.x[3]=1500-160-50-160-50;
-    zones.y[3]=50;
-    zones.w[3]=160;
-    zones.h[3]=210;
-    zones.max_cards[3] = 1;
-    zones.zoneType[3] = ZONETYPE_NORMAL;
-
-    // zone 4, deck
-    // zones.isActive[4]=true;
-    // zones.x[4]=50;
-    // zones.y[4]=50;
-    // zones.w[4]=160;
-    // zones.h[4]=210;
-    // zones.max_cards[4] = 0;
-    // zones.zoneType[4] = ZONETYPE_DECK;
-
     int running = 1;
     while (running) {
 
@@ -201,41 +170,47 @@ int main() {
         SDL_GetWindowSize(window, &wW, &wH);  
         window_scale = wW/1500.0f;
 
-        // initialize zone 1 (delete pile)
-        zones.isActive[1]=true;
-        zones.x[1]=(1500-160-50)*window_scale;
-        zones.y[1]=50*window_scale;
-        zones.w[1]=160*window_scale;
-        zones.h[1]=210*window_scale;
-        zones.max_cards[1] = 1;
-        zones.zoneType[1] = ZONETYPE_DELETE;
+        int zone_num;
+        
+        zone_num = 1;
+        strcpy(zones.name[zone_num], "discard zone");
+        zones.max_cards[zone_num] = 1;
+        zones.zoneType[zone_num] = ZONETYPE_DELETE;
+        zones.x[zone_num]=(wW-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
+        zones.y[zone_num]=50*window_scale;
+        zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*zones.max_cards[zone_num])*window_scale;
+        zones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+        zones.isActive[zone_num]=true;
 
-        // initialize zone 2 (hand)
-        zones.isActive[2]=true;
-        zones.x[2]=50*window_scale;
-        zones.y[2]=(1000-210-50)*window_scale;
-        zones.w[2]=1400*window_scale;
-        zones.h[2]=210*window_scale;
-        zones.max_cards[2] = 9;
-        zones.zoneType[2] = ZONETYPE_NORMAL;
+        zone_num = 2;
+        strcpy(zones.name[zone_num], "hand");
+        zones.max_cards[zone_num] = 5;
+        zones.zoneType[zone_num] = ZONETYPE_NORMAL;
+        zones.x[zone_num]=50*window_scale;
+        zones.y[zone_num]=(wH-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
+        zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*zones.max_cards[zone_num])*window_scale;
+        zones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+        zones.isActive[zone_num]=true;
 
-        // initialize zone 3 (equip)
-        zones.isActive[3]=true;
-        zones.x[3]=(1500-160-50-160-50)*window_scale;
-        zones.y[3]=50*window_scale;
-        zones.w[3]=160*window_scale;
-        zones.h[3]=210*window_scale;
-        zones.max_cards[3] = 1;
-        zones.zoneType[3] = ZONETYPE_NORMAL;
+        zone_num = 3;
+        strcpy(zones.name[zone_num], "equip slot");
+        zones.max_cards[zone_num] = 1;
+        zones.zoneType[zone_num] = ZONETYPE_NORMAL;
+        zones.x[zone_num]=(wW-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
+        zones.y[zone_num]=50*window_scale;
+        zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*zones.max_cards[zone_num])*window_scale;
+        zones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+        zones.isActive[zone_num]=true;
 
-        // initialize zone 4 (deck)
-        zones.isActive[4]=true;
-        zones.x[4]=50*window_scale;
-        zones.y[4]=50*window_scale;
-        zones.w[4]=160*window_scale;
-        zones.h[4]=210*window_scale;
-        zones.max_cards[4] = 0;
-        zones.zoneType[4] = ZONETYPE_DECK;
+        zone_num = 4;
+        strcpy(zones.name[zone_num], "deck");
+        zones.max_cards[zone_num] = 0;
+        zones.zoneType[zone_num] = ZONETYPE_DECK;
+        zones.x[zone_num]=50*window_scale;
+        zones.y[zone_num]=50*window_scale;
+        zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING))*window_scale;
+        zones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+        zones.isActive[zone_num]=true;
 
         dt = get_delta_time();
         
@@ -247,8 +222,6 @@ int main() {
         SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
         prevMouseState = currMouseState;
         currMouseState = SDL_GetMouseState(&mousex, &mousey);
-
-        // updates
         
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
@@ -289,11 +262,6 @@ int main() {
                             
                             printf("discard card\n");
                         } else {
-                            
-                            // the cards origin is set to the xones center
-                            // cards.px[i] = zones.x[j]+(zones.w[j]/2);
-                            // cards.py[i] = zones.y[j]+(zones.h[j]/2);
-
                             // fils up a slot in that zone
                             zones.num_cards[j]+=1;
                             cards.zoneNum[i]=zones.num_cards[j];
@@ -317,14 +285,13 @@ int main() {
                 cards.tx[i] = mousex;
                 cards.ty[i] = mousey;
             } else {
-                // if you are not dragging a card it goes back to its original position (which, if is in a zone area, becomes in the zone area)
-                // cards.tx[i] = zones.x[cards.zoneID[i]] + zones.w[cards.zoneID[i]]/2;
-                cards.tx[i] = zones.x[cards.zoneID[i]] + (81+((cards.zoneNum[i]-1) * 152) ) * window_scale;
+                // if you are not dragging a card it goes back to its original position in its corresponding zone area
+                cards.tx[i] = zones.x[cards.zoneID[i]] + (CARD_WIDTH/2+CARD_SPACING+((cards.zoneNum[i]-1) * (CARD_WIDTH+CARD_SPACING)) ) * window_scale;
                 cards.ty[i] = zones.y[cards.zoneID[i]] + zones.h[cards.zoneID[i]]/2;
             }
 
-            cards.vx[i] = (cards.tx[i] - cards.x[i]) / 0.25;
-            cards.vy[i] = (cards.ty[i] - cards.y[i]) / 0.25;
+            cards.vx[i] = (cards.tx[i] - cards.x[i]) / lerp_speed;
+            cards.vy[i] = (cards.ty[i] - cards.y[i]) / lerp_speed;
             cards.y[i] += cards.vy[i] * dt;
             cards.x[i] += cards.vx[i] * dt;
 
@@ -333,7 +300,7 @@ int main() {
 
             SDL_FRect rect = {cards.x[i] - (cards.w[i] / 2), cards.y[i] - (cards.h[i] / 2), cards.w[i], cards.h[i]};
             SDL_FPoint center = {rect.w / 2, rect.h / 2}; // rotate around center of image
-            double angle = cards.vx[i]/30; // rotate 45 degrees clockwise
+            double angle = cards.vx[i]/30;
 
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             // SDL_RenderRect(renderer, &rect);
@@ -362,7 +329,7 @@ int main() {
         }
 
         // render the cursor
-        SDL_FRect cursor = {mousex, mousey, (float)(30*window_scale), (float)(30*window_scale)};
+        SDL_FRect cursor = {mousex, mousey, 30*window_scale, 30*window_scale};
         SDL_RenderRect(renderer, &cursor);
 
         // if (cards.zoneID[0] != -1) {
