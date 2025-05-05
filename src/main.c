@@ -20,10 +20,10 @@ Uint32 currMouseState;
 Uint32 prevMouseState;
 float mousex, mousey;
 
-int wW = 1500, wH = 1000;
-float window_scale = 1.0f;
+int window_width, window_height, window_scale = 1.0f;
+float game_speed = 4;
 
-float lerp_speed = 0.25;
+#define LERP_SPEED 0.25
 
 bool isDragging;
 
@@ -32,21 +32,21 @@ bool isDragging;
 
 typedef struct {
     int ID[MAX_CARDS];
+
     float x[MAX_CARDS];
     float y[MAX_CARDS];
     float vx[MAX_CARDS];
     float vy[MAX_CARDS];
     float tx[MAX_CARDS];
     float ty[MAX_CARDS];
-    // float px[MAX_CARDS];
-    // float py[MAX_CARDS];
-    bool isDragging[MAX_CARDS];
-    bool isActive[MAX_CARDS];
-    int zoneID[MAX_CARDS];
-    int zoneNum[MAX_CARDS];
-
     float w[MAX_CARDS];
     float h[MAX_CARDS];
+
+    int zoneID[MAX_CARDS];
+    int zoneNum[MAX_CARDS];
+    
+    bool isDragging[MAX_CARDS];
+    bool isActive[MAX_CARDS];
 
     int num;
 } Cards; 
@@ -61,12 +61,15 @@ Cards indeck;
 typedef struct {
     int ID[MAX_ZONES];
     char name[MAX_ZONES][256];
+
     float x[MAX_ZONES];
     float y[MAX_ZONES];
     float w[MAX_ZONES];
     float h[MAX_ZONES];
+
     int max_cards[MAX_ZONES];
     int num_cards[MAX_ZONES];
+
     float isActive[MAX_ZONES];
 } Zones; 
 
@@ -120,7 +123,6 @@ void draw_cards(int num) {
         if (pausezones.num_cards[ZONE_HAND] >= pausezones.max_cards[ZONE_HAND]) continue;
         for (int k = 0; k < MAX_CARDS; k++) {
             if (inplay.isActive[k]) continue;
-            // if (pausezones.num_cards[2] >= pausezones.max_cards[2]) break;
 
             inplay.num+=1;
             // initialize a random card from the deck
@@ -146,8 +148,9 @@ int main() {
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     load_textures();
     SDL_HideCursor();
+    SDL_GetWindowSize(window, &window_width, &window_height);  
+    window_scale = window_width/1500.0f;
 
-    // setup keystates
     const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
@@ -171,25 +174,36 @@ int main() {
     while (running) {
 
         // get window sizes and set window scaling coefficient 
-        SDL_GetWindowSize(window, &wW, &wH);  
-        window_scale = wW/1500.0f;
+        SDL_GetWindowSize(window, &window_width, &window_height);  
+        window_scale = window_width/1500.0f;
+
+        dt = get_delta_time()*game_speed;
 
         int zone_num;
 
         zone_num = ZONE_DISCARD;
         strcpy(pausezones.name[zone_num], "discard slot");
         pausezones.max_cards[zone_num] = 1;
-        pausezones.x[zone_num]=(wW-((CARD_WIDTH+CARD_SPACING*2)+50)*1)*window_scale;
+        pausezones.x[zone_num]=(window_width-((CARD_WIDTH+CARD_SPACING*2)+50)*1)*window_scale;
         pausezones.y[zone_num]=50*window_scale;
         pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*pausezones.max_cards[zone_num])*window_scale;
         pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
         pausezones.isActive[zone_num]=true;
 
+        // zone_num = ZONE_HAND;
+        // strcpy(pausezones.name[zone_num], "hand");
+        // pausezones.max_cards[zone_num] = 9;
+        // pausezones.x[zone_num]=50*window_scale;
+        // pausezones.y[zone_num]=(window_height-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
+        // pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*pausezones.max_cards[zone_num])*window_scale;
+        // pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+        // pausezones.isActive[zone_num]=true;
+
         zone_num = ZONE_HAND;
         strcpy(pausezones.name[zone_num], "hand");
-        pausezones.max_cards[zone_num] = 5;
-        pausezones.x[zone_num]=50*window_scale;
-        pausezones.y[zone_num]=(wH-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
+        pausezones.max_cards[zone_num] = 9;
+        pausezones.x[zone_num]=60*window_scale;
+        pausezones.y[zone_num]=(window_height-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
         pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*pausezones.max_cards[zone_num])*window_scale;
         pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
         pausezones.isActive[zone_num]=true;
@@ -197,7 +211,7 @@ int main() {
         zone_num = ZONE_EQUIP_1;
         strcpy(pausezones.name[zone_num], "equip slot");
         pausezones.max_cards[zone_num] = 1;
-        pausezones.x[zone_num]=(wW-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
+        pausezones.x[zone_num]=(window_width-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
         pausezones.y[zone_num]=50*window_scale;
         pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*pausezones.max_cards[zone_num])*window_scale;
         pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
@@ -211,10 +225,7 @@ int main() {
         pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING))*window_scale;
         pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
         pausezones.isActive[zone_num]=true;
-
-        dt = get_delta_time();
         
-        // Get input states (mouse/keyboard)
         while (SDL_PollEvent(&event) != 0) {
             if (event.type == SDL_EVENT_QUIT) running = false;
         }
@@ -226,7 +237,6 @@ int main() {
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
 
-        // move each card
         for (int i = 0; i < MAX_CARDS; i++) {
             if (!inplay.isActive[i]) continue;
 
@@ -248,31 +258,29 @@ int main() {
                         for (int l = 0; l < MAX_CARDS; l++) {
                             // if the zone id is the one we move the card out of and is in the slot higher than the original, the card shifts down
                             if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) {
-                                inplay.zoneNum[l] -=1;
+                                inplay.zoneNum[l] -= 1;
                             }
                         }
                         
                         // subtract num cards for original deck
-                        pausezones.num_cards[inplay.zoneID[i]]-=1;
-
+                        pausezones.num_cards[inplay.zoneID[i]] -= 1;
                         if (j == ZONE_DISCARD) {
+                            // if the zone is a discard, it will just remove the card
                             inplay.isActive[i] = false;
                             inplay.zoneID[i] = -1;
-                            inplay.num-=1;
+                            inplay.num -= 1;
                             
                             printf("discard card\n");
                         } else {
+                            // if it isnt a discard zone, it will add the card to that zone
                             // fils up a slot in that zone
-                            pausezones.num_cards[j]+=1;
-                            inplay.zoneNum[i]=pausezones.num_cards[j];
-
+                            pausezones.num_cards[j] += 1;
+                            inplay.zoneNum[i] = pausezones.num_cards[j];
                             // the cards zone id is set to the zone number
                             inplay.zoneID[i] = j;
                         }
-
                         break;
                     }
-
                 }
 
                 // puts the card down / stops it from dragging
@@ -290,8 +298,8 @@ int main() {
                 inplay.ty[i] = pausezones.y[inplay.zoneID[i]] + pausezones.h[inplay.zoneID[i]]/2;
             }
 
-            inplay.vx[i] = (inplay.tx[i] - inplay.x[i]) / lerp_speed;
-            inplay.vy[i] = (inplay.ty[i] - inplay.y[i]) / lerp_speed;
+            inplay.vx[i] = (inplay.tx[i] - inplay.x[i]) / LERP_SPEED;
+            inplay.vy[i] = (inplay.ty[i] - inplay.y[i]) / LERP_SPEED;
             inplay.y[i] += inplay.vy[i] * dt;
             inplay.x[i] += inplay.vx[i] * dt;
 
@@ -299,21 +307,20 @@ int main() {
             inplay.h[i] = CARD_HEIGHT*window_scale;
 
             SDL_FRect rect = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
-            SDL_FPoint center = {rect.w / 2, rect.h / 2}; // rotate around center of image
-            double angle = inplay.vx[i]/30;
+            SDL_FPoint center = {rect.w / 2, rect.h / 2};
+            double angle = inplay.vx[i]/60;
 
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            // SDL_RenderRect(renderer, &rect);
+            SDL_RenderRect(renderer, &rect);
             SDL_RenderTextureRotated(renderer, texture, NULL, &rect, angle, &center, SDL_FLIP_NONE);
 
         }
 
-        // drawing cards from your deck, finding an empty card slot
+        // drawing cards from your deck, finding an open card slot
         if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, pausezones.x[ZONE_DECK], pausezones.y[ZONE_DECK], pausezones.w[ZONE_DECK], pausezones.h[ZONE_DECK])) {
             if (pausezones.num_cards[ZONE_HAND] < pausezones.max_cards[ZONE_HAND]) draw_cards(1);
         }
 
-        // ZONES
         for (int j = 0; j < MAX_ZONES; j++) {
             if (!pausezones.isActive[j]) continue;
 
@@ -328,7 +335,7 @@ int main() {
         }
 
         // render the cursor
-        SDL_FRect cursor = {mousex, mousey, 30*window_scale, 30*window_scale};
+        SDL_FRect cursor = {mousex, mousey, 30.0f*window_scale, 30.0f*window_scale};
         SDL_RenderRect(renderer, &cursor);
 
         // if (inplay.zoneID[0] != -1) {
