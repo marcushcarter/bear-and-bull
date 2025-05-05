@@ -39,6 +39,7 @@ typedef struct {
     bool isDragging[MAX_CARDS];
     bool isActive[MAX_CARDS];
     int zoneID[MAX_CARDS];
+    int zoneNum[MAX_CARDS];
     int num;
 } Cards; Cards cards;
 
@@ -55,8 +56,8 @@ typedef struct {
     float y[MAX_ZONES];
     float w[MAX_ZONES];
     float h[MAX_ZONES];
-    float max_cards[MAX_ZONES];
-    float num_cards[MAX_ZONES];
+    int max_cards[MAX_ZONES];
+    int num_cards[MAX_ZONES];
     float isActive[MAX_ZONES];
     ZoneType zoneType[MAX_ZONES];
 } Zones; Zones zones;
@@ -121,18 +122,10 @@ int main() {
     for (int i = 0; i < MAX_ZONES; i++) {
         zones.isActive[i] = false;
         zones.num_cards[i] = 0;
+        zones.max_cards[i]=0;
     }
 
-    // zone 1, hand
-    zones.isActive[2]=true;
-    zones.x[2]=50;
-    zones.y[2]=1000-210-50;
-    zones.w[2]=1400;
-    zones.h[2]=210;
-    zones.max_cards[2] = 5;
-    zones.zoneType[2] = ZONETYPE_NORMAL;
-
-    // zone 2, delete pile
+    // zone 1, delete pile
     zones.isActive[1]=true;
     zones.x[1]=1500-160-50;
     zones.y[1]=50;
@@ -140,6 +133,15 @@ int main() {
     zones.h[1]=210;
     zones.max_cards[1] = 1;
     zones.zoneType[1] = ZONETYPE_DELETE;
+
+    // zone 2, hand
+    zones.isActive[2]=true;
+    zones.x[2]=50;
+    zones.y[2]=1000-210-50;
+    zones.w[2]=1400;
+    zones.h[2]=210;
+    zones.max_cards[2] = 5;
+    zones.zoneType[2] = ZONETYPE_NORMAL;
 
     // zone 3, equip
     zones.isActive[3]=true;
@@ -162,41 +164,41 @@ int main() {
     int running = 1;
     while (running) {
 
-            // zone 1, hand
-            zones.isActive[2]=true;
-            zones.x[2]=wW*50/1500;
-            zones.y[2]=wW*(1000-210-50)/1500;
-            zones.w[2]=wW*1400/1500;
-            zones.h[2]=wW*210/1500;
-            zones.max_cards[2] = 5;
-            zones.zoneType[2] = ZONETYPE_NORMAL;
+        // zone 1, delete pile
+        zones.isActive[1]=true;
+        zones.x[1]=wW*(1500-160-50)/1500;
+        zones.y[1]=wW*50/1500;
+        zones.w[1]=wW*160/1500;
+        zones.h[1]=wW*210/1500;
+        zones.max_cards[1] = 1;
+        zones.zoneType[1] = ZONETYPE_NORMAL;
 
-            // zone 2, delete pile
-            zones.isActive[1]=true;
-            zones.x[1]=wW*(1500-160-50)/1500;
-            zones.y[1]=wW*50/1500;
-            zones.w[1]=wW*160/1500;
-            zones.h[1]=wW*210/1500;
-            zones.max_cards[1] = 1;
-            zones.zoneType[1] = ZONETYPE_DELETE;
+        // zone 2, hand
+        zones.isActive[2]=true;
+        zones.x[2]=wW*50/1500;
+        zones.y[2]=wW*(1000-210-50)/1500;
+        zones.w[2]=wW*1400/1500;
+        zones.h[2]=wW*210/1500;
+        zones.max_cards[2] = 9;
+        zones.zoneType[2] = ZONETYPE_NORMAL;
 
-            // zone 3, equip
-            zones.isActive[3]=true;
-            zones.x[3]=wW*(1500-160-50-160-50)/1500;
-            zones.y[3]=wW*50/1500;
-            zones.w[3]=wW*160/1500;
-            zones.h[3]=wW*210/1500;
-            zones.max_cards[3] = 1;
-            zones.zoneType[3] = ZONETYPE_NORMAL;
+        // zone 3, equip
+        zones.isActive[3]=true;
+        zones.x[3]=wW*(1500-160-50-160-50)/1500;
+        zones.y[3]=wW*50/1500;
+        zones.w[3]=wW*160/1500;
+        zones.h[3]=wW*210/1500;
+        zones.max_cards[3] = 1;
+        zones.zoneType[3] = ZONETYPE_NORMAL;
 
-            // zone 4, deck
-            zones.isActive[4]=true;
-            zones.x[4]=wW*50/1500;
-            zones.y[4]=wW*50/1500;
-            zones.w[4]=wW*160/1500;
-            zones.h[4]=wW*210/1500;
-            zones.max_cards[4] = 0;
-            zones.zoneType[4] = ZONETYPE_DECK;
+        // zone 4, deck
+        zones.isActive[4]=true;
+        zones.x[4]=wW*50/1500;
+        zones.y[4]=wW*50/1500;
+        zones.w[4]=wW*160/1500;
+        zones.h[4]=wW*210/1500;
+        zones.max_cards[4] = 1;
+        zones.zoneType[4] = ZONETYPE_DECK;
 
         dt = get_delta_time();
         
@@ -249,6 +251,7 @@ int main() {
 
                             // fils up a slot in that zone
                             zones.num_cards[j]+=1;
+                            cards.zoneNum[i]=zones.num_cards[j];
 
                             // the cards zone id is set to the zone number
                             cards.zoneID[i] = j;
@@ -270,7 +273,8 @@ int main() {
                 cards.ty[i] = mousey;
             } else {
                 // if you are not dragging a card it goes back to its original position (which, if is in a zone area, becomes in the zone area)
-                cards.tx[i] = zones.x[cards.zoneID[i]] + zones.w[cards.zoneID[i]]/2;
+                // cards.tx[i] = zones.x[cards.zoneID[i]] + zones.w[cards.zoneID[i]]/2;
+                cards.tx[i] = zones.x[cards.zoneID[i]] + (81+((cards.zoneNum[i]-1) * 152) ) *wW/1500;
                 cards.ty[i] = zones.y[cards.zoneID[i]] + zones.h[cards.zoneID[i]]/2;
             }
 
@@ -292,22 +296,23 @@ int main() {
         // drawing cards from your deck, finding an empty card slot
         if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, zones.x[4], zones.y[4], zones.w[4], zones.h[4])) {
             // bool found_card = false;
+            if (zones.num_cards[2] >= zones.max_cards[2]) continue;
             for (int k = 0; k < MAX_CARDS; k++) {
                 if (cards.isActive[k]) continue;
+                // if (zones.num_cards[2] >= zones.max_cards[2]) break;
 
-                    cards.num+=1;
-                    // initialize a random card from the deck
-                    isDragging = true;
-                    // cards.px[k] = zones.x[2]+(zones.w[2]/2);
-                    // cards.py[k] = zones.y[2]+(zones.h[2]/2);
-                    cards.zoneID[k] = 2;
-                    cards.x[k] = zones.x[4]+71;
-                    cards.y[k] = zones.y[4]+95;
-                    cards.isDragging[k] = true;
-                    cards.isActive[k]=true;
-                    printf("new card\n");
-                    break;
-                // }
+                cards.num+=1;
+                // initialize a random card from the deck
+                isDragging = true;
+                cards.zoneID[k] = 2;
+                zones.num_cards[cards.zoneID[k]]+=1;
+                cards.zoneNum[k]=zones.num_cards[cards.zoneID[k]];
+                cards.x[k] = zones.x[4]+71;
+                cards.y[k] = zones.y[4]+95;
+                cards.isDragging[k] = true;
+                cards.isActive[k]=true;
+                printf("new card\n");
+                break;
             }
         }
 
@@ -337,6 +342,7 @@ int main() {
         //     printf("This card is in zone ID %d\n", cards.zoneID[0]);
         // }
         // printf("%d\n", cards.num);
+        // printf("Zone 3 cards: %d Card Number: %d\n", zones.num_cards[3], cards.zoneNum[0]);
         
 
         SDL_RenderPresent(renderer);
