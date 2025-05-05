@@ -41,7 +41,11 @@ typedef struct {
     int zoneID[MAX_CARDS];
 } Cards; Cards cards;
 
-
+typedef enum {
+    ZONETYPE_NORMAL,
+    ZONETYPE_DELETE,
+    ZONETYPE_PLAY,
+} ZoneType;
 
 typedef struct {
     int ID[MAX_ZONES];
@@ -52,7 +56,10 @@ typedef struct {
     float max_cards[MAX_ZONES];
     float num_cards[MAX_ZONES];
     float isActive[MAX_ZONES];
+    ZoneType zoneType[MAX_ZONES];
 } Zones; Zones zones;
+
+
 
 SDL_Texture* texture;
 
@@ -90,7 +97,7 @@ bool point_box_collision(float px, float py, float bx, float by, float bw, float
 
 int main() {
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("Retro FPS Deckbuilder", 1500, 1000, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("Retro FPS Deckbuilder", 1500, 1000, SDL_WINDOW_OPENGL);
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -105,6 +112,7 @@ int main() {
     for (int i = 0; i < MAX_CARDS; i++) {
         cards.isActive[i] = false;
         cards.zoneID[i] = 0;
+        cards.ID[i] = i;
     }
 
     for (int i = 0; i < MAX_ZONES; i++) {
@@ -114,36 +122,37 @@ int main() {
 
     // card 1
     cards.isActive[0]=true;
-    cards.tx[0]=1500*0.5;
-    cards.ty[0]=1000*0.5;
+    cards.px[0]=1500*0.35;
+    cards.py[0]=1000*0.35;
 
     // card 2
     cards.isActive[1]=true;
-    cards.tx[1]=1500*0.2;
-    cards.ty[1]=1000*0.2;
+    cards.px[1]=1500*0.1;
+    cards.py[1]=1000*0.15;
     
     // card 3
     cards.isActive[2]=true;
-    cards.tx[2]=1500*0.2;
-    cards.ty[2]=1000*0.8;
+    cards.px[2]=1500*0.1;
+    cards.py[2]=1000*0.6;
     
     // card 4
     cards.isActive[3]=true;
-    cards.tx[3]=1500*0.8;
-    cards.ty[3]=1000*0.8;
+    cards.px[3]=1500*0.6;
+    cards.py[3]=1000*0.6;
 
     // card 5
     cards.isActive[4]=true;
-    cards.tx[4]=1500*0.8;
-    cards.ty[4]=1000*0.2;
+    cards.px[4]=1500*0.6;
+    cards.py[4]=1000*0.15;
 
     // zone 1, hand
-    zones.isActive[0]=true;
-    zones.x[0]=50;
-    zones.y[0]=1000-210-50;
-    zones.w[0]=1400;
-    zones.h[0]=210;
-    zones.max_cards[0] = 5;
+    zones.isActive[2]=true;
+    zones.x[2]=50;
+    zones.y[2]=1000-210-50;
+    zones.w[2]=1400;
+    zones.h[2]=210;
+    zones.max_cards[2] = 5;
+    zones.zoneType[2] = ZONETYPE_NORMAL;
 
     // zone 2, delete pile
     zones.isActive[1]=true;
@@ -152,6 +161,16 @@ int main() {
     zones.w[1]=160;
     zones.h[1]=210;
     zones.max_cards[1] = 1;
+    zones.zoneType[1] = ZONETYPE_DELETE;
+
+    // zone 3, equip
+    zones.isActive[3]=true;
+    zones.x[3]=1500-160-50-160-50;
+    zones.y[3]=50;
+    zones.w[3]=160;
+    zones.h[3]=210;
+    zones.max_cards[3] = 1;
+    zones.zoneType[3] = ZONETYPE_NORMAL;
 
     int running = 1;
     while (running) {
@@ -176,11 +195,13 @@ int main() {
         for (int i = 0; i < MAX_CARDS; i++) {
             if (!cards.isActive[i]) continue;
 
+            // if the cursor is not dragging anything, the card is not being dragged and the mouse clicks on the card, it will be picked up
             if (!isDragging && !cards.isDragging[i] && point_box_collision(mousex, mousey, cards.x[i] - (142 / 2), cards.y[i] - (190 / 2), 142, 190) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
                 cards.isDragging[i] = true;
                 isDragging = true;
             }
 
+            // if the card is being dragged and it is let go of
             if (cards.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
 
                 for (int j = 0; j < MAX_ZONES; j++) {
@@ -200,8 +221,13 @@ int main() {
 
                         // the cards zone id is set to the zone number
                         cards.zoneID[i] = j;
-                        // fils up a slot in that zone
-                        zones.num_cards[j]+=1;
+
+                        if (zones.zoneType[j] == ZONETYPE_DELETE) {
+                            cards.isActive[i] = false;
+                        } else {
+                            // fils up a slot in that zone
+                            zones.num_cards[j]+=1;
+                        }
 
                         break;
                     }
@@ -241,6 +267,12 @@ int main() {
         // ZONES
         for (int j = 0; j < MAX_ZONES; j++) {
             if (!zones.isActive[j]) continue;
+
+            if (zones.zoneType[j] == ZONETYPE_DELETE) {
+                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            } else {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            }
             
             SDL_FRect zone = {zones.x[j], zones.y[j], zones.w[j], zones.h[j]};
             SDL_RenderRect(renderer, &zone);
@@ -253,6 +285,10 @@ int main() {
         // menu cursor
         SDL_FRect cursor = {mousex, mousey, (float)(wW*0.02f), (float)(wW*0.02f)};
         SDL_RenderRect(renderer, &cursor);
+
+        if (cards.zoneID[0] != 0) {
+            printf("This card is in zone ID %d\n", cards.zoneID[0]);
+        }
         
 
         SDL_RenderPresent(renderer);
