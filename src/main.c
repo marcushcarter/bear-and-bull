@@ -55,13 +55,6 @@ typedef struct {
 #define CARD_WIDTH 142
 #define CARD_SPACING 10
 
-typedef enum {
-    ZONETYPE_NORMAL,
-    ZONETYPE_DELETE,
-    ZONETYPE_PLAY,
-    ZONETYPE_DECK,
-} ZoneType;
-
 typedef struct {
     int ID[MAX_ZONES];
     char name[MAX_ZONES][256];
@@ -72,10 +65,16 @@ typedef struct {
     int max_cards[MAX_ZONES];
     int num_cards[MAX_ZONES];
     float isActive[MAX_ZONES];
-    ZoneType zoneType[MAX_ZONES];
 } Zones; Zones zones;
 
-
+typedef enum {
+    ZONE_DECK = 1,
+    ZONE_HAND,
+    ZONE_DISCARD,
+    ZONE_EQUIP_1,
+    ZONE_EQUIP_2,
+    ZONE_EQUIP_3,
+} ZoneID;
 
 SDL_Texture* texture;
 
@@ -113,7 +112,7 @@ bool point_box_collision(float px, float py, float bx, float by, float bw, float
 
 void draw_cards(int num) {
     for (int i = 0; i < num; i++) {
-        if (zones.num_cards[2] >= zones.max_cards[2]) continue;
+        if (zones.num_cards[ZONE_HAND] >= zones.max_cards[ZONE_HAND]) continue;
         for (int k = 0; k < MAX_CARDS; k++) {
             if (cards.isActive[k]) continue;
             // if (zones.num_cards[2] >= zones.max_cards[2]) break;
@@ -121,11 +120,11 @@ void draw_cards(int num) {
             cards.num+=1;
             // initialize a random card from the deck
             isDragging = true;
-            cards.zoneID[k] = 2;
-            zones.num_cards[cards.zoneID[k]]+=1;
-            cards.zoneNum[k]=zones.num_cards[cards.zoneID[k]];
-            cards.x[k] = (zones.x[4]+zones.w[4]/2)*window_scale;
-            cards.y[k] = (zones.y[4]+zones.h[4]/2)*window_scale;
+            cards.zoneID[k] = ZONE_HAND;
+            zones.num_cards[ZONE_HAND]+=1;
+            cards.zoneNum[k]=zones.num_cards[ZONE_HAND];
+            cards.x[k] = (zones.x[ZONE_DECK]+zones.w[ZONE_DECK]/2)*window_scale;
+            cards.y[k] = (zones.y[ZONE_DECK]+zones.h[ZONE_DECK]/2)*window_scale;
             cards.isDragging[k] = true;
             cards.isActive[k]=true;
             printf("draw card\n");
@@ -171,41 +170,37 @@ int main() {
         window_scale = wW/1500.0f;
 
         int zone_num;
-        
-        zone_num = 1;
-        strcpy(zones.name[zone_num], "discard zone");
+
+        zone_num = ZONE_DISCARD;
+        strcpy(zones.name[zone_num], "discard slot");
         zones.max_cards[zone_num] = 1;
-        zones.zoneType[zone_num] = ZONETYPE_DELETE;
-        zones.x[zone_num]=(wW-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
+        zones.x[zone_num]=(wW-((CARD_WIDTH+CARD_SPACING*2)+50)*1)*window_scale;
         zones.y[zone_num]=50*window_scale;
         zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*zones.max_cards[zone_num])*window_scale;
         zones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
         zones.isActive[zone_num]=true;
 
-        zone_num = 2;
+        zone_num = ZONE_HAND;
         strcpy(zones.name[zone_num], "hand");
         zones.max_cards[zone_num] = 5;
-        zones.zoneType[zone_num] = ZONETYPE_NORMAL;
         zones.x[zone_num]=50*window_scale;
         zones.y[zone_num]=(wH-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
         zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*zones.max_cards[zone_num])*window_scale;
         zones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
         zones.isActive[zone_num]=true;
 
-        zone_num = 3;
+        zone_num = ZONE_EQUIP_1;
         strcpy(zones.name[zone_num], "equip slot");
         zones.max_cards[zone_num] = 1;
-        zones.zoneType[zone_num] = ZONETYPE_NORMAL;
         zones.x[zone_num]=(wW-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
         zones.y[zone_num]=50*window_scale;
         zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*zones.max_cards[zone_num])*window_scale;
         zones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
         zones.isActive[zone_num]=true;
 
-        zone_num = 4;
+        zone_num = ZONE_DECK;
         strcpy(zones.name[zone_num], "deck");
         zones.max_cards[zone_num] = 0;
-        zones.zoneType[zone_num] = ZONETYPE_DECK;
         zones.x[zone_num]=50*window_scale;
         zones.y[zone_num]=50*window_scale;
         zones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING))*window_scale;
@@ -255,7 +250,7 @@ int main() {
                         // subtract num cards for original deck
                         zones.num_cards[cards.zoneID[i]]-=1;
 
-                        if (zones.zoneType[j] == ZONETYPE_DELETE) {
+                        if (j == ZONE_DISCARD) {
                             cards.isActive[i] = false;
                             cards.zoneID[i] = -1;
                             cards.num-=1;
@@ -309,16 +304,15 @@ int main() {
         }
 
         // drawing cards from your deck, finding an empty card slot
-        if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, zones.x[4], zones.y[4], zones.w[4], zones.h[4])) {
-            if (zones.num_cards[2] >= zones.max_cards[2]) continue;
-            draw_cards(1);
+        if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, zones.x[ZONE_DECK], zones.y[ZONE_DECK], zones.w[ZONE_DECK], zones.h[ZONE_DECK])) {
+            if (zones.num_cards[ZONE_HAND] < zones.max_cards[ZONE_HAND]) draw_cards(1);
         }
 
         // ZONES
         for (int j = 0; j < MAX_ZONES; j++) {
             if (!zones.isActive[j]) continue;
 
-            if (zones.zoneType[j] == ZONETYPE_DELETE) {
+            if (j == ZONE_DISCARD) {
                 SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
             } else {
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
