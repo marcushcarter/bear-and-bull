@@ -144,19 +144,24 @@ int main() {
             }
 
             if (cards.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
-                cards.px[i] = cards.tx[i];
-                cards.py[i] = cards.ty[i];
+                // if the cards is in a zone, its origin position is set to that
+                if (point_box_collision(mousex, mousey, 0, wH*0.5, 9000, 9000)) {
+                    cards.px[i] = cards.tx[i];
+                    cards.py[i] = cards.ty[i];
+                }
+                // puts the card down / stops it from dragging
                 cards.isDragging[i] = false;
                 isDragging = false;
             }
 
             if (cards.isDragging[i]) {
+                // if you are dragging a card it goes to your mouse
                 cards.tx[i] = mousex;
                 cards.ty[i] = mousey;
             } else {
-                
-                // cards.tx[i] = 0;
-                // cards.ty[i] = 0;
+                // if you are not dragging a card it goes back to its original position (which, if is in a zone area, becomes in the zone area)
+                cards.tx[i] = cards.px[i];
+                cards.ty[i] = cards.py[i];
             }
 
             cards.vx[i] = (cards.tx[i] - cards.x[i]) / 0.25;
@@ -173,6 +178,10 @@ int main() {
             SDL_RenderTextureRotated(renderer, texture, NULL, &rect, angle, &center, SDL_FLIP_NONE);
 
         }
+
+        // zone 1
+        SDL_FRect zone1 = {0, wH*0.5, 9000, 9000};
+        SDL_RenderRect(renderer, &zone1);
 
         // menu cursor
         SDL_FRect cursor = {mousex, mousey, (float)(wW*0.02f), (float)(wW*0.02f)};
