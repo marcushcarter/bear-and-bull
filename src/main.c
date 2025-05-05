@@ -27,7 +27,7 @@ bool isDragging;
 #define MAX_ZONES 20
 
 typedef struct {
-    int id[MAX_CARDS];
+    int ID[MAX_CARDS];
     float x[MAX_CARDS];
     float y[MAX_CARDS];
     float vx[MAX_CARDS];
@@ -38,12 +38,13 @@ typedef struct {
     float py[MAX_CARDS];
     bool isDragging[MAX_CARDS];
     bool isActive[MAX_CARDS];
+    int zoneID[MAX_CARDS];
 } Cards; Cards cards;
 
 
 
 typedef struct {
-    int id[MAX_ZONES];
+    int ID[MAX_ZONES];
     float x[MAX_ZONES];
     float y[MAX_ZONES];
     float w[MAX_ZONES];
@@ -103,6 +104,7 @@ int main() {
 
     for (int i = 0; i < MAX_CARDS; i++) {
         cards.isActive[i] = false;
+        cards.zoneID[i] = 0;
     }
 
     for (int i = 0; i < MAX_ZONES; i++) {
@@ -134,19 +136,19 @@ int main() {
     cards.tx[4]=1500*0.8;
     cards.ty[4]=1000*0.2;
 
-    // zone 1
+    // zone 1, hand
     zones.isActive[0]=true;
-    zones.x[0]=0;
-    zones.y[0]=500;
-    zones.w[0]=1500;
-    zones.h[0]=500;
+    zones.x[0]=50;
+    zones.y[0]=1000-210-50;
+    zones.w[0]=1400;
+    zones.h[0]=210;
 
-    // zone 2
+    // zone 2, delete pile
     zones.isActive[1]=true;
-    zones.x[1]=750;
-    zones.y[1]=0;
-    zones.w[1]=750;
-    zones.h[1]=450;
+    zones.x[1]=1500-160-50;
+    zones.y[1]=50;
+    zones.w[1]=160;
+    zones.h[1]=210;
 
     int running = 1;
     while (running) {
@@ -185,6 +187,9 @@ int main() {
                     if (point_box_collision(cards.tx[i], cards.ty[i], zones.x[j], zones.y[j], zones.w[j], zones.h[j])) {
                         cards.px[i] = cards.tx[i];
                         cards.py[i] = cards.ty[i];
+                        
+                        cards.px[i] = zones.x[j]+(zones.w[j]/2);
+                        cards.py[i] = zones.y[j]+(zones.h[j]/2);
                     }
 
                 }
