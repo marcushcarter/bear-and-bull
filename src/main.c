@@ -24,6 +24,7 @@ int wW = 1500, wH = 1000;
 bool isDragging;
 
 #define MAX_CARDS 20
+#define MAX_ZONES 20
 
 typedef struct {
     int id[MAX_CARDS];
@@ -36,7 +37,21 @@ typedef struct {
     float px[MAX_CARDS];
     float py[MAX_CARDS];
     bool isDragging[MAX_CARDS];
+    bool isActive[MAX_CARDS];
 } Cards; Cards cards;
+
+
+
+typedef struct {
+    int id[MAX_ZONES];
+    float x[MAX_ZONES];
+    float y[MAX_ZONES];
+    float w[MAX_ZONES];
+    float h[MAX_ZONES];
+    float max_cards[MAX_ZONES];
+    float num_cards[MAX_ZONES];
+    float isActive[MAX_ZONES];
+} Zones; Zones zones;
 
 SDL_Texture* texture;
 
@@ -87,33 +102,51 @@ int main() {
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
 
     for (int i = 0; i < MAX_CARDS; i++) {
-        cards.id[i] = 0;
+        cards.isActive[i] = false;
+    }
+
+    for (int i = 0; i < MAX_ZONES; i++) {
+        zones.isActive[i] = false;
     }
 
     // card 1
-    cards.id[0]=1;
+    cards.isActive[0]=true;
     cards.tx[0]=1500*0.5;
     cards.ty[0]=1000*0.5;
 
     // card 2
-    cards.id[1]=1;
+    cards.isActive[1]=true;
     cards.tx[1]=1500*0.2;
     cards.ty[1]=1000*0.2;
     
     // card 3
-    cards.id[2]=1;
+    cards.isActive[2]=true;
     cards.tx[2]=1500*0.2;
     cards.ty[2]=1000*0.8;
     
     // card 4
-    cards.id[3]=1;
+    cards.isActive[3]=true;
     cards.tx[3]=1500*0.8;
     cards.ty[3]=1000*0.8;
 
     // card 5
-    cards.id[4]=1;
+    cards.isActive[4]=true;
     cards.tx[4]=1500*0.8;
     cards.ty[4]=1000*0.2;
+
+    // zone 1
+    zones.isActive[0]=true;
+    zones.x[0]=0;
+    zones.y[0]=500;
+    zones.w[0]=1500;
+    zones.h[0]=500;
+
+    // zone 2
+    zones.isActive[1]=true;
+    zones.x[1]=750;
+    zones.y[1]=0;
+    zones.w[1]=750;
+    zones.h[1]=450;
 
     int running = 1;
     while (running) {
@@ -136,7 +169,7 @@ int main() {
         SDL_RenderClear(renderer);
 
         for (int i = 0; i < MAX_CARDS; i++) {
-            if (cards.id[i] == 0) continue;
+            if (!cards.isActive[i]) continue;
 
             if (!isDragging && !cards.isDragging[i] && point_box_collision(mousex, mousey, cards.x[i] - (142 / 2), cards.y[i] - (190 / 2), 142, 190) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
                 cards.isDragging[i] = true;
@@ -144,10 +177,16 @@ int main() {
             }
 
             if (cards.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
-                // if the cards is in a zone, its origin position is set to that
-                if (point_box_collision(mousex, mousey, 0, wH*0.5, 9000, 9000)) {
-                    cards.px[i] = cards.tx[i];
-                    cards.py[i] = cards.ty[i];
+
+                for (int j = 0; j < MAX_ZONES; j++) {
+                    if (!zones.isActive[j]) continue;
+
+                    // if the cards is in a zone, its origin position is set to that
+                    if (point_box_collision(cards.tx[i], cards.ty[i], zones.x[j], zones.y[j], zones.w[j], zones.h[j])) {
+                        cards.px[i] = cards.tx[i];
+                        cards.py[i] = cards.ty[i];
+                    }
+
                 }
                 // puts the card down / stops it from dragging
                 cards.isDragging[i] = false;
@@ -179,9 +218,17 @@ int main() {
 
         }
 
+        // ZONES
+        for (int j = 0; j < MAX_ZONES; j++) {
+            if (!zones.isActive[j]) continue;
+            
+            SDL_FRect zone = {zones.x[j], zones.y[j], zones.w[j], zones.h[j]};
+            SDL_RenderRect(renderer, &zone);
+        }
+
         // zone 1
-        SDL_FRect zone1 = {0, wH*0.5, 9000, 9000};
-        SDL_RenderRect(renderer, &zone1);
+        // SDL_FRect zone1 = {0, wH*0.5, 9000, 9000};
+        // SDL_RenderRect(renderer, &zone1);
 
         // menu cursor
         SDL_FRect cursor = {mousex, mousey, (float)(wW*0.02f), (float)(wW*0.02f)};
