@@ -121,31 +121,6 @@ int main() {
         zones.num_cards[i] = 0;
     }
 
-    // card 1
-    cards.isActive[0]=true;
-    cards.px[0]=1500*0.35;
-    cards.py[0]=1000*0.35;
-
-    // card 2
-    cards.isActive[1]=true;
-    cards.px[1]=1500*0.1;
-    cards.py[1]=1000*0.15;
-    
-    // card 3
-    cards.isActive[2]=true;
-    cards.px[2]=1500*0.1;
-    cards.py[2]=1000*0.6;
-    
-    // card 4
-    cards.isActive[3]=true;
-    cards.px[3]=1500*0.6;
-    cards.py[3]=1000*0.6;
-
-    // card 5
-    cards.isActive[4]=true;
-    cards.px[4]=1500*0.6;
-    cards.py[4]=1000*0.15;
-
     // zone 1, hand
     zones.isActive[2]=true;
     zones.x[2]=50;
