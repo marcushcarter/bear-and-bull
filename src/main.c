@@ -299,7 +299,10 @@ int main() {
             cards.y[i] += cards.vy[i] * dt;
             cards.x[i] += cards.vx[i] * dt;
 
-            SDL_FRect rect = {cards.x[i] - (cards.w[i] / 2), cards.y[i] - (cards.h[i] / 2), cards.w[i]*wW/1500, cards.h[i]*wW/1500};
+            cards.w[i] = CARD_WIDTH*wW/1500;
+            cards.h[i] = CARD_HEIGHT*wW/1500;
+
+            SDL_FRect rect = {cards.x[i] - (cards.w[i] / 2), cards.y[i] - (cards.h[i] / 2), cards.w[i], cards.h[i]};
             SDL_FPoint center = {rect.w / 2, rect.h / 2}; // rotate around center of image
             double angle = cards.vx[i]/30; // rotate 45 degrees clockwise
 
