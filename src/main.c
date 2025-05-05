@@ -20,7 +20,8 @@ Uint32 currMouseState;
 Uint32 prevMouseState;
 float mousex, mousey;
 
-int window_width, window_height, window_scale = 1.0f;
+int window_width, window_height;
+float window_scale = 1.0f;
 float game_speed = 4;
 
 #define LERP_SPEED 0.25
@@ -184,7 +185,7 @@ int main() {
         zone_num = ZONE_DISCARD;
         strcpy(pausezones.name[zone_num], "discard slot");
         pausezones.max_cards[zone_num] = 1;
-        pausezones.x[zone_num]=(window_width-((CARD_WIDTH+CARD_SPACING*2)+50)*1)*window_scale;
+        pausezones.x[zone_num]=(1500-((CARD_WIDTH+CARD_SPACING*2)+50)*1)*window_scale;
         pausezones.y[zone_num]=50*window_scale;
         pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*pausezones.max_cards[zone_num])*window_scale;
         pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
@@ -203,7 +204,7 @@ int main() {
         strcpy(pausezones.name[zone_num], "hand");
         pausezones.max_cards[zone_num] = 9;
         pausezones.x[zone_num]=60*window_scale;
-        pausezones.y[zone_num]=(window_height-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
+        pausezones.y[zone_num]=(1000-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
         pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*pausezones.max_cards[zone_num])*window_scale;
         pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
         pausezones.isActive[zone_num]=true;
@@ -211,7 +212,7 @@ int main() {
         zone_num = ZONE_EQUIP_1;
         strcpy(pausezones.name[zone_num], "equip slot");
         pausezones.max_cards[zone_num] = 1;
-        pausezones.x[zone_num]=(window_width-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
+        pausezones.x[zone_num]=(1500-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
         pausezones.y[zone_num]=50*window_scale;
         pausezones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*pausezones.max_cards[zone_num])*window_scale;
         pausezones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
