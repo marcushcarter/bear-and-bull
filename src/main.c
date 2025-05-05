@@ -34,11 +34,12 @@ typedef struct {
     float vy[MAX_CARDS];
     float tx[MAX_CARDS];
     float ty[MAX_CARDS];
-    float px[MAX_CARDS];
-    float py[MAX_CARDS];
+    // float px[MAX_CARDS];
+    // float py[MAX_CARDS];
     bool isDragging[MAX_CARDS];
     bool isActive[MAX_CARDS];
     int zoneID[MAX_CARDS];
+    int num;
 } Cards; Cards cards;
 
 typedef enum {
@@ -110,6 +111,7 @@ int main() {
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
 
+    cards.num = 0;
     for (int i = 0; i < MAX_CARDS; i++) {
         cards.isActive[i] = false;
         cards.zoneID[i] = -1;
@@ -238,11 +240,12 @@ int main() {
                         if (zones.zoneType[j] == ZONETYPE_DELETE) {
                             cards.isActive[i] = false;
                             cards.zoneID[i] = -1;
+                            cards.num-=1;
                         } else {
                             
                             // the cards origin is set to the xones center
-                            cards.px[i] = zones.x[j]+(zones.w[j]/2);
-                            cards.py[i] = zones.y[j]+(zones.h[j]/2);
+                            // cards.px[i] = zones.x[j]+(zones.w[j]/2);
+                            // cards.py[i] = zones.y[j]+(zones.h[j]/2);
 
                             // fils up a slot in that zone
                             zones.num_cards[j]+=1;
@@ -267,8 +270,8 @@ int main() {
                 cards.ty[i] = mousey;
             } else {
                 // if you are not dragging a card it goes back to its original position (which, if is in a zone area, becomes in the zone area)
-                cards.tx[i] = cards.px[i];
-                cards.ty[i] = cards.py[i];
+                cards.tx[i] = zones.x[cards.zoneID[i]] + zones.w[cards.zoneID[i]]/2;
+                cards.ty[i] = zones.y[cards.zoneID[i]] + zones.h[cards.zoneID[i]]/2;
             }
 
             cards.vx[i] = (cards.tx[i] - cards.x[i]) / 0.25;
@@ -292,10 +295,11 @@ int main() {
             for (int k = 0; k < MAX_CARDS; k++) {
                 if (cards.isActive[k]) continue;
 
+                    cards.num+=1;
                     // initialize a random card from the deck
                     isDragging = true;
-                    cards.px[k] = zones.x[2]+(zones.w[2]/2);
-                    cards.py[k] = zones.y[2]+(zones.h[2]/2);
+                    // cards.px[k] = zones.x[2]+(zones.w[2]/2);
+                    // cards.py[k] = zones.y[2]+(zones.h[2]/2);
                     cards.zoneID[k] = 2;
                     cards.x[k] = zones.x[4]+71;
                     cards.y[k] = zones.y[4]+95;
@@ -329,9 +333,10 @@ int main() {
         SDL_FRect cursor = {mousex, mousey, (float)(wW*0.02f), (float)(wW*0.02f)};
         SDL_RenderRect(renderer, &cursor);
 
-        if (cards.zoneID[0] != -1) {
-            printf("This card is in zone ID %d\n", cards.zoneID[0]);
-        }
+        // if (cards.zoneID[0] != -1) {
+        //     printf("This card is in zone ID %d\n", cards.zoneID[0]);
+        // }
+        // printf("%d\n", cards.num);
         
 
         SDL_RenderPresent(renderer);
