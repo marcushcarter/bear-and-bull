@@ -38,8 +38,6 @@ bool isDragging;
 
 typedef struct {
     int ID[MAX_CARDS];
-    char name[MAX_CARDS][256];
-    char description[MAX_CARDS][256];
 
     float x[MAX_CARDS];
     float y[MAX_CARDS];
@@ -69,7 +67,6 @@ Cards indeck;
 
 typedef struct {
     int ID[MAX_ZONES];
-    char name[MAX_ZONES][256];
 
     float x[MAX_ZONES];
     float y[MAX_ZONES];
@@ -92,6 +89,18 @@ typedef enum {
     ZONE_EQUIP_2,
     ZONE_EQUIP_3,
 } ZoneType;
+
+#define TOTAL_CARDS 1000
+
+typedef struct {
+    SDL_Texture textures[TOTAL_CARDS];
+
+    char name[TOTAL_CARDS][256];
+    char description[TOTAL_CARDS][256];
+
+    // stats
+
+} CardID; CardID cards;
 
 SDL_Texture* texture1;
 SDL_Texture* texture2;
@@ -182,8 +191,6 @@ void add_card(int id, bool message) {
     // add the card to that index
     
     indeck.ID[index] = id;
-    strcpy(indeck.name[index], "No Name Yet");
-    strcpy(indeck.description[index], "No Description Yet");
 
     indeck.x[index] = 0;
     indeck.y[index] = 0;
@@ -208,10 +215,6 @@ void add_card(int id, bool message) {
 }
 
 void discard_card(Cards* cards, int id, bool message) {
-    
-    // cards->ID[id] = -1;
-    strcpy(cards->name[id], "");
-    strcpy(cards->description[id], "");
 
     cards->x[id] = 0;
     cards->y[id] = 0;
@@ -271,8 +274,6 @@ void draw_cards(int num, bool message) {
         // copy card to that inplayIndex
 
         inplay.ID[inplayIndex] = indeck.ID[indexNum];
-        strcpy(inplay.name[inplayIndex], indeck.name[indexNum]);
-        strcpy(inplay.description[inplayIndex], indeck.description[indexNum]);
     
         inplay.x[inplayIndex] = (playzones.x[ZONE_DECK]+playzones.w[ZONE_DECK]/2)*window_scale;
         inplay.y[inplayIndex] = (playzones.y[ZONE_DECK]+playzones.h[ZONE_DECK]/2)*window_scale;
@@ -340,7 +341,6 @@ int main() {
         int zone_num;
 
         zone_num = ZONE_DISCARD;
-        strcpy(playzones.name[zone_num], "discard slot");
         playzones.max_cards[zone_num] = 1;
         playzones.x[zone_num]=(1500-((CARD_WIDTH+CARD_SPACING*2)+50)*1)*window_scale;
         playzones.y[zone_num]=50*window_scale;
@@ -349,7 +349,6 @@ int main() {
         playzones.isActive[zone_num]=true;
 
         // zone_num = ZONE_HAND;
-        // strcpy(playzones.name[zone_num], "hand");
         // playzones.max_cards[zone_num] = 9;
         // playzones.x[zone_num]=50*window_scale;
         // playzones.y[zone_num]=(window_height-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
@@ -358,7 +357,6 @@ int main() {
         // playzones.isActive[zone_num]=true;
 
         zone_num = ZONE_HAND;
-        strcpy(playzones.name[zone_num], "hand");
         playzones.max_cards[zone_num] = 9;
         playzones.x[zone_num]=60*window_scale;
         playzones.y[zone_num]=(1000-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
@@ -367,7 +365,6 @@ int main() {
         playzones.isActive[zone_num]=true;
 
         zone_num = ZONE_EQUIP_1;
-        strcpy(playzones.name[zone_num], "equip slot");
         playzones.max_cards[zone_num] = 1;
         playzones.x[zone_num]=(1500-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
         playzones.y[zone_num]=50*window_scale;
@@ -376,7 +373,6 @@ int main() {
         playzones.isActive[zone_num]=true;
 
         zone_num = ZONE_DECK;
-        strcpy(playzones.name[zone_num], "deck");
         playzones.max_cards[zone_num] = 0;
         playzones.x[zone_num]=50*window_scale;
         playzones.y[zone_num]=50*window_scale;
@@ -468,33 +464,44 @@ int main() {
             if (!inplay.isDragging[i]) sine = 5 *  sin(((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*2)));
 
             SDL_FRect cardhitbox = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
-            SDL_FRect card = {inplay.x[i] - (inplay.w[i] / 2)  - (card_grow_w/2), inplay.y[i] - (inplay.h[i] / 2)  - (card_grow_h/2) - sine, inplay.w[i] + card_grow_w, inplay.h[i] + card_grow_h};
+            SDL_FRect card = {inplay.x[i] - (inplay.w[i] / 2)  - (card_grow_w/2), inplay.y[i] - (inplay.h[i] / 2)  - (card_grow_h/2) - sine*window_scale, inplay.w[i] + card_grow_w, inplay.h[i] + card_grow_h};
             SDL_FPoint center = {card.w / 2, card.h / 2};
-            double angle = inplay.vx[i]/60;
+            double angle = inplay.vx[i]/60 + sine;
 
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-            if (inplay.ID[i] == 0) {
-                SDL_RenderTextureRotated(renderer, texture1, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            } else if (inplay.ID[i] == 1) {
-                SDL_RenderTextureRotated(renderer, texture2, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            } else if (inplay.ID[i] == 2) {
-                SDL_RenderTextureRotated(renderer, texture3, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            } else if (inplay.ID[i] == 3) {
-                SDL_RenderTextureRotated(renderer, texture4, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            } else if (inplay.ID[i] == 4) {
-                SDL_RenderTextureRotated(renderer, texture5, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            } else if (inplay.ID[i] == 5) {
-                SDL_RenderTextureRotated(renderer, texture6, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            } else if (inplay.ID[i] == 6) {
-                SDL_RenderTextureRotated(renderer, texture7, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            } else if (inplay.ID[i] == 7) {
-                SDL_RenderTextureRotated(renderer, texture8, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            } else if (inplay.ID[i] == 8) {
-                SDL_RenderTextureRotated(renderer, texture9, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            } else {
-                SDL_RenderTextureRotated(renderer, texture10, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            }
+            SDL_Texture* textures[] = {
+                texture1, texture2, texture3, texture4, texture5,
+                texture6, texture7, texture8, texture9, texture10
+            };
+            
+            int id = inplay.ID[i];
+            if (id < 0 || id >= 10) id = 9;
+            
+            SDL_RenderTextureRotated(renderer, textures[id], NULL, &card, angle, &center, SDL_FLIP_NONE);
+            
+
+            // if (inplay.ID[i] == 0) {
+            //     SDL_RenderTextureRotated(renderer, texture1, NULL, &card, angle, &center, SDL_FLIP_NONE);
+            // } else if (inplay.ID[i] == 1) {
+            //     SDL_RenderTextureRotated(renderer, texture2, NULL, &card, angle, &center, SDL_FLIP_NONE);
+            // } else if (inplay.ID[i] == 2) {
+            //     SDL_RenderTextureRotated(renderer, texture3, NULL, &card, angle, &center, SDL_FLIP_NONE);
+            // } else if (inplay.ID[i] == 3) {
+            //     SDL_RenderTextureRotated(renderer, texture4, NULL, &card, angle, &center, SDL_FLIP_NONE);
+            // } else if (inplay.ID[i] == 4) {
+            //     SDL_RenderTextureRotated(renderer, texture5, NULL, &card, angle, &center, SDL_FLIP_NONE);
+            // } else if (inplay.ID[i] == 5) {
+            //     SDL_RenderTextureRotated(renderer, texture6, NULL, &card, angle, &center, SDL_FLIP_NONE);
+            // } else if (inplay.ID[i] == 6) {
+            //     SDL_RenderTextureRotated(renderer, texture7, NULL, &card, angle, &center, SDL_FLIP_NONE);
+            // } else if (inplay.ID[i] == 7) {
+            //     SDL_RenderTextureRotated(renderer, texture8, NULL, &card, angle, &center, SDL_FLIP_NONE);
+            // } else if (inplay.ID[i] == 8) {
+            //     SDL_RenderTextureRotated(renderer, texture9, NULL, &card, angle, &center, SDL_FLIP_NONE);
+            // } else {
+            //     SDL_RenderTextureRotated(renderer, texture10, NULL, &card, angle, &center, SDL_FLIP_NONE);
+            // }
             
             if (currKeyState[SDL_SCANCODE_SPACE]) SDL_RenderRect(renderer, &cardhitbox);
 
