@@ -316,8 +316,8 @@ int main() {
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
 
-    inplay.num = 0;
-    for (int i = 0; i < MAX_CARDS; i++) { discard_card(&inplay, i, false); }
+    for (int i = 0; i < MAX_CARDS; i++) { discard_card(&inplay, i, false); inplay.num = 0; }
+    for (int i = 0; i < MAX_CARDS; i++) { discard_card(&indeck, i, false); indeck.num = 0; }
 
     for (int i = 0; i < MAX_ZONES; i++) {
         playzones.isActive[i] = false;
@@ -325,15 +325,8 @@ int main() {
         playzones.max_cards[i]=0;
     }
 
-    indeck.num = 0;
-    for (int i = 0; i < MAX_CARDS; i++) {
-        indeck.isActive[i] = false;
-    }
-    for (int i = 0; i < 3; i++) {
-        indeck.isActive[i] = true;
-        indeck.ID[i] = i;
-        indeck.num += 1;
-    }
+    for (int i = 0; i < 8; i++) { add_card(rand() % 10, false); }
+    // draw_cards(5, false);
 
     int running = 1;
     while (running) {
