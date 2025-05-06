@@ -28,6 +28,7 @@ int seed;
 
 #define LERP_SPEED 0.25
 
+
 bool isDragging;
 
 #define MAX_CARDS 20
@@ -62,6 +63,7 @@ Cards indeck;
 #define CARD_HEIGHT 190
 #define CARD_WIDTH 142
 #define CARD_SPACING 10
+#define CARD_GROW 0.05
 
 typedef struct {
     int ID[MAX_ZONES];
@@ -89,7 +91,7 @@ typedef enum {
     ZONE_EQUIP_3,
 } ZoneType;
 
-SDL_Texture* texture;
+SDL_Texture* texture1;
 SDL_Texture* texture2;
 SDL_Texture* texture3;
 SDL_Texture* texture4;
@@ -102,8 +104,8 @@ SDL_Texture* texture10;
 
 bool load_textures() {
 
-	texture = IMG_LoadTexture(renderer, "./resources/textures/card1.png");
-	SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+	texture1 = IMG_LoadTexture(renderer, "./resources/textures/card1.png");
+	SDL_SetTextureScaleMode(texture1, SDL_SCALEMODE_NEAREST);
 
     texture2 = IMG_LoadTexture(renderer, "./resources/textures/card2.jpg");
 	SDL_SetTextureScaleMode(texture2, SDL_SCALEMODE_NEAREST);
@@ -414,34 +416,41 @@ int main() {
         for (int i = 0; i < MAX_CARDS; i++) {
             if (!inplay.isActive[i]) continue;
 
-            SDL_FRect rect = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
-            SDL_FPoint center = {rect.w / 2, rect.h / 2};
+            // + (inplay.isDragging[i]*20)
+
+            float card_grow_w = inplay.isDragging[i]*CARD_GROW*inplay.w[i]*window_scale;
+            float card_grow_h = inplay.isDragging[i]*CARD_GROW*inplay.h[i]*window_scale;
+
+            SDL_FRect cardhitbox = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
+            SDL_FRect card = {inplay.x[i] - (inplay.w[i] / 2)  - (card_grow_w/2), inplay.y[i] - (inplay.h[i] / 2)  - (card_grow_h/2), inplay.w[i] + card_grow_w, inplay.h[i] + card_grow_h};
+            SDL_FPoint center = {card.w / 2, card.h / 2};
             double angle = inplay.vx[i]/60;
 
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_RenderRect(renderer, &rect);
 
             if (inplay.ID[i] == 0) {
-                SDL_RenderTextureRotated(renderer, texture, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, texture1, NULL, &card, angle, &center, SDL_FLIP_NONE);
             } else if (inplay.ID[i] == 1) {
-                SDL_RenderTextureRotated(renderer, texture2, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, texture2, NULL, &card, angle, &center, SDL_FLIP_NONE);
             } else if (inplay.ID[i] == 2) {
-                SDL_RenderTextureRotated(renderer, texture3, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, texture3, NULL, &card, angle, &center, SDL_FLIP_NONE);
             } else if (inplay.ID[i] == 3) {
-                SDL_RenderTextureRotated(renderer, texture4, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, texture4, NULL, &card, angle, &center, SDL_FLIP_NONE);
             } else if (inplay.ID[i] == 4) {
-                SDL_RenderTextureRotated(renderer, texture5, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, texture5, NULL, &card, angle, &center, SDL_FLIP_NONE);
             } else if (inplay.ID[i] == 5) {
-                SDL_RenderTextureRotated(renderer, texture6, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, texture6, NULL, &card, angle, &center, SDL_FLIP_NONE);
             } else if (inplay.ID[i] == 6) {
-                SDL_RenderTextureRotated(renderer, texture7, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, texture7, NULL, &card, angle, &center, SDL_FLIP_NONE);
             } else if (inplay.ID[i] == 7) {
-                SDL_RenderTextureRotated(renderer, texture8, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, texture8, NULL, &card, angle, &center, SDL_FLIP_NONE);
             } else if (inplay.ID[i] == 8) {
-                SDL_RenderTextureRotated(renderer, texture9, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, texture9, NULL, &card, angle, &center, SDL_FLIP_NONE);
             } else {
-                SDL_RenderTextureRotated(renderer, texture10, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, texture10, NULL, &card, angle, &center, SDL_FLIP_NONE);
             }
+            
+            SDL_RenderRect(renderer, &cardhitbox);
 
         }
 
