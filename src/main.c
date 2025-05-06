@@ -80,7 +80,7 @@ typedef struct {
 Zones pausezones;
 
 typedef enum {
-    ZONE_DECK = 1,
+    ZONE_DECK,
     ZONE_HAND,
     ZONE_DISCARD,
     ZONE_EQUIP_1,
@@ -122,7 +122,7 @@ bool point_box_collision(float px, float py, float bx, float by, float bw, float
     return (px >= bx && px <= bx + bw && py >= by && py <= by + bh);
 }
 
-void add_to_deck() {}
+void add_card(Cards* cards, int id, bool message) {}
 
 void discard_card(Cards* cards, int id, bool message) {
     
@@ -159,41 +159,45 @@ void draw_cards(int num, bool message) {
         for (int j = 0; j < MAX_CARDS; j++) {
             if (inplay.isActive[j]) continue;
 
-            inplay.num+=1;
+            int randNum = rand() % indeck.num;
+            // ^^^ this has to find a valid card in the deck
 
-            // set inplay card to deck card
-            // delete the deck card
-            // slide the deck cards down
+            randNum = 0;
 
-            //
+            // set inplay card to random deck card
 
-            // indeck.
-            
-            indeck.num -= 1;
-
-            // slide the cards in deck down
-
-            // for (int l = 0; l < MAX_CARDS; l++) { 
-            //     if ( indeck.ID[l] > indeck.ID[randomNum]) {
-            //         indeck.ID[l-1] = indeck.ID[l]; 
-            //     } 
-            // }
-            // indeck.ID[indeck.num] = -1;
-
-
-            // set card to 
-
-            // discard_card(&indeck, randomNum, false);
-            // initialize a random card from the deck
-            
-            isDragging = true;
-            inplay.zoneID[j] = ZONE_HAND;
-            pausezones.num_cards[ZONE_HAND]+=1;
-            inplay.zoneNum[j]=pausezones.num_cards[ZONE_HAND];
+            inplay.ID[j] = 1;
+            // strcpy(inplay.name[j], indeck.name[randNum]);
+            // strcpy(inplay.description[j], indeck.description[randNum]);
+        
             inplay.x[j] = (pausezones.x[ZONE_DECK]+pausezones.w[ZONE_DECK]/2)*window_scale;
             inplay.y[j] = (pausezones.y[ZONE_DECK]+pausezones.h[ZONE_DECK]/2)*window_scale;
+            inplay.vx[j] = 0;
+            inplay.vy[j] = 0;
+            inplay.tx[j] = 0;
+            inplay.ty[j] = 0;
+            inplay.w[j] = CARD_WIDTH;
+            inplay.h[j] = CARD_HEIGHT;
+        
+            pausezones.num_cards[ZONE_HAND]+=1;
+            inplay.zoneID[j] = ZONE_HAND;
+            inplay.zoneNum[j]=pausezones.num_cards[ZONE_HAND];
+        
+            isDragging = true;
             inplay.isDragging[j] = true;
             inplay.isActive[j]=true;
+            
+            inplay.num += 1;
+
+
+            // delete the deck card
+
+            discard_card(&indeck, randNum, true);
+
+
+
+            // indeck.num -= 1;
+            // slide the deck cards down
 
             if (message) printf("draw card\n");
             

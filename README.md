@@ -36,9 +36,13 @@ First I wanted to make the window resizable but always keep the same aspect rati
 
 *2025-05-05*
 
-Now I need to actually give each "card" some data that tells what card it actually is / what it does. Im thinking about doing this with either a strcut of these inside the SoA or even just adding more lists into the SoA for the card stats.
+Now I need to actually give each "card" some data that tells what card it actually is / what it does. Im thinking about doing this with either a strcut of these inside the SoA or even just adding more lists into the SoA for the card stats. I think that is what i will do as the structs in the SoA take alot of memory and processing time.
 
-**Each Card has stats for:**
+# ***WTF did I do? (i cant unbreaked the deck picker upper)***
+
+**Each Card has stats for a bunch of attributes:**
+***For in game weapons attributes***
+- range (m)
 - 
 - 
 - 
@@ -47,7 +51,7 @@ Now I need to actually give each "card" some data that tells what card it actual
 - 
 - 
 - 
-- 
+***And for when youre holding it gives a stat boost***
 - 
 - 
 - 
