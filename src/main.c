@@ -33,6 +33,8 @@ bool isDragging;
 
 typedef struct {
     int ID[MAX_CARDS];
+    char name[MAX_CARDS][256];
+    char description[MAX_CARDS][256];
 
     float x[MAX_CARDS];
     float y[MAX_CARDS];
@@ -119,6 +121,32 @@ bool point_box_collision(float px, float py, float bx, float by, float bw, float
     return (px >= bx && px <= bx + bw && py >= by && py <= by + bh);
 }
 
+void discard_card(Cards* cards, int id) {
+    
+    cards->ID[id] = -1;
+    strcpy(cards->name[id], "");
+    strcpy(cards->description[id], "");
+
+    cards->x[id] = 0;
+    cards->y[id] = 0;
+    cards->vx[id] = 0;
+    cards->vy[id] = 0;
+    cards->tx[id] = 0;
+    cards->ty[id] = 0;
+    cards->w[id] = CARD_WIDTH;
+    cards->h[id] = CARD_HEIGHT;
+
+    cards->zoneID[id] = -1;
+    cards->zoneNum[id] = 0;
+
+    cards->isDragging[id] = false;
+    cards->isActive[id] = false;
+                            
+    printf("discard card\n");
+
+    return;
+}
+
 void draw_cards(int num) {
     for (int i = 0; i < num; i++) {
         if (pausezones.num_cards[ZONE_HAND] >= pausezones.max_cards[ZONE_HAND]) continue;
@@ -135,7 +163,9 @@ void draw_cards(int num) {
             inplay.y[k] = (pausezones.y[ZONE_DECK]+pausezones.h[ZONE_DECK]/2)*window_scale;
             inplay.isDragging[k] = true;
             inplay.isActive[k]=true;
+
             printf("draw card\n");
+            
             break;
         }
     }
@@ -157,13 +187,7 @@ int main() {
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
 
     inplay.num = 0;
-    for (int i = 0; i < MAX_CARDS; i++) {
-        inplay.isActive[i] = false;
-        inplay.zoneID[i] = -1;
-        inplay.ID[i] = i;
-        inplay.w[i]=CARD_WIDTH;
-        inplay.h[i]=CARD_HEIGHT;
-    }
+    for (int i = 0; i < MAX_CARDS; i++) { discard_card(&inplay, i); }
 
     for (int i = 0; i < MAX_ZONES; i++) {
         pausezones.isActive[i] = false;
@@ -247,54 +271,44 @@ int main() {
                 isDragging = true;
             }
 
-            // if the card is being dragged and it is let go of
+            // if the card is being dragged and it is let go of (putting the card down)
             if (inplay.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
 
                 for (int j = 0; j < MAX_ZONES; j++) {
                     if (!pausezones.isActive[j]) continue;
 
-                    // if the cards is in a zone and the zone is not full, its origin position is set to that
+                    // if you put the card into a zone (and it is not full)
                     if (point_box_collision(inplay.tx[i], inplay.ty[i], pausezones.x[j], pausezones.y[j], pausezones.w[j], pausezones.h[j]) && (pausezones.num_cards[j] < pausezones.max_cards[j])) {
 
-                        for (int l = 0; l < MAX_CARDS; l++) {
-                            // if the zone id is the one we move the card out of and is in the slot higher than the original, the card shifts down
-                            if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) {
-                                inplay.zoneNum[l] -= 1;
-                            }
-                        }
+                        // in the zone the card just left, every card after that one shifts down one space
+                        for (int l = 0; l < MAX_CARDS; l++) { if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) inplay.zoneNum[l] -= 1; }
                         
-                        // subtract num cards for original deck
+                        // if the zone is a discard pile, we delete the card
+                        // if it is not, we put the card in that zone
                         pausezones.num_cards[inplay.zoneID[i]] -= 1;
                         if (j == ZONE_DISCARD) {
-                            // if the zone is a discard, it will just remove the card
-                            inplay.isActive[i] = false;
-                            inplay.zoneID[i] = -1;
+                            discard_card(&inplay, i);
                             inplay.num -= 1;
-                            
-                            printf("discard card\n");
                         } else {
-                            // if it isnt a discard zone, it will add the card to that zone
-                            // fils up a slot in that zone
                             pausezones.num_cards[j] += 1;
                             inplay.zoneNum[i] = pausezones.num_cards[j];
-                            // the cards zone id is set to the zone number
                             inplay.zoneID[i] = j;
                         }
+
                         break;
                     }
                 }
 
-                // puts the card down / stops it from dragging
                 inplay.isDragging[i] = false;
                 isDragging = false;
             }
 
+            // if you are dragging a card it goes to your mouse
+            // if you are not dragging it, it goes back to the zone id it belongs to (with spacing / no overlap)
             if (inplay.isDragging[i]) {
-                // if you are dragging a card it goes to your mouse
                 inplay.tx[i] = mousex;
                 inplay.ty[i] = mousey;
             } else {
-                // if you are not dragging a card it goes back to its original position in its corresponding zone area
                 inplay.tx[i] = pausezones.x[inplay.zoneID[i]] + (CARD_WIDTH/2+CARD_SPACING+((inplay.zoneNum[i]-1) * (CARD_WIDTH+CARD_SPACING)) ) * window_scale;
                 inplay.ty[i] = pausezones.y[inplay.zoneID[i]] + pausezones.h[inplay.zoneID[i]]/2;
             }
@@ -307,6 +321,11 @@ int main() {
             inplay.w[i] = CARD_WIDTH*window_scale;
             inplay.h[i] = CARD_HEIGHT*window_scale;
 
+        }
+
+        for (int i = 0; i < MAX_CARDS; i++) {
+            if (!inplay.isActive[i]) continue;
+
             SDL_FRect rect = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
             SDL_FPoint center = {rect.w / 2, rect.h / 2};
             double angle = inplay.vx[i]/60;
@@ -314,10 +333,9 @@ int main() {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             SDL_RenderRect(renderer, &rect);
             SDL_RenderTextureRotated(renderer, texture, NULL, &rect, angle, &center, SDL_FLIP_NONE);
-
         }
 
-        // drawing cards from your deck, finding an open card slot
+        // if you click on the deck, it will draw a card
         if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, pausezones.x[ZONE_DECK], pausezones.y[ZONE_DECK], pausezones.w[ZONE_DECK], pausezones.h[ZONE_DECK])) {
             if (pausezones.num_cards[ZONE_HAND] < pausezones.max_cards[ZONE_HAND]) draw_cards(1);
         }
