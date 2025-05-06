@@ -24,6 +24,7 @@ float mousex, mousey;
 int window_width, window_height;
 float window_scale = 1.0f;
 float game_speed = 2;
+int seed;
 
 #define LERP_SPEED 0.25
 
@@ -89,11 +90,47 @@ typedef enum {
 } ZoneType;
 
 SDL_Texture* texture;
+SDL_Texture* texture2;
+SDL_Texture* texture3;
+SDL_Texture* texture4;
+SDL_Texture* texture5;
+SDL_Texture* texture6;
+SDL_Texture* texture7;
+SDL_Texture* texture8;
+SDL_Texture* texture9;
+SDL_Texture* texture10;
 
 bool load_textures() {
 
-	texture = IMG_LoadTexture(renderer, "./resources/textures/card.png");
+	texture = IMG_LoadTexture(renderer, "./resources/textures/card1.png");
 	SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+
+    texture2 = IMG_LoadTexture(renderer, "./resources/textures/card2.jpg");
+	SDL_SetTextureScaleMode(texture2, SDL_SCALEMODE_NEAREST);
+
+    texture3 = IMG_LoadTexture(renderer, "./resources/textures/card3.png");
+	SDL_SetTextureScaleMode(texture3, SDL_SCALEMODE_NEAREST);
+
+    texture4 = IMG_LoadTexture(renderer, "./resources/textures/card4.png");
+	SDL_SetTextureScaleMode(texture4, SDL_SCALEMODE_NEAREST);
+
+    texture5 = IMG_LoadTexture(renderer, "./resources/textures/card5.png");
+	SDL_SetTextureScaleMode(texture5, SDL_SCALEMODE_NEAREST);
+
+    texture6 = IMG_LoadTexture(renderer, "./resources/textures/card6.png");
+	SDL_SetTextureScaleMode(texture6, SDL_SCALEMODE_NEAREST);
+
+    texture7 = IMG_LoadTexture(renderer, "./resources/textures/card7.png");
+	SDL_SetTextureScaleMode(texture7, SDL_SCALEMODE_NEAREST);
+
+    texture8 = IMG_LoadTexture(renderer, "./resources/textures/card8.png");
+	SDL_SetTextureScaleMode(texture8, SDL_SCALEMODE_NEAREST);
+
+    texture9 = IMG_LoadTexture(renderer, "./resources/textures/card9.png");
+	SDL_SetTextureScaleMode(texture9, SDL_SCALEMODE_NEAREST);
+
+    texture10 = IMG_LoadTexture(renderer, "./resources/textures/card10.png");
+	SDL_SetTextureScaleMode(texture10, SDL_SCALEMODE_NEAREST);
 
 	return true;
 }
@@ -123,6 +160,8 @@ bool point_box_collision(float px, float py, float bx, float by, float bw, float
 }
 
 void add_card(Cards* cards, int id, bool message) {}
+
+void transfer_card(Cards* from, int id1, Cards* to, int id2) {}
 
 void discard_card(Cards* cards, int id, bool message) {
     
@@ -154,55 +193,57 @@ void discard_card(Cards* cards, int id, bool message) {
 
 void draw_cards(int num, bool message) {
     for (int i = 0; i < num; i++) {
-        if (pausezones.num_cards[ZONE_HAND] >= pausezones.max_cards[ZONE_HAND]) continue;
-        if (indeck.num <= 0) continue;
-        for (int j = 0; j < MAX_CARDS; j++) {
-            if (inplay.isActive[j]) continue;
+        if (pausezones.num_cards[ZONE_HAND] >= pausezones.max_cards[ZONE_HAND]) continue; // if the hand is not full
+        if (indeck.num <= 0) continue; // if there is actually a card in the deck
 
-            int randNum = rand() % indeck.num;
-            // ^^^ this has to find a valid card in the deck
-
-            randNum = 0;
-
-            // set inplay card to random deck card
-
-            inplay.ID[j] = 1;
-            // strcpy(inplay.name[j], indeck.name[randNum]);
-            // strcpy(inplay.description[j], indeck.description[randNum]);
-        
-            inplay.x[j] = (pausezones.x[ZONE_DECK]+pausezones.w[ZONE_DECK]/2)*window_scale;
-            inplay.y[j] = (pausezones.y[ZONE_DECK]+pausezones.h[ZONE_DECK]/2)*window_scale;
-            inplay.vx[j] = 0;
-            inplay.vy[j] = 0;
-            inplay.tx[j] = 0;
-            inplay.ty[j] = 0;
-            inplay.w[j] = CARD_WIDTH;
-            inplay.h[j] = CARD_HEIGHT;
-        
-            pausezones.num_cards[ZONE_HAND]+=1;
-            inplay.zoneID[j] = ZONE_HAND;
-            inplay.zoneNum[j]=pausezones.num_cards[ZONE_HAND];
-        
-            isDragging = true;
-            inplay.isDragging[j] = true;
-            inplay.isActive[j]=true;
-            
-            inplay.num += 1;
-
-
-            // delete the deck card
-
-            discard_card(&indeck, randNum, true);
-
-
-
-            // indeck.num -= 1;
-            // slide the deck cards down
-
-            if (message) printf("draw card\n");
-            
-            break;
+        int validIndex[MAX_CARDS];
+        int numValid = 0;
+        for (int i = 0; i < MAX_CARDS; i++) {
+            if (indeck.isActive[i]) 
+                validIndex[numValid++] = i;
         }
+
+        if (numValid == 0) return; // no cards in deck
+
+        int randIndex = rand() % numValid;
+        int indexNum = validIndex[randIndex]; // gives me the index of the valid random card
+
+        int inplayIndex = -1;
+        for (int i = 0; i < MAX_CARDS; i++) {
+            if (!inplay.isActive[i]) {
+                inplayIndex = i;
+                break;
+            }
+        }
+
+        if (inplayIndex == -1) return; // no space in your hand to draw a card
+
+        // copy card to that inplayIndex
+
+        inplay.ID[inplayIndex] = indeck.ID[indexNum];
+        strcpy(inplay.name[inplayIndex], indeck.name[indexNum]);
+        strcpy(inplay.description[inplayIndex], indeck.description[indexNum]);
+    
+        inplay.x[inplayIndex] = (pausezones.x[ZONE_DECK]+pausezones.w[ZONE_DECK]/2)*window_scale;
+        inplay.y[inplayIndex] = (pausezones.y[ZONE_DECK]+pausezones.h[ZONE_DECK]/2)*window_scale;
+        inplay.w[inplayIndex] = CARD_WIDTH;
+        inplay.h[inplayIndex] = CARD_HEIGHT;
+    
+        pausezones.num_cards[ZONE_HAND]+=1;
+        inplay.zoneID[inplayIndex] = ZONE_HAND;
+        inplay.zoneNum[inplayIndex]=pausezones.num_cards[ZONE_HAND];
+    
+        isDragging = true;
+        inplay.isDragging[inplayIndex] = true;
+        inplay.isActive[inplayIndex]=true;
+        
+        inplay.num += 1;
+
+        if (message) printf("draw card\n");
+
+        // delete card at indexNum
+
+        discard_card(&indeck, indexNum, false);
     }
 }
 
@@ -216,6 +257,9 @@ int main() {
     SDL_HideCursor();
     SDL_GetWindowSize(window, &window_width, &window_height);  
     window_scale = window_width/1500.0f;
+    // set the seed for the game
+    seed = time(NULL);
+    srand(seed);
 
     const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
@@ -230,7 +274,15 @@ int main() {
         pausezones.max_cards[i]=0;
     }
 
-    indeck.num = 5;
+    indeck.num = 0;
+    for (int i = 0; i < MAX_CARDS; i++) {
+        indeck.isActive[i] = false;
+    }
+    for (int i = 0; i < 10; i++) {
+        indeck.isActive[i] = true;
+        indeck.ID[i] = i;
+        indeck.num += 1;
+    }
 
     int running = 1;
     while (running) {
@@ -368,7 +420,29 @@ int main() {
 
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             SDL_RenderRect(renderer, &rect);
-            SDL_RenderTextureRotated(renderer, texture, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+
+            if (inplay.ID[i] == 0) {
+                SDL_RenderTextureRotated(renderer, texture, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+            } else if (inplay.ID[i] == 1) {
+                SDL_RenderTextureRotated(renderer, texture2, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+            } else if (inplay.ID[i] == 2) {
+                SDL_RenderTextureRotated(renderer, texture3, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+            } else if (inplay.ID[i] == 3) {
+                SDL_RenderTextureRotated(renderer, texture4, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+            } else if (inplay.ID[i] == 4) {
+                SDL_RenderTextureRotated(renderer, texture5, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+            } else if (inplay.ID[i] == 5) {
+                SDL_RenderTextureRotated(renderer, texture6, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+            } else if (inplay.ID[i] == 6) {
+                SDL_RenderTextureRotated(renderer, texture7, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+            } else if (inplay.ID[i] == 7) {
+                SDL_RenderTextureRotated(renderer, texture8, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+            } else if (inplay.ID[i] == 8) {
+                SDL_RenderTextureRotated(renderer, texture9, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+            } else {
+                SDL_RenderTextureRotated(renderer, texture10, NULL, &rect, angle, &center, SDL_FLIP_NONE);
+            }
+
         }
 
         // if you click on the deck, it will draw a card
