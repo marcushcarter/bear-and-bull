@@ -30,9 +30,31 @@ I first want to kind of design the layout of the "pause menu" (but not really pa
 
 So lets get started I guess :|
 
-First I wanted to make the window resizable but always keep the same aspect ratio. (it didnt work so for now the window will stay at 1920x1280 scaled down to 1500x1000). Im going to use % of the screen to render these boxes because thats how it works in OpenGL (window_width * 0.1)
+First I wanted to make the window resizable but always keep the same aspect ratio. (it didnt work so for now the window will stay at 1920x1280 scaled down to 1500x1000). Im going to use % of the screen to render these boxes because thats how it works in OpenGL (window_width * 0.1). I did this by multiplying the normal x/y positions at 1500x1000 pixel window (which is the default) and multiply it by the current screen width (in pixels) divided by 1500. Then I setup a deck, a hand zone, discard pile and a equipement zone.
 
 **NOTE: I think im either not doing this right or i just suck at this**
+
+*2025-05-05*
+
+Now I need to actually give each "card" some data that tells what card it actually is / what it does. Im thinking about doing this with either a strcut of these inside the SoA or even just adding more lists into the SoA for the card stats.
+
+**Each Card has stats for:**
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
 
 ## Weapon Cards
 

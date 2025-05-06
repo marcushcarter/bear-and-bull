@@ -22,7 +22,7 @@ float mousex, mousey;
 
 int window_width, window_height;
 float window_scale = 1.0f;
-float game_speed = 4;
+float game_speed = 2;
 
 #define LERP_SPEED 0.25
 
