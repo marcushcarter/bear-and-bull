@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 #include <string.h>
@@ -121,7 +122,9 @@ bool point_box_collision(float px, float py, float bx, float by, float bw, float
     return (px >= bx && px <= bx + bw && py >= by && py <= by + bh);
 }
 
-void discard_card(Cards* cards, int id) {
+void add_to_deck() {}
+
+void discard_card(Cards* cards, int id, bool message) {
     
     cards->ID[id] = -1;
     strcpy(cards->name[id], "");
@@ -141,30 +144,58 @@ void discard_card(Cards* cards, int id) {
 
     cards->isDragging[id] = false;
     cards->isActive[id] = false;
+    
+    cards->num -= 1;
                             
-    printf("discard card\n");
+    if (message) printf("discard card\n");
 
     return;
 }
 
-void draw_cards(int num) {
+void draw_cards(int num, bool message) {
     for (int i = 0; i < num; i++) {
         if (pausezones.num_cards[ZONE_HAND] >= pausezones.max_cards[ZONE_HAND]) continue;
-        for (int k = 0; k < MAX_CARDS; k++) {
-            if (inplay.isActive[k]) continue;
+        if (indeck.num <= 0) continue;
+        for (int j = 0; j < MAX_CARDS; j++) {
+            if (inplay.isActive[j]) continue;
 
             inplay.num+=1;
-            // initialize a random card from the deck
-            isDragging = true;
-            inplay.zoneID[k] = ZONE_HAND;
-            pausezones.num_cards[ZONE_HAND]+=1;
-            inplay.zoneNum[k]=pausezones.num_cards[ZONE_HAND];
-            inplay.x[k] = (pausezones.x[ZONE_DECK]+pausezones.w[ZONE_DECK]/2)*window_scale;
-            inplay.y[k] = (pausezones.y[ZONE_DECK]+pausezones.h[ZONE_DECK]/2)*window_scale;
-            inplay.isDragging[k] = true;
-            inplay.isActive[k]=true;
 
-            printf("draw card\n");
+            // set inplay card to deck card
+            // delete the deck card
+            // slide the deck cards down
+
+            //
+
+            // indeck.
+            
+            indeck.num -= 1;
+
+            // slide the cards in deck down
+
+            // for (int l = 0; l < MAX_CARDS; l++) { 
+            //     if ( indeck.ID[l] > indeck.ID[randomNum]) {
+            //         indeck.ID[l-1] = indeck.ID[l]; 
+            //     } 
+            // }
+            // indeck.ID[indeck.num] = -1;
+
+
+            // set card to 
+
+            // discard_card(&indeck, randomNum, false);
+            // initialize a random card from the deck
+            
+            isDragging = true;
+            inplay.zoneID[j] = ZONE_HAND;
+            pausezones.num_cards[ZONE_HAND]+=1;
+            inplay.zoneNum[j]=pausezones.num_cards[ZONE_HAND];
+            inplay.x[j] = (pausezones.x[ZONE_DECK]+pausezones.w[ZONE_DECK]/2)*window_scale;
+            inplay.y[j] = (pausezones.y[ZONE_DECK]+pausezones.h[ZONE_DECK]/2)*window_scale;
+            inplay.isDragging[j] = true;
+            inplay.isActive[j]=true;
+
+            if (message) printf("draw card\n");
             
             break;
         }
@@ -187,13 +218,15 @@ int main() {
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
 
     inplay.num = 0;
-    for (int i = 0; i < MAX_CARDS; i++) { discard_card(&inplay, i); }
+    for (int i = 0; i < MAX_CARDS; i++) { discard_card(&inplay, i, false); }
 
     for (int i = 0; i < MAX_ZONES; i++) {
         pausezones.isActive[i] = false;
         pausezones.num_cards[i] = 0;
         pausezones.max_cards[i]=0;
     }
+
+    indeck.num = 5;
 
     int running = 1;
     while (running) {
@@ -287,8 +320,7 @@ int main() {
                         // if it is not, we put the card in that zone
                         pausezones.num_cards[inplay.zoneID[i]] -= 1;
                         if (j == ZONE_DISCARD) {
-                            discard_card(&inplay, i);
-                            inplay.num -= 1;
+                            discard_card(&inplay, i, true);
                         } else {
                             pausezones.num_cards[j] += 1;
                             inplay.zoneNum[i] = pausezones.num_cards[j];
@@ -337,7 +369,7 @@ int main() {
 
         // if you click on the deck, it will draw a card
         if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, pausezones.x[ZONE_DECK], pausezones.y[ZONE_DECK], pausezones.w[ZONE_DECK], pausezones.h[ZONE_DECK])) {
-            if (pausezones.num_cards[ZONE_HAND] < pausezones.max_cards[ZONE_HAND]) draw_cards(1);
+            if (pausezones.num_cards[ZONE_HAND] < pausezones.max_cards[ZONE_HAND]) draw_cards(1, true);
         }
 
         for (int j = 0; j < MAX_ZONES; j++) {
@@ -362,6 +394,7 @@ int main() {
         // }
         // printf("%d\n", inplay.num);
         // printf("Zone 3 cards: %d Card Number: %d\n", pausezones.num_cards[3], cards.zoneNum[0]);
+        // if (indeck.num > -1) printf("%d\n", indeck.ID[0]);
 
         SDL_RenderPresent(renderer);
 
