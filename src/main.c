@@ -33,8 +33,8 @@ int seed;
 
 bool isDragging;
 
-#define MAX_CARDS 20
-#define MAX_ZONES 20
+#define MAX_CARDS 99
+#define MAX_ZONES 5
 
 typedef struct {
     int ID[MAX_CARDS];
@@ -93,7 +93,7 @@ typedef enum {
 #define TOTAL_CARDS 1000
 
 typedef struct {
-    SDL_Texture textures[TOTAL_CARDS];
+    SDL_Texture* textures[TOTAL_CARDS];
 
     char name[TOTAL_CARDS][256];
     char description[TOTAL_CARDS][256];
@@ -216,6 +216,8 @@ void add_card(int id, bool message) {
 
 void discard_card(Cards* cards, int id, bool message) {
 
+    cards->ID[id] = -1;
+
     cards->x[id] = 0;
     cards->y[id] = 0;
     cards->vx[id] = 0;
@@ -310,7 +312,7 @@ int main() {
     window_scale = window_width/1500.0f;
     // set the seed for the game
     seed = time(NULL);
-    seed = 0;
+    // seed = 0;
     srand(seed);
 
     const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
@@ -347,14 +349,6 @@ int main() {
         playzones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*playzones.max_cards[zone_num])*window_scale;
         playzones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
         playzones.isActive[zone_num]=true;
-
-        // zone_num = ZONE_HAND;
-        // playzones.max_cards[zone_num] = 9;
-        // playzones.x[zone_num]=50*window_scale;
-        // playzones.y[zone_num]=(window_height-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
-        // playzones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*playzones.max_cards[zone_num])*window_scale;
-        // playzones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
-        // playzones.isActive[zone_num]=true;
 
         zone_num = ZONE_HAND;
         playzones.max_cards[zone_num] = 9;
@@ -416,8 +410,8 @@ int main() {
                         // if it is not, we put the card in that zone
                         playzones.num_cards[inplay.zoneID[i]] -= 1;
                         if (j == ZONE_DISCARD) {
-                            discard_card(&inplay, i, true);
                             add_card(inplay.ID[i], true);
+                            discard_card(&inplay, i, true);
                         } else {
                             playzones.num_cards[j] += 1;
                             inplay.zoneNum[i] = playzones.num_cards[j];
@@ -461,11 +455,12 @@ int main() {
             float card_grow_h = inplay.isDragging[i]*CARD_GROW*inplay.h[i]*window_scale;
 
             float sine = 0;
-            if (!inplay.isDragging[i]) sine = 5 *  sin(((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*2)));
+            if (!inplay.isDragging[i]) sine = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
 
             SDL_FRect cardhitbox = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
             SDL_FRect card = {inplay.x[i] - (inplay.w[i] / 2)  - (card_grow_w/2), inplay.y[i] - (inplay.h[i] / 2)  - (card_grow_h/2) - sine*window_scale, inplay.w[i] + card_grow_w, inplay.h[i] + card_grow_h};
             SDL_FPoint center = {card.w / 2, card.h / 2};
+            if (!inplay.isDragging[i]) sine = 5 *  sin(1*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
             double angle = inplay.vx[i]/60 + sine;
 
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -535,6 +530,14 @@ int main() {
         // printf("%d\n", inplay.num);
         // printf("Zone 3 cards: %d Card Number: %d\n", playzones.num_cards[3], cards.zoneNum[0]);
         // if (indeck.num > -1) printf("%d\n", indeck.ID[0]);
+        // printf("%d\n", inplay.ID[0]);
+
+        // for (int i = 0; i < MAX_CARDS; i++) {
+        //     if (inplay.zoneID[i] == ZONE_HAND) {
+        //         printf("%d\n", inplay.ID[i]);
+        //         // break;
+        //     }
+        // }
 
         SDL_RenderPresent(renderer);
 
