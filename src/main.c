@@ -27,7 +27,7 @@ float window_scale = 1.0f;
 float game_speed = 2;
 int seed;
 
-// int pick_tix = 0;
+int pick_tix = 0;
 
 #define LERP_SPEED 0.25
 
@@ -243,6 +243,7 @@ void discard_card(Cards* cards, int id, bool message) {
 void draw_cards(int num, bool message) {
     for (int i = 0; i < num; i++) {
         if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) continue; // check quickly to make sure the hand is not full
+        if (!pick_tix > 0) continue; // checks if you have any pickup tickets
         if (indeck.num <= 0) continue; // quick check for if there is actually any cards in the deck
 
         // cehcks if there are any valid cards in your deck
@@ -291,6 +292,7 @@ void draw_cards(int num, bool message) {
         inplay.isActive[inplayIndex]=true;
         
         inplay.num += 1;
+        pick_tix-=1;
 
         if (message) printf("draw card\n");
 
@@ -330,6 +332,8 @@ int main() {
 
     for (int i = 0; i < 8; i++) { add_card(rand() % 10, false); }
     // draw_cards(5, false);
+
+    pick_tix = 10;
 
     int running = 1;
     while (running) {
