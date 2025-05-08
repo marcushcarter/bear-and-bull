@@ -360,6 +360,9 @@ void inputs() {
 }
 
 void update() {
+
+    update_window();
+    update_zones();
     
     // update card locations
     for (int i = 0; i < MAX_CARDS; i++) {
@@ -512,14 +515,11 @@ int main() {
     setup();
     load_textures();
 
-    int running = 1;
+    running = 1;
     while (running) {
-
-        update_window();
 
         dt = get_delta_time()*game_speed;
 
-        update_zones();
         inputs();
         update();
         render();
