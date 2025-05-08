@@ -94,6 +94,7 @@ typedef enum {
 
 typedef struct {
     SDL_Texture* textures[TOTAL_CARDS];
+    char path[TOTAL_CARDS][256];
 
     char name[TOTAL_CARDS][256];
     char description[TOTAL_CARDS][256];
@@ -101,6 +102,28 @@ typedef struct {
     // stats
 
 } CardID; CardID cards;
+
+void make_card(int id, const char* path, const char* name, const char* description) {
+    strcpy(cards.path[id], path);
+    strcpy(cards.name[id], name);
+    strcpy(cards.description[id], description);
+}
+
+void setup() {
+    // LOAD CARDS
+
+    make_card(0, "./resources/textures/card1.png", "card 1", "card of the number of one");
+    make_card(1, "./resources/textures/card2.jpg", "card 2", "card of the number of two");
+    make_card(2, "./resources/textures/card3.png", "card 3", "card of the number of three");
+    make_card(3, "./resources/textures/card4.png", "card 4", "card of the number of four");
+    make_card(4, "./resources/textures/card5.png", "card 5", "card of the number of five");
+    make_card(5, "./resources/textures/card6.png", "card 6", "card of the number of six");
+    make_card(6, "./resources/textures/card7.png", "card 7", "card of the number of seven");
+    make_card(7, "./resources/textures/card8.png", "card 8", "card of the number of eight");
+    make_card(8, "./resources/textures/card9.png", "card 9", "card of the number of nine");
+    make_card(9, "./resources/textures/card10.png", "card 10", "card of the number of ten");
+
+}
 
 SDL_Texture* texture1;
 SDL_Texture* texture2;
@@ -114,6 +137,11 @@ SDL_Texture* texture9;
 SDL_Texture* texture10;
 
 bool load_textures() {
+
+    for (int i = 0; i < TOTAL_CARDS; i++) {
+        cards.textures[i] = IMG_LoadTexture(renderer, cards.path[i]);
+        SDL_SetTextureScaleMode(cards.textures[i], SDL_SCALEMODE_NEAREST);
+    } 
 
 	texture1 = IMG_LoadTexture(renderer, "./resources/textures/card1.png");
 	SDL_SetTextureScaleMode(texture1, SDL_SCALEMODE_NEAREST);
@@ -257,10 +285,8 @@ void draw_cards(int num, bool message) {
 
         if (numValid == 0) return;
 
-        // picks a random card out of the valid ones and giveus us the index of that card (indexNum)
-
-        int randIndex = rand() % numValid;
-        int indexNum = validIndex[randIndex];
+        int randIndex = rand() % numValid; 
+        int indexNum = validIndex[randIndex]; // picks a random card out of the valid ones and giveus us the index of that card (indexNum)
 
         // check if there is any space in the hand
 
@@ -296,9 +322,7 @@ void draw_cards(int num, bool message) {
 
         if (message) printf("draw card\n");
 
-        // delete card at indexNum
-
-        discard_card(&indeck, indexNum, false);
+        discard_card(&indeck, indexNum, false); // delete card at indexNum
     }
 }
 
@@ -308,10 +332,14 @@ int main() {
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+    setup();
     load_textures();
+
     SDL_HideCursor();
     SDL_GetWindowSize(window, &window_width, &window_height);  
     window_scale = window_width/1500.0f;
+
     // set the seed for the game
     seed = time(NULL);
     // seed = 0;
@@ -331,9 +359,9 @@ int main() {
     }
 
     for (int i = 0; i < 8; i++) { add_card(rand() % 10, false); }
-    // draw_cards(5, false);
 
-    pick_tix = 10;
+    // pick_tix = 10;
+    pick_tix = 1000;
 
     int running = 1;
     while (running) {
@@ -453,8 +481,6 @@ int main() {
         for (int i = 0; i < MAX_CARDS; i++) {
             if (!inplay.isActive[i]) continue;
 
-            // + (inplay.isDragging[i]*20)
-
             float card_grow_w = inplay.isDragging[i]*CARD_GROW*inplay.w[i]*window_scale;
             float card_grow_h = inplay.isDragging[i]*CARD_GROW*inplay.h[i]*window_scale;
 
@@ -467,42 +493,12 @@ int main() {
             if (!inplay.isDragging[i]) sine = 5 *  sin(1*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
             double angle = inplay.vx[i]/60 + sine;
 
+                // if (!inplay.isActive[i]) continue;
+                SDL_RenderTextureRotated(renderer, cards.textures[inplay.ID[i]], NULL, &card, angle, &center, SDL_FLIP_NONE);
+
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
-            SDL_Texture* textures[] = {
-                texture1, texture2, texture3, texture4, texture5,
-                texture6, texture7, texture8, texture9, texture10
-            };
-            
-            int id = inplay.ID[i];
-            if (id < 0 || id >= 10) id = 9;
-            
-            SDL_RenderTextureRotated(renderer, textures[id], NULL, &card, angle, &center, SDL_FLIP_NONE);
-            
-
-            // if (inplay.ID[i] == 0) {
-            //     SDL_RenderTextureRotated(renderer, texture1, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            // } else if (inplay.ID[i] == 1) {
-            //     SDL_RenderTextureRotated(renderer, texture2, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            // } else if (inplay.ID[i] == 2) {
-            //     SDL_RenderTextureRotated(renderer, texture3, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            // } else if (inplay.ID[i] == 3) {
-            //     SDL_RenderTextureRotated(renderer, texture4, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            // } else if (inplay.ID[i] == 4) {
-            //     SDL_RenderTextureRotated(renderer, texture5, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            // } else if (inplay.ID[i] == 5) {
-            //     SDL_RenderTextureRotated(renderer, texture6, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            // } else if (inplay.ID[i] == 6) {
-            //     SDL_RenderTextureRotated(renderer, texture7, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            // } else if (inplay.ID[i] == 7) {
-            //     SDL_RenderTextureRotated(renderer, texture8, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            // } else if (inplay.ID[i] == 8) {
-            //     SDL_RenderTextureRotated(renderer, texture9, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            // } else {
-            //     SDL_RenderTextureRotated(renderer, texture10, NULL, &card, angle, &center, SDL_FLIP_NONE);
-            // }
-            
-            if (currKeyState[SDL_SCANCODE_SPACE]) SDL_RenderRect(renderer, &cardhitbox);
+            /*if (currKeyState[SDL_SCANCODE_SPACE])*/ SDL_RenderRect(renderer, &cardhitbox);
 
         }
 
