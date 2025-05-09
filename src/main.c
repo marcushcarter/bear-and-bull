@@ -344,20 +344,20 @@ void make_zone(ZoneType num, int slots, int x, int y) {
 
 void update_zones() {
     // original prototype
-    make_zone(ZONE_DISCARD, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
-    make_zone(ZONE_HAND, 9, CARD_MARGIN, (1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN));
-    make_zone(ZONE_EQUIP_1, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
-    make_zone(ZONE_DECK, 0, CARD_MARGIN, CARD_MARGIN);
+    // make_zone(ZONE_DISCARD, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
+    // make_zone(ZONE_HAND, 9, CARD_MARGIN, (1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN));
+    // make_zone(ZONE_EQUIP_1, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
+    // make_zone(ZONE_DECK, 0, CARD_MARGIN, CARD_MARGIN);
 
     // new version
-    // make_zone(ZONE_DISCARD, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
-    // make_zone(ZONE_HAND, 5, CARD_MARGIN, (1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN));
-    // make_zone(ZONE_EQUIP_1, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
-    // make_zone(ZONE_DECK, 0, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
-    // make_zone(ZONE_HAND, hand_slots, CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
-    // make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
+    make_zone(ZONE_DECK, 0, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
+    make_zone(ZONE_HAND, hand_slots, CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
+    make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
+    make_zone(ZONE_EQUIP_1, 1, CARD_MARGIN, CARD_MARGIN);
+    make_zone(ZONE_EQUIP_2, 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN);
 }
 
+SDL_Texture* deck;
 bool load_textures() {
 
     for (int i = 0; i < TOTAL_CARDS; i++) {
@@ -366,6 +366,9 @@ bool load_textures() {
         cards.spritesheet[i] = IMG_LoadTexture(renderer, cards.spritepath[i]);
         SDL_SetTextureScaleMode(cards.spritesheet[i], SDL_SCALEMODE_NEAREST);
     }
+
+    deck = IMG_LoadTexture(renderer, "./resources/textures/deck.png");
+    SDL_SetTextureScaleMode(deck, SDL_SCALEMODE_NEAREST);
 
 	return true;
 }
@@ -511,6 +514,31 @@ void render() {
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderClear(renderer);
 
+    // zones
+    for (int j = 0; j < MAX_ZONES; j++) {
+        if (!playzones.isActive[j]) continue;
+
+        if (j == ZONE_DISCARD) {
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        } else {
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        }
+
+        
+        
+        SDL_FRect zone = {playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]};
+        if (j == ZONE_DECK) {
+            float sine = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f)));
+
+            // SDL_FRect zone = {0, 0, 100, 100};
+            double angle = sine/2;
+            SDL_FPoint center = {zone.w / 2, zone.h / 2};
+            SDL_RenderTextureRotated(renderer, deck, NULL, &zone, angle, &center, SDL_FLIP_NONE);
+        } else {
+            SDL_RenderRect(renderer, &zone);
+        }
+    }
+
     // cards
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!inplay.isActive[i]) continue;
@@ -538,21 +566,8 @@ void render() {
 
     }
 
-    // zones
-    for (int j = 0; j < MAX_ZONES; j++) {
-        if (!playzones.isActive[j]) continue;
-
-        if (j == ZONE_DISCARD) {
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        } else {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        }
-        
-        SDL_FRect zone = {playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]};
-        SDL_RenderRect(renderer, &zone);
-    }
-
     // cursor
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_FRect cursor = {mousex, mousey, 30.0f*window_scale, 30.0f*window_scale};
     SDL_RenderRect(renderer, &cursor);
 
@@ -599,6 +614,7 @@ int main() {
     while (running) {
 
         dt = get_delta_time()*game_speed;
+        if (dt > 0.3) continue;
 
         inputs();
         update();
