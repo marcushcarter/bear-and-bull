@@ -400,11 +400,13 @@ void update() {
 
         // if you are dragging a card it goes to your mouse
         // if you are not dragging it, it goes back to the zone id it belongs to (with spacing / no overlap)
+        // if it is in a multi card zone, the cards will fan
         if (inplay.isDragging[i]) {
             inplay.tx[i] = mousex;
             inplay.ty[i] = mousey;
         } else {
-            inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2+CARD_SPACING+((inplay.zoneNum[i]-1) * (CARD_WIDTH+CARD_SPACING)) ) * window_scale;
+            float fanning = playzones.w[inplay.zoneID[i]]/2 - (CARD_WIDTH+CARD_SPACING)/2*(playzones.num_cards[inplay.zoneID[i]]) - 5;
+            inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2+CARD_SPACING+((inplay.zoneNum[i]-1)*(CARD_WIDTH+CARD_SPACING)) )*window_scale + fanning*window_scale;
             inplay.ty[i] = playzones.y[inplay.zoneID[i]] + playzones.h[inplay.zoneID[i]]/2;
         }
 
