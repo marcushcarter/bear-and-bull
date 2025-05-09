@@ -9,7 +9,7 @@ Started working on this game on *2025-05-04* (May the force be with you :)
 - *2025-05-06* change zone name to "playzones", made "add_card" function, made "draw_cards" function, added game seeds, made cards bigger when you pick them up, 
 - *2025-05-07* added pickup tickets when drawing cards
 - *2025-05-08* added card fanning (angle and translation), organized code, cleaned up, changed how cards are rendered
-- *2025-05-09* 
+- *2025-05-09* added some base stats for cards
 
 ## Opening Ideas / Thoughts
 
@@ -40,11 +40,31 @@ First I wanted to make the window resizable but always keep the same aspect rati
 
 *2025-05-05*
 
-Now I need to actually give each "card" some data that tells what card it actually is / what it does. Im thinking about doing this with either a strcut of these inside the SoA or even just adding more lists into the SoA for the card stats. I think that is what i will do as the structs in the SoA take alot of memory and processing time.
+Now I need to actually give each "card" some data that tells what card it actually is / what it does. Im thinking about doing this with either a strcut of these inside the SoA or even just adding more lists into the SoA for the card stats. I think that is what i will do as the structs in the SoA take alot of memory and processing time. I did this by assigning a card a specific ID, which is linked to a seperate SoA that has all they data, so from just the cards ID, you can find all its data. Pretty much the "Cards" SoA is for the position of the cards and the CardID SoA is the data
 
-# ***WTF did I do? (i cant unbreaked the deck picker upper)***
+### ***WTF did I do? (i cant unbreaked the deck picker upper)*** I fixed it
+
+Then i tried to add card fanning to the rendered cards, i di this by finding the average of the cards which is either the middle of a card for an odd amount or the average position between the two for an even number. It then takes the card number in the zoneminus the total number of cards that can fit in the zone divide dby 2. You multiply that by a angle magnitude (I used 10) Nd thats what you change the render angle by.
+
+
 
 **Each Card has stats for a bunch of attributes:**
+
+Weapon
+- type (melee, hitscan, none, physics projectiles)
+- range (hitscan weap)
+- damage
+- damage multiplier
+- effect (burn, freeze, none)
+- effect chance (%)
+- life steal (% of health)
+- collateral (%)
+
+
+***Card naming***
+- int ID
+- string name
+- stringe description
 ***For in game weapons attributes***
 - range (m)
 - 
@@ -55,13 +75,14 @@ Now I need to actually give each "card" some data that tells what card it actual
 - 
 - 
 - 
+
 ***And for when youre holding it gives a stat boost***
-- 
-- 
-- 
-- 
-- 
-- 
+- hp increase (int)
+- life steal chance (%)
+- pickup range (int)
+- ammo capacity increase (int)
+- armor increase (%)
+- speed increase (int)
 - 
 
 ## Weapon Cards

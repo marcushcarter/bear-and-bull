@@ -93,14 +93,54 @@ typedef enum {
 
 #define TOTAL_CARDS 1000
 
-typedef struct {
-    SDL_Texture* textures[TOTAL_CARDS];
-    char path[TOTAL_CARDS][256];
+typedef enum {
+    WEAPON_NONE,
+    WEAPON_HITSCAN,
+    WEAPON_MELEE,
+    WEAPON_PROJECTILE,
+} WeaponType;
 
+typedef enum {
+    EFFECT_BURN,
+    EFFECT_FREEZE,
+    EFFECT_POISON,
+    EFFECT_SHOCK,
+} EffectType;
+
+typedef struct {
+    SDL_Texture* cardtexture[TOTAL_CARDS];
+    SDL_Texture* spritesheet[TOTAL_CARDS];
+    char cardpath[TOTAL_CARDS][256];
+    char spritepath[TOTAL_CARDS][256];
     char name[TOTAL_CARDS][256];
     char description[TOTAL_CARDS][256];
+    WeaponType type[TOTAL_CARDS];
 
     // stats
+
+    float range[TOTAL_CARDS]; // for ranged
+    float min_damage[TOTAL_CARDS];
+    float max_damage[TOTAL_CARDS];
+    float lifesteal[TOTAL_CARDS];
+    float ammo[TOTAL_CARDS];
+    float reload[TOTAL_CARDS];
+
+    // passive
+
+    // float speed_up[TOTAL_CARDS];
+    // float stamina_up[TOTAL_CARDS];
+    // float health_up[TOTAL_CARDS];
+    // float luck_up[TOTAL_CARDS];
+    // float ammo_up[TOTAL_CARDS];
+    // float armor_up[TOTAL_CARDS]; // also called defense
+    // float damage_up[TOTAL_CARDS];
+    // float heal_up[TOTAL_CARDS]; // health points per second amount over time (heal per second)
+
+    // used card stats
+
+    // float health_use[TOTAL_CARDS];
+    // float armor_use[TOTAL_CARDS];
+    // float tickets_use[TOTAL_CARDS];
 
 } CardID; CardID cards;
 
@@ -108,6 +148,17 @@ typedef struct {
 
 bool point_box_collision(float px, float py, float bx, float by, float bw, float bh) {
     return (px >= bx && px <= bx + bw && py >= by && py <= by + bh);
+}
+
+float* floatarr(int num, ...) {
+	va_list args;
+	float* combined_array = (float*)malloc(num * sizeof(float)); // Allocate memory for the integers
+	int count = 0;
+	va_start(args, num);
+	for (int i = 0; i < num; i++) combined_array[count++] = va_arg(args, double);
+	va_end(args);
+
+	return combined_array;
 }
 
 // DELTA TIME (dt) FUNCTIONS ----------------------------------------------------------------------------------------------------
@@ -262,10 +313,22 @@ void draw_cards(int num, bool message) {
 
 // ----------------------------------------------------------------------------------------------------
 
-void make_card(int id, const char* path, const char* name, const char* description) {
-    strcpy(cards.path[id], path);
+void make_card(int id, const char* cardpath, const char* spritepath, const char* name, const char* description, WeaponType type, float stats[6]) {
+    strcpy(cards.cardpath[id], cardpath);
+    strcpy(cards.spritepath[id], spritepath);
     strcpy(cards.name[id], name);
     strcpy(cards.description[id], description);
+
+    if (stats != NULL) {
+        cards.range[id] = stats[0]; // for ranged
+        cards.min_damage[id] = stats[1];
+        cards.max_damage[id] = stats[2];
+        cards.lifesteal[id] = stats[3];
+        cards.ammo[id] = stats[4];
+        cards.reload[id] = stats[5];
+    }
+
+
 }
 
 void make_zone(ZoneType num, int slots, int x, int y) {
@@ -288,8 +351,10 @@ void update_zones() {
 bool load_textures() {
 
     for (int i = 0; i < TOTAL_CARDS; i++) {
-        cards.textures[i] = IMG_LoadTexture(renderer, cards.path[i]);
-        SDL_SetTextureScaleMode(cards.textures[i], SDL_SCALEMODE_NEAREST);
+        cards.cardtexture[i] = IMG_LoadTexture(renderer, cards.cardpath[i]);
+        SDL_SetTextureScaleMode(cards.cardtexture[i], SDL_SCALEMODE_NEAREST);
+        cards.spritesheet[i] = IMG_LoadTexture(renderer, cards.spritepath[i]);
+        SDL_SetTextureScaleMode(cards.spritesheet[i], SDL_SCALEMODE_NEAREST);
     }
 
 	return true;
@@ -307,16 +372,16 @@ void update_window() {
 void setup() {
     // LOAD CARDS
 
-    make_card(0, "./resources/textures/card1.png", "card 1", "card of the number of one");
-    make_card(1, "./resources/textures/card2.jpg", "card 2", "card of the number of two");
-    make_card(2, "./resources/textures/card3.png", "card 3", "card of the number of three");
-    make_card(3, "./resources/textures/card4.png", "card 4", "card of the number of four");
-    make_card(4, "./resources/textures/card5.png", "card 5", "card of the number of five");
-    make_card(5, "./resources/textures/card6.png", "card 6", "card of the number of six");
-    make_card(6, "./resources/textures/card7.png", "card 7", "card of the number of seven");
-    make_card(7, "./resources/textures/card8.png", "card 8", "card of the number of eight");
-    make_card(8, "./resources/textures/card9.png", "card 9", "card of the number of nine");
-    make_card(9, "./resources/textures/card10.png", "card 10", "card of the number of ten");
+    make_card(0, "./resources/textures/card1.png", "./resources/textures/card1.png", "card 1", "card of the number of one", WEAPON_NONE, NULL);
+    make_card(1, "./resources/textures/card2.jpg", "./resources/textures/card2.jpg", "card 2", "card of the number of two", WEAPON_MELEE, floatarr(6, 0, 1, 2, 3, 4, 6));
+    make_card(2, "./resources/textures/card3.png", "./resources/textures/card3.png", "card 3", "card of the number of three", WEAPON_HITSCAN, floatarr(6, 10, 3, 9, 8, 6, 1));
+    make_card(3, "./resources/textures/card4.png", "./resources/textures/card4.png", "card 4", "card of the number of four", WEAPON_PROJECTILE, floatarr(6, 5, 4, 3, 2, 1, 1));
+    make_card(4, "./resources/textures/card5.png", "./resources/textures/card5.png", "card 5", "card of the number of five", WEAPON_NONE, NULL);
+    make_card(5, "./resources/textures/card6.png", "./resources/textures/card6.png", "card 6", "card of the number of six", WEAPON_NONE, NULL);
+    make_card(6, "./resources/textures/card7.png", "./resources/textures/card7.png", "card 7", "card of the number of seven", WEAPON_NONE, NULL);
+    make_card(7, "./resources/textures/card8.png", "./resources/textures/card8.png", "card 8", "card of the number of eight", WEAPON_NONE, NULL);
+    make_card(8, "./resources/textures/card9.png", "./resources/textures/card9.png", "card 9", "card of the number of nine", WEAPON_NONE, NULL);
+    make_card(9, "./resources/textures/card10.png", "./resources/textures/card10.png", "card 10", "card of the number of ten", WEAPON_NONE, NULL);
 
     update_window();
     update_zones();
@@ -451,7 +516,7 @@ void render() {
         if (!inplay.isDragging[i]) sine = 5 *  sin(1*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
         double angle = inplay.vx[i]/60 + sine/2 + fanning;
 
-        SDL_RenderTextureRotated(renderer, cards.textures[inplay.ID[i]], NULL, &card, angle, &center, SDL_FLIP_NONE);
+        SDL_RenderTextureRotated(renderer, cards.cardtexture[inplay.ID[i]], NULL, &card, angle, &center, SDL_FLIP_NONE);
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         if (currKeyState[SDL_SCANCODE_SPACE]) SDL_RenderRect(renderer, &cardhitbox);
