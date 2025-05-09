@@ -28,6 +28,7 @@ float game_speed = 2;
 int seed;
 
 int pick_tix = 0;
+int hand_slots = 3;
 
 #define LERP_SPEED 0.25
 
@@ -342,10 +343,19 @@ void make_zone(ZoneType num, int slots, int x, int y) {
 }
 
 void update_zones() {
+    // original prototype
     make_zone(ZONE_DISCARD, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
     make_zone(ZONE_HAND, 9, CARD_MARGIN, (1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN));
     make_zone(ZONE_EQUIP_1, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
     make_zone(ZONE_DECK, 0, CARD_MARGIN, CARD_MARGIN);
+
+    // new version
+    // make_zone(ZONE_DISCARD, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
+    // make_zone(ZONE_HAND, 5, CARD_MARGIN, (1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN));
+    // make_zone(ZONE_EQUIP_1, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
+    // make_zone(ZONE_DECK, 0, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
+    // make_zone(ZONE_HAND, hand_slots, CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
+    // make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
 }
 
 bool load_textures() {
@@ -470,8 +480,8 @@ void update() {
             inplay.tx[i] = mousex;
             inplay.ty[i] = mousey;
         } else {
-            float fanning = playzones.w[inplay.zoneID[i]]/2 - (CARD_WIDTH+CARD_SPACING)/2*(playzones.num_cards[inplay.zoneID[i]]) - 5;
-            inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2+CARD_SPACING+((inplay.zoneNum[i]-1)*(CARD_WIDTH+CARD_SPACING)) )*window_scale + fanning*window_scale;
+            float fanning = playzones.w[inplay.zoneID[i]] / 2 - ((CARD_WIDTH + CARD_SPACING) / 2.0f) * window_scale * playzones.num_cards[inplay.zoneID[i]] - 5*window_scale;
+            inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2 + CARD_SPACING + ((inplay.zoneNum[i] - 1) * (CARD_WIDTH + CARD_SPACING)) )*window_scale + fanning;
             inplay.ty[i] = playzones.y[inplay.zoneID[i]] + playzones.h[inplay.zoneID[i]]/2;
         }
 
@@ -488,6 +498,11 @@ void update() {
     // if you click on the deck, it will draw a card
     if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, playzones.x[ZONE_DECK], playzones.y[ZONE_DECK], playzones.w[ZONE_DECK], playzones.h[ZONE_DECK])) {
         if (playzones.num_cards[ZONE_HAND] < playzones.max_cards[ZONE_HAND]) draw_cards(1, true);
+    }
+
+    if (currKeyState[SDL_SCANCODE_1] && !prevKeyState[SDL_SCANCODE_1]) {
+        hand_slots+=1;
+        if (hand_slots > 6) hand_slots = 6;
     }
 }
 
