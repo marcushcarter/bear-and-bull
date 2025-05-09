@@ -8,6 +8,8 @@ Started working on this game on *2025-05-04* (May the force be with you :)
 - *2025-05-05* worked on temporary card movement and zones
 - *2025-05-06* change zone name to "playzones", made "add_card" function, made "draw_cards" function, added game seeds, made cards bigger when you pick them up, 
 - *2025-05-07* added pickup tickets when drawing cards
+- *2025-05-08* added card fanning (angle and translation), organized code, cleaned up, changed how cards are rendered
+- *2025-05-09* 
 
 ## Opening Ideas / Thoughts
 
