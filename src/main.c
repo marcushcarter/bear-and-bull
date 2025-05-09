@@ -438,19 +438,23 @@ void render() {
         float card_grow_w = inplay.isDragging[i]*CARD_GROW*inplay.w[i]*window_scale;
         float card_grow_h = inplay.isDragging[i]*CARD_GROW*inplay.h[i]*window_scale;
 
-        float sine = 0;
+        float sine = 0, fanning = 0;
         if (!inplay.isDragging[i]) sine = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
+        if (!inplay.isDragging[i]) {
+            sine = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
+            fanning = (inplay.zoneNum[i] - ((playzones.num_cards[inplay.zoneID[i]] + 1) / 2.0f)) * 2.5f;
+        }
 
         SDL_FRect cardhitbox = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
         SDL_FRect card = {inplay.x[i] - (inplay.w[i] / 2)  - (card_grow_w/2), inplay.y[i] - (inplay.h[i] / 2)  - (card_grow_h/2) - sine*window_scale, inplay.w[i] + card_grow_w, inplay.h[i] + card_grow_h};
         SDL_FPoint center = {card.w / 2, card.h / 2};
         if (!inplay.isDragging[i]) sine = 5 *  sin(1*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
-        double angle = inplay.vx[i]/60 + sine;
+        double angle = inplay.vx[i]/60 + sine/2 + fanning;
 
         SDL_RenderTextureRotated(renderer, cards.textures[inplay.ID[i]], NULL, &card, angle, &center, SDL_FLIP_NONE);
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        /*if (currKeyState[SDL_SCANCODE_SPACE])*/ SDL_RenderRect(renderer, &cardhitbox);
+        if (currKeyState[SDL_SCANCODE_SPACE]) SDL_RenderRect(renderer, &cardhitbox);
 
     }
 
