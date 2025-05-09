@@ -64,6 +64,7 @@ Cards indeck;
 #define CARD_WIDTH 142
 #define CARD_SPACING 10
 #define CARD_GROW 0.05
+#define CARD_MARGIN 50
 
 typedef struct {
     int ID[MAX_ZONES];
@@ -103,13 +104,13 @@ typedef struct {
 
 } CardID; CardID cards;
 
-// COMMON ----------------------------------------------------------------------------------------------------
+// COMMON FUNCTIONS ----------------------------------------------------------------------------------------------------
 
 bool point_box_collision(float px, float py, float bx, float by, float bw, float bh) {
     return (px >= bx && px <= bx + bw && py >= by && py <= by + bh);
 }
 
-// ----------------------------------------------------------------------------------------------------
+// DELTA TIME (dt) FUNCTIONS ----------------------------------------------------------------------------------------------------
 
 clock_t previous_time = 0;
 float dt;
@@ -131,7 +132,7 @@ void control_fps(float target_fps) {
 	}
 }
 
-// ----------------------------------------------------------------------------------------------------
+// DRAWING / DISCARDING CARDS FUNCTIONS ----------------------------------------------------------------------------------------------------
 
 void add_card(int id, bool message) {
 
@@ -267,14 +268,21 @@ void make_card(int id, const char* path, const char* name, const char* descripti
     strcpy(cards.description[id], description);
 }
 
-void zone(ZoneType num, int slots, int x, int y) {
+void make_zone(ZoneType num, int slots, int x, int y) {
+    playzones.max_cards[num] = slots;
     playzones.x[num]=x*window_scale;
     playzones.y[num]=y*window_scale;
+    if (num == ZONE_DECK) slots = 1;
     playzones.w[num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*slots)*window_scale;
     playzones.h[num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
-    if (num == ZONE_DECK) slots = 0;
-    playzones.max_cards[num] = slots;
     playzones.isActive[num]=true;
+}
+
+void update_zones() {
+    make_zone(ZONE_DISCARD, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
+    make_zone(ZONE_HAND, 9, CARD_MARGIN, (1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN));
+    make_zone(ZONE_EQUIP_1, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
+    make_zone(ZONE_DECK, 0, CARD_MARGIN, CARD_MARGIN);
 }
 
 bool load_textures() {
@@ -294,6 +302,8 @@ void update_window() {
     window_scale = window_width/1500.0f;
 }
 
+// LOOP FUNCTIONS ----------------------------------------------------------------------------------------------------
+
 void setup() {
     // LOAD CARDS
 
@@ -309,6 +319,7 @@ void setup() {
     make_card(9, "./resources/textures/card10.png", "card 10", "card of the number of ten");
 
     update_window();
+    update_zones();
 
     const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
@@ -323,58 +334,11 @@ void setup() {
         playzones.max_cards[i]=0;
     }
 
-    for (int i = 0; i < 8; i++) { add_card(rand() % 10, false); }
+    for (int i = 0; i < 54; i++) { add_card(rand() % 10, false); }
 
     // pick_tix = 10;
     pick_tix = 1000;
 
-}
-
-void update_zones() {
-    
-    int zone_num;
-
-    // zone(ZONE_DISCARD, 1, 
-
-    zone(ZONE_DISCARD, 1, (1500-((CARD_WIDTH+CARD_SPACING*2)+50)*1), 50);
-
-    // zone_num = ZONE_DISCARD;
-    // playzones.max_cards[zone_num] = 1;
-    // playzones.x[zone_num]=(1500-((CARD_WIDTH+CARD_SPACING*2)+50)*1)*window_scale;
-    // playzones.y[zone_num]=50*window_scale;
-    // playzones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*playzones.max_cards[zone_num])*window_scale;
-    // playzones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
-    // playzones.isActive[zone_num]=true;
-
-    zone(ZONE_HAND, 9, 50, (1000-((CARD_HEIGHT+CARD_SPACING*2)+50)*1));
-
-    // zone_num = ZONE_HAND;
-    // playzones.max_cards[zone_num] = 9;
-    // playzones.x[zone_num]=60*window_scale;
-    // playzones.y[zone_num]=(1000-((CARD_HEIGHT+CARD_SPACING*2)+50)*1)*window_scale;
-    // playzones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*playzones.max_cards[zone_num])*window_scale;
-    // playzones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
-    // playzones.isActive[zone_num]=true;
-
-    zone(ZONE_EQUIP_1, 1, (1500-((CARD_WIDTH+CARD_SPACING*2)+50)*2), 50);
-
-    // zone_num = ZONE_EQUIP_1;
-    // playzones.max_cards[zone_num] = 1;
-    // playzones.x[zone_num]=(1500-((CARD_WIDTH+CARD_SPACING*2)+50)*2)*window_scale;
-    // playzones.y[zone_num]=50*window_scale;
-    // playzones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*playzones.max_cards[zone_num])*window_scale;
-    // playzones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
-    // playzones.isActive[zone_num]=true;
-
-    zone(ZONE_DECK, 1, 50, 50);
-
-    // zone_num = ZONE_DECK;
-    // playzones.max_cards[zone_num] = 0;
-    // playzones.x[zone_num]=50*window_scale;
-    // playzones.y[zone_num]=50*window_scale;
-    // playzones.w[zone_num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING))*window_scale;
-    // playzones.h[zone_num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
-    // playzones.isActive[zone_num]=true;
 }
 
 void inputs() {
@@ -527,7 +491,7 @@ void debug() {
     // }
 }
 
-// ----------------------------------------------------------------------------------------------------
+// MAIN FUNCTION ----------------------------------------------------------------------------------------------------
 
 int main() {
     
