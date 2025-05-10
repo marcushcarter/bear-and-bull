@@ -21,23 +21,30 @@ Uint8 prevKeyState[NUM_KEYS];
 Uint32 currMouseState;
 Uint32 prevMouseState;
 float mousex, mousey;
+bool isDragging;
 
 int window_width, window_height;
 float window_scale = 1.0f;
-float game_speed = 2;
-int seed;
 
+int seed;
+float game_speed = 2;
 int pick_tix = 0;
 int hand_slots = 3;
 
 #define LERP_SPEED 0.25
 
-bool isDragging;
-
 #define MAX_CARDS 99
 #define MAX_ZONES 5
 
-typedef struct {
+#define CARD_HEIGHT 190
+#define CARD_WIDTH 142
+#define CARD_SPACING 10
+#define CARD_GROW 0.05
+#define CARD_MARGIN 50
+
+#define TOTAL_CARDS 1000
+
+typedef struct Cards {
     int ID[MAX_CARDS];
 
     float x[MAX_CARDS];
@@ -56,18 +63,9 @@ typedef struct {
     bool isActive[MAX_CARDS];
 
     int num;
-} Cards; 
+} Cards;
 
-Cards inplay;
-Cards indeck;
-
-#define CARD_HEIGHT 190
-#define CARD_WIDTH 142
-#define CARD_SPACING 10
-#define CARD_GROW 0.05
-#define CARD_MARGIN 50
-
-typedef struct {
+typedef struct Zones {
     int ID[MAX_ZONES];
 
     float x[MAX_ZONES];
@@ -81,9 +79,7 @@ typedef struct {
     float isActive[MAX_ZONES];
 } Zones; 
 
-Zones playzones;
-
-typedef enum {
+typedef enum ZoneType {
     ZONE_DECK,
     ZONE_HAND,
     ZONE_DISCARD,
@@ -92,9 +88,7 @@ typedef enum {
     ZONE_EQUIP_3,
 } ZoneType;
 
-#define TOTAL_CARDS 1000
-
-typedef enum {
+typedef enum WeaponType {
     WEAPON_NONE,
     WEAPON_HITSCAN,
     WEAPON_MELEE,
@@ -108,7 +102,7 @@ typedef enum {
     EFFECT_SHOCK,
 } EffectType;
 
-typedef struct {
+typedef struct CardID{
     SDL_Texture* cardtexture[TOTAL_CARDS];
     SDL_Texture* spritesheet[TOTAL_CARDS];
     char cardpath[TOTAL_CARDS][256];
@@ -143,7 +137,16 @@ typedef struct {
     // float armor_use[TOTAL_CARDS];
     // float tickets_use[TOTAL_CARDS];
 
-} CardID; CardID cards;
+} CardID; 
+
+
+
+Cards inplay;
+Cards indeck;
+
+Zones playzones;
+
+CardID cards;
 
 // COMMON FUNCTIONS ----------------------------------------------------------------------------------------------------
 
@@ -256,7 +259,7 @@ void discard_card(Cards* cards, int id, bool message) {
 
 void draw_cards(int num, bool message) {
     for (int i = 0; i < num; i++) {
-        if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) continue; // check quickly to make sure the hand is not full
+        if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]-1) continue; // check quickly to make sure the hand is not full
         if (!pick_tix > 0) continue; // checks if you have any pickup tickets
         if (indeck.num <= 0) continue; // quick check for if there is actually any cards in the deck
 
@@ -350,11 +353,18 @@ void update_zones() {
     // make_zone(ZONE_DECK, 0, CARD_MARGIN, CARD_MARGIN);
 
     // new version
+    // make_zone(ZONE_DECK, 0, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
+    // make_zone(ZONE_HAND, hand_slots, CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
+    // make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
+    // make_zone(ZONE_EQUIP_1, 1, CARD_MARGIN, CARD_MARGIN);
+    // make_zone(ZONE_EQUIP_2, 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN);
+
+    // Planned version
     make_zone(ZONE_DECK, 0, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
-    make_zone(ZONE_HAND, hand_slots, CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
-    make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
-    make_zone(ZONE_EQUIP_1, 1, CARD_MARGIN, CARD_MARGIN);
-    make_zone(ZONE_EQUIP_2, 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN);
+    make_zone(ZONE_HAND, hand_slots, CARD_MARGIN, CARD_MARGIN);
+    make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN);
+    make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
+    make_zone(ZONE_EQUIP_2, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
 }
 
 SDL_Texture* deck;
@@ -505,7 +515,7 @@ void update() {
 
     if (currKeyState[SDL_SCANCODE_1] && !prevKeyState[SDL_SCANCODE_1]) {
         hand_slots+=1;
-        if (hand_slots > 6) hand_slots = 6;
+        if (hand_slots > 8) hand_slots = 8;
     }
 }
 
@@ -524,18 +534,15 @@ void render() {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         }
 
-        
-        
-        SDL_FRect zone = {playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]};
+        SDL_FRect zonehitbox = {playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]};
         if (j == ZONE_DECK) {
             float sine = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f)));
-
-            // SDL_FRect zone = {0, 0, 100, 100};
+            SDL_FRect zone = {playzones.x[j], playzones.y[j] - sine*window_scale, playzones.w[j], playzones.h[j]};
             double angle = sine/2;
             SDL_FPoint center = {zone.w / 2, zone.h / 2};
             SDL_RenderTextureRotated(renderer, deck, NULL, &zone, angle, &center, SDL_FLIP_NONE);
         } else {
-            SDL_RenderRect(renderer, &zone);
+            SDL_RenderRect(renderer, &zonehitbox);
         }
     }
 
