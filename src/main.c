@@ -14,8 +14,10 @@
 const char* vertexShaderSource = "#version 330 core\n"
     "layout (location = 0) in vec2 aPos;\n"
     "uniform vec2 offset;\n"
+    "uniform vec2 scale;\n"
     "void main() {\n"
-    "   gl_Position = vec4(aPos + offset, 0.0, 1.0);\n"
+    "   vec2 scaledPos = aPos * scale;\n"
+    "   gl_Position = vec4(scaledPos + offset, 0.0, 1.0);\n"
     "}\0";
 
 const char* fragmentShaderSource = "#version 330 core\n"
@@ -24,6 +26,8 @@ const char* fragmentShaderSource = "#version 330 core\n"
     "   FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
     "}\0";
 
+
+float boxScale = 1.0f;
 
 SDL_Window* window;
 SDL_GLContext glContext;
@@ -77,6 +81,8 @@ void control_fps(float target_fps) {
 }
 
 // MAIN FUNCTION ----------------------------------------------------------------------------------------------------
+
+float x, y, xvel,yvel;
 
 int main() {
     SDL_Init(SDL_INIT_VIDEO);
@@ -134,7 +140,7 @@ int main() {
         SDL_GetWindowSize(window, &window_width, &window_height);
         glViewport(0, 0, window_width, window_height);
 
-        dt = get_delta_time();
+        dt = get_delta_time() * 2;
         if (dt > 0.3) continue;
 
         // INPUTS FUNCTION
@@ -151,22 +157,26 @@ int main() {
         
         // UPDATE
 
+        xvel = (mousex - x) / 0.25;
+        yvel = (mousey - y) / 0.25;
+        y += yvel * dt;
+        x += xvel * dt;
+
         // RENDER
 
+        boxScale = 1.0f * sin(SDL_GetTicks() / 500.0f);
+
+        // Render
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shaderProgram);
-        GLint offsetLocation = glGetUniformLocation(shaderProgram, "offset");
-        glUniform2f(offsetLocation, mousex, mousey);
+        GLint offsetLoc = glGetUniformLocation(shaderProgram, "offset");
+        GLint scaleLoc = glGetUniformLocation(shaderProgram, "scale");
 
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        glUseProgram(shaderProgram);
-        offsetLocation = glGetUniformLocation(shaderProgram, "offset");
-        glUniform2f(offsetLocation, 0, 0);
-
+        // Draw box at mouse
+        glUniform2f(offsetLoc, x, y);
+        glUniform2f(scaleLoc, 1.0f, 3.0f);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
