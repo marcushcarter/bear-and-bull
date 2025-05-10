@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-
-
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -13,7 +11,19 @@
 #include <string.h>
 #include <math.h>
 
-#include "shaders.c"
+const char* vertexShaderSource = "#version 330 core\n"
+    "layout (location = 0) in vec2 aPos;\n"
+    "uniform vec2 offset;\n"
+    "void main() {\n"
+    "   gl_Position = vec4(aPos + offset, 0.0, 1.0);\n"
+    "}\0";
+
+const char* fragmentShaderSource = "#version 330 core\n"
+    "out vec4 FragColor;\n"
+    "void main() {\n"
+    "   FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
+    "}\0";
+
 
 SDL_Window* window;
 SDL_GLContext glContext;
@@ -27,6 +37,9 @@ Uint32 currMouseState;
 Uint32 prevMouseState;
 float mousex, mousey;
 bool isDragging;
+
+int window_width, window_height;
+float window_scale = 1.0f;
 
 #define SCREEN_WIDTH 1500
 #define SCREEN_HEIGHT 1000
@@ -68,10 +81,13 @@ void control_fps(float target_fps) {
 int main() {
     SDL_Init(SDL_INIT_VIDEO);
 
-    window = SDL_CreateWindow("Box Movement", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("Box Movement", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     glContext = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, glContext);
     gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
+
+    SDL_GetWindowSize(window, &window_width, &window_height);
+    glViewport(0, 0, window_width, window_height);
 
     // Compile vertex shader
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -115,6 +131,9 @@ int main() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     while (running) {
 
+        SDL_GetWindowSize(window, &window_width, &window_height);
+        glViewport(0, 0, window_width, window_height);
+
         dt = get_delta_time();
         if (dt > 0.3) continue;
 
@@ -127,11 +146,10 @@ int main() {
         SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
         prevMouseState = currMouseState;
         currMouseState = SDL_GetMouseState(&mousex, &mousey);
-        mousex = mousex/750-1;
-        mousey = -mousey/500+1;
+        mousex = mousex/(window_width/2)-1;
+        mousey = -mousey/(window_height/2)+1;
         
         // UPDATE
-
 
         // RENDER
 
@@ -145,7 +163,16 @@ int main() {
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
+        glUseProgram(shaderProgram);
+        offsetLocation = glGetUniformLocation(shaderProgram, "offset");
+        glUniform2f(offsetLocation, 0, 0);
+
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
         SDL_GL_SwapWindow(window);
+
+        // OTHER
 
         SDL_memcpy(prevKeyState, currKeyState, NUM_KEYS);
         control_fps(120.0f);
