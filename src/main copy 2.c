@@ -13,10 +13,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "shaders.c"
-
 SDL_Window* window;
-SDL_GLContext glContext;
+SDL_Renderer* renderer;
 SDL_Event event;
 bool running;
 
@@ -31,8 +29,21 @@ bool isDragging;
 #define SCREEN_WIDTH 1500
 #define SCREEN_HEIGHT 1000
 
+const char* vertexShaderSource = "#version 330 core\n"
+    "layout (location = 0) in vec2 aPos;\n"
+    "uniform vec2 offset;\n"
+    "void main() {\n"
+    "   gl_Position = vec4(aPos + offset, 0.0, 1.0);\n"
+    "}\0";
+
+const char* fragmentShaderSource = "#version 330 core\n"
+    "out vec4 FragColor;\n"
+    "void main() {\n"
+    "   FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
+    "}\0";
+
 // Box vertices (2 triangles for a square)
-float quad[] = {
+float vertices[] = {
     -0.1f, -0.1f,
      0.1f, -0.1f,
      0.1f,  0.1f,
@@ -63,15 +74,33 @@ void control_fps(float target_fps) {
 	}
 }
 
-// MAIN FUNCTION ----------------------------------------------------------------------------------------------------
+void inputs() {
+    while (SDL_PollEvent(&event) != 0) {
+        if (event.type == SDL_EVENT_QUIT) running = false;
+    }
+    const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
+    SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
+    prevMouseState = currMouseState;
+    currMouseState = SDL_GetMouseState(&mousex, &mousey);
+}
 
 int main() {
     SDL_Init(SDL_INIT_VIDEO);
 
-    window = SDL_CreateWindow("Box Movement", SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL);
-    glContext = SDL_GL_CreateContext(window);
+    SDL_Window* window = SDL_CreateWindow(
+        "Box Movement",
+        SCREEN_WIDTH,
+        SCREEN_HEIGHT,
+        SDL_WINDOW_OPENGL
+    );
+
+    SDL_GLContext glContext = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, glContext);
-    gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
+
+    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
+        printf("Failed to initialize GLAD\n");
+        return -1;
+    }
 
     // Compile vertex shader
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -99,7 +128,7 @@ int main() {
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -114,12 +143,11 @@ int main() {
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     while (running) {
+        // while (SDL_PollEvent(&event)) {
+        //     if (event.type == SDL_EVENT_QUIT) running = false;
+        // }
 
-        dt = get_delta_time();
-        if (dt > 0.3) continue;
-
-        // INPUTS FUNCTION
-
+        
         while (SDL_PollEvent(&event) != 0) {
             if (event.type == SDL_EVENT_QUIT) running = false;
         }
@@ -127,28 +155,20 @@ int main() {
         SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
         prevMouseState = currMouseState;
         currMouseState = SDL_GetMouseState(&mousex, &mousey);
-        mousex = mousex/750-1;
-        mousey = -mousey/500+1;
-        
-        // UPDATE
 
-
-        // RENDER
+        // offsetX -= 0.0005f;
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(shaderProgram);
         GLint offsetLocation = glGetUniformLocation(shaderProgram, "offset");
-        glUniform2f(offsetLocation, mousex, mousey);
+        glUniform2f(offsetLocation, mousex/750-1, -mousey/500+1);
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
         SDL_GL_SwapWindow(window);
-
-        SDL_memcpy(prevKeyState, currKeyState, NUM_KEYS);
-        control_fps(120.0f);
     }
 
     glDeleteVertexArrays(1, &VAO);
