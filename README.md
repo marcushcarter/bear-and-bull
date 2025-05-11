@@ -7,20 +7,33 @@
 - *2025-05-08* added card fanning (angle and translation), organized code, cleaned up, changed how cards are rendered
 - *2025-05-09* added some base stats for cards, fixed fanning, added deck texture, finished card shmovement prototype, started translating to opengl
 
-- *2025-05-09*
+- *2025-05-11* switched game idea, seperated window scale to x/y, changed make_zone function, gave up on opengl, draw_card_id func,
 
 
 
 
 
 
-### idea
+### NEW idea
 
-- draw 3 cards at the start of the 60s round (these cards modify the moeny etc you make ex. money = x1.5)
+- draw 3 cards at the start of the 60s round (these cards modify stats, money etc you make ex. money = x1.5)
 - make as much money as possible in the round by buying/selling stocks
 - 3 semi-random market actions happen in 15 second intervals in the round which is effected by the market state at the beggining of the round (ex market crash -> stocks price reduced by 60%)
-- get graded by how much money you have made each round
-- draft crads based on the grade into your deck (these are power ups)
+- get graded by how much temporary  money you have made each round
+- draft crads based on the grade you got into your deck (these are power ups)
+
+- every round you are given 5 stocks to trade
+- drawing cards in between rounds costs more an more permanent money
+
+
+
+- 60 second rounds
+- draw three cards at beggining of the round from your deck
+- you can sell these hand cards (removes them forever and gets them out of your hand)
+- you can draw more cards into your hand from your deck (with an increasing price)
+
+- depending on how the round went you earn mor ecapital and can draft up to 3 cards into your deck 
+- any cards in your hand at the end of the round go back into your deck
 
 
 
@@ -28,13 +41,18 @@
 
 
 
+CARDS have a NUM of STATS
+
+- luck
+- money (int)
+- isLoan
+- 
 
 
 
 
 
-
-
+TO FIND THE VALUE OF A STOCK AT A SPECIFIC POINT
 
 
 

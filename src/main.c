@@ -30,7 +30,6 @@ float window_scale_y = 1.0f;
 
 int seed;
 float game_speed = 2;
-int pick_tix = 0;
 int hand_slots = 3;
 bool hitboxes = false;
 
@@ -91,37 +90,26 @@ typedef enum ZoneType {
     ZONE_EQUIP_3,
 } ZoneType;
 
-typedef enum WeaponType {
-    WEAPON_NONE,
-    WEAPON_HITSCAN,
-    WEAPON_MELEE,
-    WEAPON_PROJECTILE,
-} WeaponType;
-
-typedef enum {
-    EFFECT_BURN,
-    EFFECT_FREEZE,
-    EFFECT_POISON,
-    EFFECT_SHOCK,
-} EffectType;
-
 typedef struct CardID{
     SDL_Texture* cardtexture[TOTAL_CARDS];
-    SDL_Texture* spritesheet[TOTAL_CARDS];
     char cardpath[TOTAL_CARDS][256];
-    char spritepath[TOTAL_CARDS][256];
     char name[TOTAL_CARDS][256];
     char description[TOTAL_CARDS][256];
-    WeaponType type[TOTAL_CARDS];
 
-    // stats
+    float money_mult[TOTAL_CARDS]; // added form each card to a base of 1 and that is multiplied by the money at the end of the round
+    float capital[TOTAL_CARDS]; // this extra money added at the end of every round
+    float luck[TOTAL_CARDS];
+    float passive[TOTAL_CARDS]; // how many seconds to earn 1 coin passively
+    float price[TOTAL_CARDS]; // card can be bought for this price and sold for half of it
+    float speed[TOTAL_CARDS]; // higher your speed stat, the slower the 60 second round goes
+    float market_stability[TOTAL_CARDS]; //
 
-    float range[TOTAL_CARDS]; // for ranged
-    float min_damage[TOTAL_CARDS];
-    float max_damage[TOTAL_CARDS];
-    float lifesteal[TOTAL_CARDS];
-    float ammo[TOTAL_CARDS];
-    float reload[TOTAL_CARDS];
+    // float range[TOTAL_CARDS]; // for ranged
+    // float min_damage[TOTAL_CARDS];
+    // float max_damage[TOTAL_CARDS];
+    // float lifesteal[TOTAL_CARDS];
+    // float ammo[TOTAL_CARDS];
+    // float reload[TOTAL_CARDS];
 
     // passive
 
@@ -146,6 +134,7 @@ Cards inplay;
 Cards indeck;
 
 Zones playzones;
+Zones eventzone;
 
 CardID cards;
 
@@ -261,7 +250,6 @@ void discard_card(Cards* cards, int id, bool message) {
 void draw_cards(int num, bool message) {
     for (int i = 0; i < num; i++) {
         if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) continue; // check quickly to make sure the hand is not full
-        if (!pick_tix > 0) continue; // checks if you have any pickup tickets
         if (indeck.num <= 0) continue; // quick check for if there is actually any cards in the deck
 
         // cehcks if there are any valid cards in your deck
@@ -308,7 +296,6 @@ void draw_cards(int num, bool message) {
         inplay.isActive[inplayIndex]=true;
         
         inplay.num += 1;
-        pick_tix-=1;
 
         if (message) printf("draw card\n");
 
@@ -316,22 +303,58 @@ void draw_cards(int num, bool message) {
     }
 }
 
+void draw_card_id(int id, bool message) {
+
+    if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // check quickly to make sure the hand is not full
+
+    // check if there is any space in the hand
+
+    int inplayIndex = -1;
+    for (int k = 0; k < MAX_CARDS; k++) {
+        if (!inplay.isActive[k]) {
+            inplayIndex = k;
+            break;
+        }
+    }
+    if (inplayIndex == -1) return;
+
+    // draw that card
+
+    inplay.ID[inplayIndex] = id;
+
+    inplay.x[inplayIndex] = (playzones.x[ZONE_DECK]+playzones.w[ZONE_DECK]/2)*window_scale_x;
+    inplay.y[inplayIndex] = (playzones.y[ZONE_DECK]+playzones.h[ZONE_DECK]/2)*window_scale_y;
+    inplay.w[inplayIndex] = CARD_WIDTH;
+    inplay.h[inplayIndex] = CARD_HEIGHT;
+
+    playzones.num_cards[ZONE_HAND]+=1;
+    inplay.zoneID[inplayIndex] = ZONE_HAND;
+    inplay.zoneNum[inplayIndex]=playzones.num_cards[ZONE_HAND];
+
+    isDragging = true;
+    inplay.isDragging[inplayIndex] = true;
+    inplay.isActive[inplayIndex]=true;
+    
+    inplay.num += 1;
+
+    if (message) printf("draw card\n");
+}
+
 // ----------------------------------------------------------------------------------------------------
 
-void make_card(int id, const char* cardpath, const char* spritepath, const char* name, const char* description, WeaponType type, float stats[6]) {
+void make_card(int id, const char* cardpath, const char* name, const char* description, float stats[6]) {
     strcpy(cards.cardpath[id], cardpath);
-    strcpy(cards.spritepath[id], spritepath);
     strcpy(cards.name[id], name);
     strcpy(cards.description[id], description);
 
-    if (stats != NULL) {
-        cards.range[id] = stats[0]; // for ranged
-        cards.min_damage[id] = stats[1];
-        cards.max_damage[id] = stats[2];
-        cards.lifesteal[id] = stats[3];
-        cards.ammo[id] = stats[4];
-        cards.reload[id] = stats[5];
-    }
+    // if (stats != NULL) {
+    //     cards.range[id] = stats[0]; // for ranged
+    //     cards.min_damage[id] = stats[1];
+    //     cards.max_damage[id] = stats[2];
+    //     cards.lifesteal[id] = stats[3];
+    //     cards.ammo[id] = stats[4];
+    //     cards.reload[id] = stats[5];
+    // }
 
 
 }
@@ -384,8 +407,6 @@ bool load_textures() {
     for (int i = 0; i < TOTAL_CARDS; i++) {
         cards.cardtexture[i] = IMG_LoadTexture(renderer, cards.cardpath[i]);
         SDL_SetTextureScaleMode(cards.cardtexture[i], SDL_SCALEMODE_NEAREST);
-        cards.spritesheet[i] = IMG_LoadTexture(renderer, cards.spritepath[i]);
-        SDL_SetTextureScaleMode(cards.spritesheet[i], SDL_SCALEMODE_NEAREST);
     }
 
     deck = IMG_LoadTexture(renderer, "./resources/textures/deck.png");
@@ -407,16 +428,16 @@ void update_window() {
 void setup() {
     // LOAD CARDS
 
-    make_card(0, "./resources/textures/card1.png", "./resources/textures/card1.png", "card 1", "card of the number of one", WEAPON_NONE, NULL);
-    make_card(1, "./resources/textures/card2.jpg", "./resources/textures/card2.jpg", "card 2", "card of the number of two", WEAPON_MELEE, floatarr(6, 0, 1, 2, 3, 4, 6));
-    make_card(2, "./resources/textures/card3.png", "./resources/textures/card3.png", "card 3", "card of the number of three", WEAPON_HITSCAN, floatarr(6, 10, 3, 9, 8, 6, 1));
-    make_card(3, "./resources/textures/card4.png", "./resources/textures/card4.png", "card 4", "card of the number of four", WEAPON_PROJECTILE, floatarr(6, 5, 4, 3, 2, 1, 1));
-    make_card(4, "./resources/textures/card5.png", "./resources/textures/card5.png", "card 5", "card of the number of five", WEAPON_NONE, NULL);
-    make_card(5, "./resources/textures/card6.png", "./resources/textures/card6.png", "card 6", "card of the number of six", WEAPON_NONE, NULL);
-    make_card(6, "./resources/textures/card7.png", "./resources/textures/card7.png", "card 7", "card of the number of seven", WEAPON_NONE, NULL);
-    make_card(7, "./resources/textures/card8.png", "./resources/textures/card8.png", "card 8", "card of the number of eight", WEAPON_NONE, NULL);
-    make_card(8, "./resources/textures/card9.png", "./resources/textures/card9.png", "card 9", "card of the number of nine", WEAPON_NONE, NULL);
-    make_card(9, "./resources/textures/card10.png", "./resources/textures/card10.png", "card 10", "card of the number of ten", WEAPON_NONE, NULL);
+    make_card(0, "./resources/textures/card1.png", "card 1", "card of the number of one", NULL);
+    make_card(1, "./resources/textures/card2.png", "card 2", "card of the number of two", floatarr(6, 0, 1, 2, 3, 4, 6));
+    make_card(2, "./resources/textures/card3.png", "card 3", "card of the number of three", floatarr(6, 10, 3, 9, 8, 6, 1));
+    make_card(3, "./resources/textures/card4.png", "card 4", "card of the number of four", floatarr(6, 5, 4, 3, 2, 1, 1));
+    make_card(4, "./resources/textures/card5.png", "card 5", "card of the number of five", NULL);
+    make_card(5, "./resources/textures/card6.png", "card 6", "card of the number of six", NULL);
+    make_card(6, "./resources/textures/card7.png", "card 7", "card of the number of seven", NULL);
+    make_card(7, "./resources/textures/card8.png", "card 8", "card of the number of eight", NULL);
+    make_card(8, "./resources/textures/card9.png", "card 9", "card of the number of nine", NULL);
+    make_card(9, "./resources/textures/card10.png", "card 10", "card of the number of ten", NULL);
 
     update_window();
     update_zones();
@@ -436,9 +457,6 @@ void setup() {
 
     for (int i = 0; i < 54; i++) { add_card(rand() % 10, false); }
 
-    // pick_tix = 10;
-    pick_tix = 1000;
-
 }
 
 void inputs() {
@@ -455,6 +473,10 @@ void update() {
 
     update_window();
     update_zones();
+
+    if (currKeyState[SDL_SCANCODE_P] && !prevKeyState[SDL_SCANCODE_P]) {
+        draw_card_id(0, false);
+    }
     
     // update card locations
     for (int i = 0; i < MAX_CARDS; i++) {
