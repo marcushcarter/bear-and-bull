@@ -31,7 +31,10 @@ float window_scale_y = 1.0f;
 int seed;
 float game_speed = 2;
 int hand_slots = 3;
-bool hitboxes = true;
+
+bool show_hitboxes = true;
+bool show_textures = true;
+bool custom_cursor = false;
 
 #define LERP_SPEED 0.25
 
@@ -435,8 +438,7 @@ bool load_textures() {
 }
 
 void update_window() {
-    // get window sizes and set window scaling coefficient 
-    SDL_HideCursor();
+    // get window sizes and set window scaling coefficient
     SDL_GetWindowSize(window, &window_width, &window_height);
     window_scale_x = window_width/1500.0f;  
     window_scale_y = window_height/1000.0f;
@@ -503,12 +505,17 @@ void dev_tools() {
 
     // press space to toggle hitboxes
     if (currKeyState[SDL_SCANCODE_SPACE] && !prevKeyState[SDL_SCANCODE_SPACE]){
-        if (hitboxes) {
-            hitboxes = false;
+        if (show_hitboxes) {
+            show_hitboxes = false;
+            show_textures = true;
         } else {
-            hitboxes = true;
+            show_hitboxes = true;
+            show_textures = false;
         }
     }
+
+    // press the "2" key to toggle custom cursor
+    if (currKeyState[SDL_SCANCODE_2] && !prevKeyState[SDL_SCANCODE_2]) custom_cursor = !custom_cursor;
 
 }
 
@@ -575,8 +582,9 @@ void update() {
         if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5) {
             playzones.num_cards[inplay.zoneID[i]] -= 1;
             // add_card(inplay.ID[i], true);
+            if (inplay.isDragging[i]) isDragging = false;
             discard_card(&inplay, i, true);
-            // sell the card for money
+            // sell the card for / give player money
         }
 
         inplay.w[i] = CARD_WIDTH*window_scale_x;
@@ -595,89 +603,97 @@ void update() {
     }
 }
 
-void render2() {
-
-    // zones
-    // graph
-    // assistant
-    // cards
-    // cursor
-
-
-
-}
-
 void render() {
 
-    // float sineh;
-    // float sinea;
+    // ZONES TEXTURES / HITBOX
+    // -----------------------
+    for (int i = 0; i < MAX_ZONES; i++) {
+        if (!playzones.isActive[i]) continue;
 
-    // zones
-    for (int j = 0; j < MAX_ZONES; j++) {
-        if (!playzones.isActive[j]) continue;
+        if (show_textures) {
+            if (i == ZONE_DECK) {
+                float sineh = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f)));
+                float sinea = 2.5 *  sin(1*((SDL_GetTicks() / 1000.0f)));
+                float angle = sinea;
 
-        // hitboxes
+                SDL_FRect zone = {
+                    playzones.x[i], 
+                    playzones.y[i] - sineh*window_scale_y, 
+                    playzones.w[i], 
+                    playzones.h[i]
+                };
 
-        // textures
+                SDL_FPoint center = {zone.w / 2, zone.h / 2};
+                SDL_RenderTextureRotated(renderer, deck, NULL, &zone, angle, &center, SDL_FLIP_NONE);
+            }
+        }
 
-        if (j == ZONE_DISCARD) {
-            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        } else {
+        if (show_hitboxes) {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_FRect zonehitbox = {playzones.x[i], playzones.y[i], playzones.w[i], playzones.h[i]};
+            SDL_RenderRect(renderer, &zonehitbox);
         }
-
-        SDL_FRect zonehitbox = {playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]};
-        if (j == ZONE_DECK) {
-            float sinea, sineh;
-
-            sineh = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f)));
-            sinea = 5 *  sin(1*((SDL_GetTicks() / 1000.0f)));
-            SDL_FRect zone = {playzones.x[j], playzones.y[j] - sineh*window_scale_y, playzones.w[j], playzones.h[j]};
-            double angle = sinea/2;
-            SDL_FPoint center = {zone.w / 2, zone.h / 2};
-            SDL_RenderTextureRotated(renderer, deck, NULL, &zone, angle, &center, SDL_FLIP_NONE);
-        }
-        
-        if (hitboxes) SDL_RenderRect(renderer, &zonehitbox);
-        
     }
 
-    // cards
+    // STOCK CHARTS TEXTURES / HITBOX
+    // ------------------------------
+
+    // ASSISTANT TEXTURES / HITBOX
+    // ---------------------------
+
+    // CARDS TEXTURES / HITBOX
+    // -----------------------
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!inplay.isActive[i]) continue;
 
-        // hitboxes
+        if (show_textures) {
 
-        if (hitboxes) {
-            SDL_FRect cardhitbox = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
+            float card_grow_w = inplay.isDragging[i]*CARD_GROW*inplay.w[i];
+            float card_grow_h = inplay.isDragging[i]*CARD_GROW*inplay.h[i];
+
+            float sineh = 0, sinea = 0, fanning = 0;
+            if (!inplay.isDragging[i]) {
+                sineh = 5 *  sin(2 * (inplay.zoneTime[i] - SDL_GetTicks() / 1000.0f));
+                fanning = (inplay.zoneNum[i] - ((playzones.num_cards[inplay.zoneID[i]] + 1) / 2.0f)) * 2.5f;
+                sinea = 2.5f * sin(inplay.zoneTime[i] - SDL_GetTicks() / 1000.0f);
+            }
+            double angle = inplay.vx[i]/60 + sinea + fanning;
+
+            SDL_FRect cardtexture = {  
+                inplay.x[i] - (inplay.w[i]/2) - (card_grow_w/2), 
+                inplay.y[i] - (inplay.h[i]/2) - (card_grow_h/2) - (sineh*window_scale_y), 
+                inplay.w[i] + (card_grow_w*window_scale_x), 
+                inplay.h[i] + (card_grow_h*window_scale_y)
+            };
+
+            SDL_FPoint center = {cardtexture.w / 2, cardtexture.h / 2};
+            SDL_RenderTextureRotated(renderer, cards.cardtexture[inplay.ID[i]], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
+        }
+
+        if (show_hitboxes) {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_FRect cardhitbox = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
             SDL_RenderRect(renderer, &cardhitbox);
         }
-        
-        // textures
-
-        float card_grow_w = inplay.isDragging[i]*CARD_GROW*inplay.w[i]*window_scale_x;
-        float card_grow_h = inplay.isDragging[i]*CARD_GROW*inplay.h[i]*window_scale_y;
-
-        float sine = 0, fanning = 0;
-        if (!inplay.isDragging[i]) {
-            sine = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
-            fanning = (inplay.zoneNum[i] - ((playzones.num_cards[inplay.zoneID[i]] + 1) / 2.0f)) * 2.5f;
-        }
-
-        SDL_FRect card = {inplay.x[i] - (inplay.w[i] / 2)  - (card_grow_w/2), inplay.y[i] - (inplay.h[i] / 2)  - (card_grow_h/2) - sine*window_scale_y, inplay.w[i] + card_grow_w, inplay.h[i] + card_grow_h};
-        SDL_FPoint center = {card.w / 2, card.h / 2};
-        if (!inplay.isDragging[i]) sine = 5 *  sin(1*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
-        double angle = inplay.vx[i]/60 + sine/2 + fanning;
-
-        SDL_RenderTextureRotated(renderer, cards.cardtexture[inplay.ID[i]], NULL, &card, angle, &center, SDL_FLIP_NONE);
-
     }
 
-    // cursor
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_FRect cursor = {mousex, mousey, 30.0f*window_scale_x, 30.0f*window_scale_y};
-    SDL_RenderRect(renderer, &cursor);
+    // CURSOR TEXTURES / HITBOX
+    // ------------------------
+    if (custom_cursor) {
+        SDL_HideCursor();
+
+        if (show_textures) {}
+
+        if (show_hitboxes) {
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_FRect cursorhitbox = {mousex, mousey, 30.0f*window_scale_x, 30.0f*window_scale_y};
+            SDL_RenderRect(renderer, &cursorhitbox);
+        }
+
+    } else {
+        SDL_ShowCursor();
+    }
+
 }
 
 void debug() {
@@ -723,11 +739,11 @@ int main() {
         if (dt > 0.3) continue;
 
         inputs();
+        dev_tools();
         update();
 
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
-        render2();
         render();
         SDL_RenderPresent(renderer);
 
