@@ -59,6 +59,35 @@ TO FIND THE VALUE OF A STOCK AT A SPECIFIC POINT
 
 
 
+FACTORS THAT AFFECT A STOCKS RISE AND FALL
+
+- supply and demand (higher number means more supply) (events, people can mass buy(higher price)/sell(lower price) stocks)
+- earning reports, scandals etc (measured through performance (higher performance means more expensive stock))
+- investments, inflation and employment data
+- follow crowd behavior
+- global events
+- taxes
+- 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Retro FPS Deckbuilder (Haven't decided on a game name yet)

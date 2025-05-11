@@ -63,6 +63,7 @@ typedef struct Cards {
     
     bool isDragging[MAX_CARDS];
     bool isActive[MAX_CARDS];
+    bool isSellable[MAX_CARDS];
 
     int num;
 } Cards;
@@ -86,8 +87,8 @@ typedef enum ZoneType {
     ZONE_HAND,
     ZONE_DISCARD,
     ZONE_EQUIP_1,
+    ZONE_EVENT,
     ZONE_EQUIP_2,
-    ZONE_EQUIP_3,
 } ZoneType;
 
 typedef struct CardID{
@@ -96,13 +97,25 @@ typedef struct CardID{
     char name[TOTAL_CARDS][256];
     char description[TOTAL_CARDS][256];
 
-    float money_mult[TOTAL_CARDS]; // added form each card to a base of 1 and that is multiplied by the money at the end of the round
-    float capital[TOTAL_CARDS]; // this extra money added at the end of every round
-    float luck[TOTAL_CARDS];
-    float passive[TOTAL_CARDS]; // how many seconds to earn 1 coin passively
-    float price[TOTAL_CARDS]; // card can be bought for this price and sold for half of it
-    float speed[TOTAL_CARDS]; // higher your speed stat, the slower the 60 second round goes
-    float market_stability[TOTAL_CARDS]; //
+    // float money_mult[TOTAL_CARDS]; // added form each card to a base of 1 and that is multiplied by the money at the end of the round
+    // float capital[TOTAL_CARDS]; // this extra money added at the end of every round
+    // float luck[TOTAL_CARDS];
+    // float passive[TOTAL_CARDS]; // how many seconds to earn 1 coin passively
+    // float price[TOTAL_CARDS]; // card can be bought for this price and sold for half of it
+    // float speed[TOTAL_CARDS]; // higher your speed stat, the slower the 60 second round goes
+    // float market_stability[TOTAL_CARDS]; //
+
+    // GENERAL
+
+    float price[TOTAL_CARDS]; // price of the card
+    float passive[TOTAL_CARDS]; // (int) money earned at the end of every round
+    float mult[TOTAL_CARDS]; // added to 1 and that number is multiplied by the total money earned at the end of the round (before the passive income addition)
+
+    // IN ROUND STOCKS
+
+    float stock_cost[TOTAL_CARDS];
+
+    // SPECIFIC
 
     // float range[TOTAL_CARDS]; // for ranged
     // float min_damage[TOTAL_CARDS];
@@ -213,6 +226,7 @@ void add_card(int id, bool message) {
 
     indeck.isDragging[index] = false;
     indeck.isActive[index] = true;
+    indeck.isSellable[index] = true;
     
     indeck.num += 1;
                             
@@ -239,6 +253,7 @@ void discard_card(Cards* cards, int id, bool message) {
 
     cards->isDragging[id] = false;
     cards->isActive[id] = false;
+    cards->isSellable[id] = true;
     
     cards->num -= 1;
                             
@@ -293,7 +308,8 @@ void draw_cards(int num, bool message) {
     
         isDragging = true;
         inplay.isDragging[inplayIndex] = true;
-        inplay.isActive[inplayIndex]=true;
+        inplay.isActive[inplayIndex] = true;
+        inplay.isSellable[inplayIndex] = true;
         
         inplay.num += 1;
 
@@ -303,9 +319,9 @@ void draw_cards(int num, bool message) {
     }
 }
 
-void draw_card_id(int id, bool message) {
+void draw_event_card(int id, bool message) {
 
-    if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // check quickly to make sure the hand is not full
+    if (playzones.num_cards[ZONE_EVENT] >= playzones.max_cards[ZONE_EVENT]) return; // check quickly to make sure the hand is not full
 
     // check if there is any space in the hand
 
@@ -322,18 +338,18 @@ void draw_card_id(int id, bool message) {
 
     inplay.ID[inplayIndex] = id;
 
-    inplay.x[inplayIndex] = (playzones.x[ZONE_DECK]+playzones.w[ZONE_DECK]/2)*window_scale_x;
-    inplay.y[inplayIndex] = (playzones.y[ZONE_DECK]+playzones.h[ZONE_DECK]/2)*window_scale_y;
+    inplay.x[inplayIndex] = (playzones.x[ZONE_EVENT]+playzones.w[ZONE_EVENT]/2)*window_scale_x;
+    inplay.y[inplayIndex] = ((playzones.y[ZONE_EVENT]+playzones.h[ZONE_EVENT]/2)+500)*window_scale_y;
     inplay.w[inplayIndex] = CARD_WIDTH;
     inplay.h[inplayIndex] = CARD_HEIGHT;
 
-    playzones.num_cards[ZONE_HAND]+=1;
-    inplay.zoneID[inplayIndex] = ZONE_HAND;
-    inplay.zoneNum[inplayIndex]=playzones.num_cards[ZONE_HAND];
+    playzones.num_cards[ZONE_EVENT]+=1;
+    inplay.zoneID[inplayIndex] = ZONE_EVENT;
+    inplay.zoneNum[inplayIndex]=playzones.num_cards[ZONE_EVENT];
 
-    isDragging = true;
-    inplay.isDragging[inplayIndex] = true;
-    inplay.isActive[inplayIndex]=true;
+    inplay.isDragging[inplayIndex] = false;
+    inplay.isActive[inplayIndex] = true;
+    inplay.isSellable[inplayIndex] = false;
     
     inplay.num += 1;
 
@@ -398,7 +414,7 @@ void update_zones() {
     make_zone(ZONE_HAND, hand_slots, CARD_MARGIN, CARD_MARGIN, 0, 0);
     make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
     make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    make_zone(ZONE_EQUIP_2, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
 }
 
 SDL_Texture* deck;
@@ -474,8 +490,12 @@ void update() {
     update_window();
     update_zones();
 
+    int ticks = (int)(SDL_GetTicks() / 1000.0f) % 10;
+    if (ticks == 9) {draw_event_card(0, false);}
+    // printf("%d\n", ticks);
+
     if (currKeyState[SDL_SCANCODE_P] && !prevKeyState[SDL_SCANCODE_P]) {
-        draw_card_id(0, false);
+        draw_event_card(0, false);
     }
     
     // update card locations
@@ -498,15 +518,18 @@ void update() {
                 if (point_box_collision(inplay.tx[i], inplay.ty[i], playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]) && (playzones.num_cards[j] < playzones.max_cards[j])) {
 
                     // in the zone the card just left, every card after that one shifts down one space
-                    for (int l = 0; l < MAX_CARDS; l++) { if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) inplay.zoneNum[l] -= 1; }
-                    
                     // if the zone is a discard pile, we delete the card
                     // if it is not, we put the card in that zone
-                    playzones.num_cards[inplay.zoneID[i]] -= 1;
                     if (j == ZONE_DISCARD) {
-                        add_card(inplay.ID[i], true);
-                        discard_card(&inplay, i, true);
+                        if (inplay.isSellable[i]) {
+                            for (int l = 0; l < MAX_CARDS; l++) { if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) inplay.zoneNum[l] -= 1; }
+                            playzones.num_cards[inplay.zoneID[i]] -= 1;
+                            add_card(inplay.ID[i], true);
+                            discard_card(&inplay, i, true);
+                        }
                     } else {
+                        for (int l = 0; l < MAX_CARDS; l++) { if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) inplay.zoneNum[l] -= 1; }
+                        playzones.num_cards[inplay.zoneID[i]] -= 1;
                         playzones.num_cards[j] += 1;
                         inplay.zoneNum[i] = playzones.num_cards[j];
                         inplay.zoneID[i] = j;
