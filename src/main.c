@@ -24,7 +24,9 @@ float mousex, mousey;
 bool isDragging;
 
 int window_width, window_height;
-float window_scale = 1.0f;
+
+float window_scale_x = 1.0f;
+float window_scale_y = 1.0f;
 
 int seed;
 float game_speed = 2;
@@ -292,8 +294,8 @@ void draw_cards(int num, bool message) {
 
         inplay.ID[inplayIndex] = indeck.ID[indexNum];
     
-        inplay.x[inplayIndex] = (playzones.x[ZONE_DECK]+playzones.w[ZONE_DECK]/2)*window_scale;
-        inplay.y[inplayIndex] = (playzones.y[ZONE_DECK]+playzones.h[ZONE_DECK]/2)*window_scale;
+        inplay.x[inplayIndex] = (playzones.x[ZONE_DECK]+playzones.w[ZONE_DECK]/2)*window_scale_x;
+        inplay.y[inplayIndex] = (playzones.y[ZONE_DECK]+playzones.h[ZONE_DECK]/2)*window_scale_y;
         inplay.w[inplayIndex] = CARD_WIDTH;
         inplay.h[inplayIndex] = CARD_HEIGHT;
     
@@ -336,19 +338,19 @@ void make_card(int id, const char* cardpath, const char* spritepath, const char*
 
 void make_zone(ZoneType num, int slots, int x, int y, int w, int h) {
     playzones.max_cards[num] = slots;
-    playzones.x[num]=x*window_scale;
-    playzones.y[num]=y*window_scale;
+    playzones.x[num]=x*window_scale_x;
+    playzones.y[num]=y*window_scale_y;
     if (num == ZONE_DECK) slots = 1;
     if (w != 0) {
-        playzones.w[num] = w*window_scale;
+        playzones.w[num] = w*window_scale_x;
     } else {
-        playzones.w[num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*slots)*window_scale;
+        playzones.w[num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*slots)*window_scale_x;
     }
 
     if (h != 0) {
-        playzones.h[num] = h*window_scale;
+        playzones.h[num] = h*window_scale_y;
     } else {
-        playzones.h[num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+        playzones.h[num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale_y;
     }
     
     playzones.isActive[num]=true;
@@ -395,8 +397,9 @@ bool load_textures() {
 void update_window() {
     // get window sizes and set window scaling coefficient 
     SDL_HideCursor();
-    SDL_GetWindowSize(window, &window_width, &window_height);  
-    window_scale = window_width/1500.0f;
+    SDL_GetWindowSize(window, &window_width, &window_height);
+    window_scale_x = window_width/1500.0f;  
+    window_scale_y = window_height/1000.0f;
 }
 
 // LOOP FUNCTIONS ----------------------------------------------------------------------------------------------------
@@ -502,8 +505,8 @@ void update() {
             inplay.tx[i] = mousex;
             inplay.ty[i] = mousey;
         } else {
-            float fanning = playzones.w[inplay.zoneID[i]] / 2 - ((CARD_WIDTH + CARD_SPACING) / 2.0f) * window_scale * playzones.num_cards[inplay.zoneID[i]] - 5*window_scale;
-            inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2 + CARD_SPACING + ((inplay.zoneNum[i] - 1) * (CARD_WIDTH + CARD_SPACING)) )*window_scale + fanning;
+            float fanning = playzones.w[inplay.zoneID[i]] / 2 - ((CARD_WIDTH + CARD_SPACING) / 2.0f) * window_scale_x * playzones.num_cards[inplay.zoneID[i]] - 5*window_scale_x;
+            inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2 + CARD_SPACING + ((inplay.zoneNum[i] - 1) * (CARD_WIDTH + CARD_SPACING)) )*window_scale_x + fanning;
             inplay.ty[i] = playzones.y[inplay.zoneID[i]] + playzones.h[inplay.zoneID[i]]/2;
         }
 
@@ -512,8 +515,8 @@ void update() {
         inplay.y[i] += inplay.vy[i] * dt;
         inplay.x[i] += inplay.vx[i] * dt;
 
-        inplay.w[i] = CARD_WIDTH*window_scale;
-        inplay.h[i] = CARD_HEIGHT*window_scale;
+        inplay.w[i] = CARD_WIDTH*window_scale_x;
+        inplay.h[i] = CARD_HEIGHT*window_scale_y;
 
     }
 
@@ -573,7 +576,7 @@ void render() {
 
             sineh = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f)));
             sinea = 5 *  sin(1*((SDL_GetTicks() / 1000.0f)));
-            SDL_FRect zone = {playzones.x[j], playzones.y[j] - sineh*window_scale, playzones.w[j], playzones.h[j]};
+            SDL_FRect zone = {playzones.x[j], playzones.y[j] - sineh*window_scale_y, playzones.w[j], playzones.h[j]};
             double angle = sinea/2;
             SDL_FPoint center = {zone.w / 2, zone.h / 2};
             SDL_RenderTextureRotated(renderer, deck, NULL, &zone, angle, &center, SDL_FLIP_NONE);
@@ -597,8 +600,8 @@ void render() {
         
         // textures
 
-        float card_grow_w = inplay.isDragging[i]*CARD_GROW*inplay.w[i]*window_scale;
-        float card_grow_h = inplay.isDragging[i]*CARD_GROW*inplay.h[i]*window_scale;
+        float card_grow_w = inplay.isDragging[i]*CARD_GROW*inplay.w[i]*window_scale_x;
+        float card_grow_h = inplay.isDragging[i]*CARD_GROW*inplay.h[i]*window_scale_y;
 
         float sine = 0, fanning = 0;
         if (!inplay.isDragging[i]) {
@@ -606,7 +609,7 @@ void render() {
             fanning = (inplay.zoneNum[i] - ((playzones.num_cards[inplay.zoneID[i]] + 1) / 2.0f)) * 2.5f;
         }
 
-        SDL_FRect card = {inplay.x[i] - (inplay.w[i] / 2)  - (card_grow_w/2), inplay.y[i] - (inplay.h[i] / 2)  - (card_grow_h/2) - sine*window_scale, inplay.w[i] + card_grow_w, inplay.h[i] + card_grow_h};
+        SDL_FRect card = {inplay.x[i] - (inplay.w[i] / 2)  - (card_grow_w/2), inplay.y[i] - (inplay.h[i] / 2)  - (card_grow_h/2) - sine*window_scale_y, inplay.w[i] + card_grow_w, inplay.h[i] + card_grow_h};
         SDL_FPoint center = {card.w / 2, card.h / 2};
         if (!inplay.isDragging[i]) sine = 5 *  sin(1*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
         double angle = inplay.vx[i]/60 + sine/2 + fanning;
@@ -617,7 +620,7 @@ void render() {
 
     // cursor
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_FRect cursor = {mousex, mousey, 30.0f*window_scale, 30.0f*window_scale};
+    SDL_FRect cursor = {mousex, mousey, 30.0f*window_scale_x, 30.0f*window_scale_y};
     SDL_RenderRect(renderer, &cursor);
 }
 
