@@ -1,7 +1,3 @@
-# Retro FPS Deckbuilder (Haven't decided on a game name yet)
-
-Started working on this game on *2025-05-04* (May the force be with you :)
-
 ## Update Log
 
 - *2025-05-04* started brainstorming, worked on moving cards around
@@ -12,6 +8,44 @@ Started working on this game on *2025-05-04* (May the force be with you :)
 - *2025-05-09* added some base stats for cards, fixed fanning, added deck texture, finished card shmovement prototype, started translating to opengl
 
 - *2025-05-09*
+
+
+
+
+
+
+### idea
+
+- draw 3 cards at the start of the 60s round (these cards modify the moeny etc you make ex. money = x1.5)
+- make as much money as possible in the round by buying/selling stocks
+- 3 semi-random market actions happen in 15 second intervals in the round which is effected by the market state at the beggining of the round (ex market crash -> stocks price reduced by 60%)
+- get graded by how much money you have made each round
+- draft crads based on the grade into your deck (these are power ups)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Retro FPS Deckbuilder (Haven't decided on a game name yet)
+
+Started working on this game on *2025-05-04* (May the force be with you :)
 
 ## Opening Ideas / Thoughts
 

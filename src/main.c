@@ -334,13 +334,23 @@ void make_card(int id, const char* cardpath, const char* spritepath, const char*
 
 }
 
-void make_zone(ZoneType num, int slots, int x, int y) {
+void make_zone(ZoneType num, int slots, int x, int y, int w, int h) {
     playzones.max_cards[num] = slots;
     playzones.x[num]=x*window_scale;
     playzones.y[num]=y*window_scale;
     if (num == ZONE_DECK) slots = 1;
-    playzones.w[num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*slots)*window_scale;
-    playzones.h[num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+    if (w != 0) {
+        playzones.w[num] = w*window_scale;
+    } else {
+        playzones.w[num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*slots)*window_scale;
+    }
+
+    if (h != 0) {
+        playzones.h[num] = h*window_scale;
+    } else {
+        playzones.h[num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale;
+    }
+    
     playzones.isActive[num]=true;
 }
 
@@ -359,11 +369,11 @@ void update_zones() {
     // make_zone(ZONE_EQUIP_2, 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN);
 
     // Planned version
-    make_zone(ZONE_DECK, 0, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
-    make_zone(ZONE_HAND, hand_slots, CARD_MARGIN, CARD_MARGIN);
-    make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN);
-    make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
-    make_zone(ZONE_EQUIP_2, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
+    make_zone(ZONE_DECK, 0, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    make_zone(ZONE_HAND, hand_slots, CARD_MARGIN, CARD_MARGIN, 0, 0);
+    make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
+    make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    make_zone(ZONE_EQUIP_2, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
 }
 
 SDL_Texture* deck;
