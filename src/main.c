@@ -31,7 +31,7 @@ float window_scale_y = 1.0f;
 int seed;
 float game_speed = 2;
 int hand_slots = 3;
-bool hitboxes = false;
+bool hitboxes = true;
 
 #define LERP_SPEED 0.25
 
@@ -488,20 +488,39 @@ void inputs() {
     currMouseState = SDL_GetMouseState(&mousex, &mousey);
 }
 
+void dev_tools() {
+
+    // draws an event card when P key is pressed
+    if (currKeyState[SDL_SCANCODE_P] && !prevKeyState[SDL_SCANCODE_P]) {
+        draw_event_card(0, false);
+    }
+
+    // if you press the "1" key it will increase the number of hand_slots you have by 1
+    if (currKeyState[SDL_SCANCODE_1] && !prevKeyState[SDL_SCANCODE_1]) {
+        hand_slots+=1;
+        if (hand_slots > 8) hand_slots = 8;
+    }
+
+    // press space to toggle hitboxes
+    if (currKeyState[SDL_SCANCODE_SPACE] && !prevKeyState[SDL_SCANCODE_SPACE]){
+        if (hitboxes) {
+            hitboxes = false;
+        } else {
+            hitboxes = true;
+        }
+    }
+
+}
+
 void update() {
 
     update_window();
     update_zones();
 
+    // draws an event card every 10 seconds
     int ticks = (int)(SDL_GetTicks() / 1000.0f) % 10;
     if (ticks == 9) {draw_event_card(0, false);}
-    // printf("%d\n", ticks);
 
-    if (currKeyState[SDL_SCANCODE_P] && !prevKeyState[SDL_SCANCODE_P]) {
-        draw_event_card(0, false);
-    }
-    
-    // update card locations
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!inplay.isActive[i]) continue;
 
@@ -553,38 +572,26 @@ void update() {
         }
 
         // checks if a card is to be deleted
-        if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 3) {
+        if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5) {
             playzones.num_cards[inplay.zoneID[i]] -= 1;
             // add_card(inplay.ID[i], true);
             discard_card(&inplay, i, true);
+            // sell the card for money
         }
+
+        inplay.w[i] = CARD_WIDTH*window_scale_x;
+        inplay.h[i] = CARD_HEIGHT*window_scale_y;
 
         inplay.vx[i] = (inplay.tx[i] - inplay.x[i]) / LERP_SPEED;
         inplay.vy[i] = (inplay.ty[i] - inplay.y[i]) / LERP_SPEED;
         inplay.y[i] += inplay.vy[i] * dt;
         inplay.x[i] += inplay.vx[i] * dt;
 
-        inplay.w[i] = CARD_WIDTH*window_scale_x;
-        inplay.h[i] = CARD_HEIGHT*window_scale_y;
-
     }
 
     // if you click on the deck, it will draw a card
     if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, playzones.x[ZONE_DECK], playzones.y[ZONE_DECK], playzones.w[ZONE_DECK], playzones.h[ZONE_DECK])) {
         if (playzones.num_cards[ZONE_HAND] < playzones.max_cards[ZONE_HAND]) draw_cards(1, true);
-    }
-
-    if (currKeyState[SDL_SCANCODE_1] && !prevKeyState[SDL_SCANCODE_1]) {
-        hand_slots+=1;
-        if (hand_slots > 8) hand_slots = 8;
-    }
-
-    if (currKeyState[SDL_SCANCODE_SPACE] && !prevKeyState[SDL_SCANCODE_SPACE]){
-        if (hitboxes) {
-            hitboxes = false;
-        } else {
-            hitboxes = true;
-        }
     }
 }
 
