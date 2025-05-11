@@ -38,8 +38,8 @@ bool custom_cursor = false;
 
 #define LERP_SPEED 0.25
 
-#define MAX_CARDS 99
-#define MAX_ZONES 5
+#define MAX_CARDS 10
+#define MAX_ZONES 10
 
 #define CARD_HEIGHT 190
 #define CARD_WIDTH 142
@@ -47,7 +47,7 @@ bool custom_cursor = false;
 #define CARD_GROW 0.05
 #define CARD_MARGIN 50
 
-#define TOTAL_CARDS 1000
+#define TOTAL_CARDS 10
 
 typedef struct Cards {
     int ID[MAX_CARDS];
@@ -91,8 +91,9 @@ typedef enum ZoneType {
     ZONE_HAND,
     ZONE_DISCARD,
     ZONE_EQUIP_1,
-    ZONE_EVENT,
     ZONE_EQUIP_2,
+    ZONE_EQUIP_3,
+    ZONE_EVENT,
 } ZoneType;
 
 typedef struct CardID{
@@ -362,7 +363,20 @@ void draw_event_card(int id, bool message) {
     if (message) printf("draw card\n");
 }
 
-// ----------------------------------------------------------------------------------------------------
+void shuffle_hand(bool message) {
+    for (int i = 0; i < MAX_CARDS; i++) {
+        if (inplay.isActive[i] == false) continue;
+
+        if (inplay.isDragging[i]) isDragging = false;
+        playzones.num_cards[inplay.zoneID[i]] -= 1;
+        add_card(inplay.ID[i], false);
+        discard_card(&inplay, i, false);
+    }
+
+    if (message) printf("shuffled hand into deck\n");
+}
+
+// SETUP FUNCTIONS ----------------------------------------------------------------------------------------------------
 
 void make_card(int id, const char* cardpath, const char* name, const char* description, float stats[6]) {
     strcpy(cards.cardpath[id], cardpath);
@@ -444,8 +458,6 @@ void update_window() {
     window_scale_y = window_height/1000.0f;
 }
 
-// LOOP FUNCTIONS ----------------------------------------------------------------------------------------------------
-
 void setup() {
     // LOAD CARDS
 
@@ -476,9 +488,11 @@ void setup() {
         playzones.max_cards[i]=0;
     }
 
-    for (int i = 0; i < 54; i++) { add_card(rand() % 10, false); }
+    for (int i = 0; i < 3; i++) { add_card(rand() % TOTAL_CARDS, false); }
 
 }
+
+// LOOP FUNCTIONS ----------------------------------------------------------------------------------------------------
 
 void inputs() {
     while (SDL_PollEvent(&event) != 0) {
@@ -492,9 +506,14 @@ void inputs() {
 
 void dev_tools() {
 
+    // shuffle hand into deck
+    if (currKeyState[SDL_SCANCODE_3] && !prevKeyState[SDL_SCANCODE_3]) {
+        shuffle_hand(true);
+    }
+
     // draws an event card when P key is pressed
     if (currKeyState[SDL_SCANCODE_P] && !prevKeyState[SDL_SCANCODE_P]) {
-        draw_event_card(0, false);
+        draw_event_card(rand() % TOTAL_CARDS, false);
     }
 
     // if you press the "1" key it will increase the number of hand_slots you have by 1
@@ -580,9 +599,9 @@ void update() {
 
         // checks if a card is to be deleted
         if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5) {
+            if (inplay.isDragging[i]) isDragging = false;
             playzones.num_cards[inplay.zoneID[i]] -= 1;
             // add_card(inplay.ID[i], true);
-            if (inplay.isDragging[i]) isDragging = false;
             discard_card(&inplay, i, true);
             // sell the card for / give player money
         }

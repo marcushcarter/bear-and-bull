@@ -7,7 +7,7 @@
 - *2025-05-08* added card fanning (angle and translation), organized code, cleaned up, changed how cards are rendered
 - *2025-05-09* added some base stats for cards, fixed fanning, added deck texture, finished card shmovement prototype, started translating to opengl
 
-- *2025-05-11* switched game idea, seperated window scale to x/y, changed make_zone function, gave up on opengl, draw_card_id func,
+- *2025-05-11* switched game idea, seperated window scale to x/y, changed make_zone function, gave up on opengl, draw_card_id func, delete delay, render func rewrite
 
 
 
@@ -69,7 +69,7 @@ FACTORS THAT AFFECT A STOCKS RISE AND FALL
 - taxes
 - 
 
-
+// I wan
 
 
 
