@@ -30,6 +30,7 @@ int seed;
 float game_speed = 2;
 int pick_tix = 0;
 int hand_slots = 3;
+bool hitboxes = false;
 
 #define LERP_SPEED 0.25
 
@@ -138,8 +139,6 @@ typedef struct CardID{
     // float tickets_use[TOTAL_CARDS];
 
 } CardID; 
-
-
 
 Cards inplay;
 Cards indeck;
@@ -259,7 +258,7 @@ void discard_card(Cards* cards, int id, bool message) {
 
 void draw_cards(int num, bool message) {
     for (int i = 0; i < num; i++) {
-        if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]-1) continue; // check quickly to make sure the hand is not full
+        if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) continue; // check quickly to make sure the hand is not full
         if (!pick_tix > 0) continue; // checks if you have any pickup tickets
         if (indeck.num <= 0) continue; // quick check for if there is actually any cards in the deck
 
@@ -517,16 +516,40 @@ void update() {
         hand_slots+=1;
         if (hand_slots > 8) hand_slots = 8;
     }
+
+    if (currKeyState[SDL_SCANCODE_SPACE] && !prevKeyState[SDL_SCANCODE_SPACE]){
+        if (hitboxes) {
+            hitboxes = false;
+        } else {
+            hitboxes = true;
+        }
+    }
+}
+
+void render2() {
+
+    // zones
+    // graph
+    // assistant
+    // cards
+    // cursor
+
+
+
 }
 
 void render() {
 
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderClear(renderer);
+    // float sineh;
+    // float sinea;
 
     // zones
     for (int j = 0; j < MAX_ZONES; j++) {
         if (!playzones.isActive[j]) continue;
+
+        // hitboxes
+
+        // textures
 
         if (j == ZONE_DISCARD) {
             SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -536,31 +559,43 @@ void render() {
 
         SDL_FRect zonehitbox = {playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]};
         if (j == ZONE_DECK) {
-            float sine = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f)));
-            SDL_FRect zone = {playzones.x[j], playzones.y[j] - sine*window_scale, playzones.w[j], playzones.h[j]};
-            double angle = sine/2;
+            float sinea, sineh;
+
+            sineh = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f)));
+            sinea = 5 *  sin(1*((SDL_GetTicks() / 1000.0f)));
+            SDL_FRect zone = {playzones.x[j], playzones.y[j] - sineh*window_scale, playzones.w[j], playzones.h[j]};
+            double angle = sinea/2;
             SDL_FPoint center = {zone.w / 2, zone.h / 2};
             SDL_RenderTextureRotated(renderer, deck, NULL, &zone, angle, &center, SDL_FLIP_NONE);
-        } else {
-            SDL_RenderRect(renderer, &zonehitbox);
         }
+        
+        if (hitboxes) SDL_RenderRect(renderer, &zonehitbox);
+        
     }
 
     // cards
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!inplay.isActive[i]) continue;
 
+        // hitboxes
+
+        if (hitboxes) {
+            SDL_FRect cardhitbox = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderRect(renderer, &cardhitbox);
+        }
+        
+        // textures
+
         float card_grow_w = inplay.isDragging[i]*CARD_GROW*inplay.w[i]*window_scale;
         float card_grow_h = inplay.isDragging[i]*CARD_GROW*inplay.h[i]*window_scale;
 
         float sine = 0, fanning = 0;
-        if (!inplay.isDragging[i]) sine = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
         if (!inplay.isDragging[i]) {
             sine = 5 *  sin(2.0*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
             fanning = (inplay.zoneNum[i] - ((playzones.num_cards[inplay.zoneID[i]] + 1) / 2.0f)) * 2.5f;
         }
 
-        SDL_FRect cardhitbox = {inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]};
         SDL_FRect card = {inplay.x[i] - (inplay.w[i] / 2)  - (card_grow_w/2), inplay.y[i] - (inplay.h[i] / 2)  - (card_grow_h/2) - sine*window_scale, inplay.w[i] + card_grow_w, inplay.h[i] + card_grow_h};
         SDL_FPoint center = {card.w / 2, card.h / 2};
         if (!inplay.isDragging[i]) sine = 5 *  sin(1*((SDL_GetTicks() / 1000.0f) + (inplay.ID[i]*15)));
@@ -568,17 +603,12 @@ void render() {
 
         SDL_RenderTextureRotated(renderer, cards.cardtexture[inplay.ID[i]], NULL, &card, angle, &center, SDL_FLIP_NONE);
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        if (currKeyState[SDL_SCANCODE_SPACE]) SDL_RenderRect(renderer, &cardhitbox);
-
     }
 
     // cursor
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_FRect cursor = {mousex, mousey, 30.0f*window_scale, 30.0f*window_scale};
     SDL_RenderRect(renderer, &cursor);
-
-    SDL_RenderPresent(renderer);
 }
 
 void debug() {
@@ -625,7 +655,13 @@ int main() {
 
         inputs();
         update();
+
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
+        render2();
         render();
+        SDL_RenderPresent(renderer);
+
         debug();
 
         SDL_memcpy(prevKeyState, currKeyState, NUM_KEYS);

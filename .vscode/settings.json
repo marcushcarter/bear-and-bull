@@ -3,6 +3,8 @@
         "sdl_image.h": "c",
         "sdl.h": "c",
         "string.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "stdlib.h": "c",
+        "sdl_ttf.h": "c"
     }
 }
