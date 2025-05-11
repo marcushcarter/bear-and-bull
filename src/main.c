@@ -60,6 +60,7 @@ typedef struct Cards {
 
     int zoneID[MAX_CARDS];
     int zoneNum[MAX_CARDS];
+    float zoneTime[MAX_CARDS];
     
     bool isDragging[MAX_CARDS];
     bool isActive[MAX_CARDS];
@@ -305,6 +306,7 @@ void draw_cards(int num, bool message) {
         playzones.num_cards[ZONE_HAND]+=1;
         inplay.zoneID[inplayIndex] = ZONE_HAND;
         inplay.zoneNum[inplayIndex]=playzones.num_cards[ZONE_HAND];
+        inplay.zoneTime[inplayIndex] = (SDL_GetTicks()/1000.0f);
     
         isDragging = true;
         inplay.isDragging[inplayIndex] = true;
@@ -346,6 +348,7 @@ void draw_event_card(int id, bool message) {
     playzones.num_cards[ZONE_EVENT]+=1;
     inplay.zoneID[inplayIndex] = ZONE_EVENT;
     inplay.zoneNum[inplayIndex]=playzones.num_cards[ZONE_EVENT];
+    inplay.zoneTime[inplayIndex] = (SDL_GetTicks()/1000.0f);
 
     inplay.isDragging[inplayIndex] = false;
     inplay.isActive[inplayIndex] = true;
@@ -517,22 +520,16 @@ void update() {
                 // if you put the card into a zone (and it is not full)
                 if (point_box_collision(inplay.tx[i], inplay.ty[i], playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]) && (playzones.num_cards[j] < playzones.max_cards[j])) {
 
-                    // in the zone the card just left, every card after that one shifts down one space
-                    // if the zone is a discard pile, we delete the card
-                    // if it is not, we put the card in that zone
-                    if (j == ZONE_DISCARD) {
-                        if (inplay.isSellable[i]) {
-                            for (int l = 0; l < MAX_CARDS; l++) { if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) inplay.zoneNum[l] -= 1; }
-                            playzones.num_cards[inplay.zoneID[i]] -= 1;
-                            add_card(inplay.ID[i], true);
-                            discard_card(&inplay, i, true);
-                        }
-                    } else {
+                    // if the card is non sellable and the zone is discard, you cant put that card there
+                    if (!(j == ZONE_DISCARD && !inplay.isSellable[i])) {
+                        // in the zone the card just left, every card after that one shifts down one space
+                        // we put the card's data in that zone
                         for (int l = 0; l < MAX_CARDS; l++) { if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) inplay.zoneNum[l] -= 1; }
                         playzones.num_cards[inplay.zoneID[i]] -= 1;
                         playzones.num_cards[j] += 1;
                         inplay.zoneNum[i] = playzones.num_cards[j];
                         inplay.zoneID[i] = j;
+                        inplay.zoneTime[i] = (SDL_GetTicks()/1000.0f);
                     }
 
                     break;
@@ -553,6 +550,13 @@ void update() {
             float fanning = playzones.w[inplay.zoneID[i]] / 2 - ((CARD_WIDTH + CARD_SPACING) / 2.0f) * window_scale_x * playzones.num_cards[inplay.zoneID[i]] - 5*window_scale_x;
             inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2 + CARD_SPACING + ((inplay.zoneNum[i] - 1) * (CARD_WIDTH + CARD_SPACING)) )*window_scale_x + fanning;
             inplay.ty[i] = playzones.y[inplay.zoneID[i]] + playzones.h[inplay.zoneID[i]]/2;
+        }
+
+        // checks if a card is to be deleted
+        if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 3) {
+            playzones.num_cards[inplay.zoneID[i]] -= 1;
+            // add_card(inplay.ID[i], true);
+            discard_card(&inplay, i, true);
         }
 
         inplay.vx[i] = (inplay.tx[i] - inplay.x[i]) / LERP_SPEED;
