@@ -7,7 +7,7 @@
 - *2025-05-08* added card fanning (angle and translation), organized code, cleaned up, changed how cards are rendered
 - *2025-05-09* added some base stats for cards, fixed fanning, added deck texture, finished card shmovement prototype, started translating to opengl
 
-- *2025-05-11* switched game idea, seperated window scale to x/y, changed make_zone function, gave up on opengl, draw_card_id func, delete delay, render func rewrite
+- *2025-05-11* switched game idea, seperated window scale to x/y, changed make_zone function, gave up on opengl, draw_card_id func, delete delay, render func rewrite, thunk up the new game idea, 
 
 
 
@@ -16,45 +16,38 @@
 
 ### NEW idea
 
-- draw 3 cards at the start of the 60s round (these cards modify stats, money etc you make ex. money = x1.5)
-- make as much money as possible in the round by buying/selling stocks
-- 3 semi-random market actions happen in 15 second intervals in the round which is effected by the market state at the beggining of the round (ex market crash -> stocks price reduced by 60%)
-- get graded by how much temporary  money you have made each round
-- draft crads based on the grade you got into your deck (these are power ups)
+- start with a set of 10 common cards in your deck
+- start with only being able to draw 1 card at the beggining of rounds (max 6)
+- start with only 3 hand slots (max 6)
 
-- every round you are given 5 stocks to trade
-- drawing cards in between rounds costs more an more permanent money
+- each round is 60 seconds
+- the goal of each round is to buy/sell stocks to earn as much money as possible
+- at the beggining of the round you will draw cards from your deck
+- you can draw additional cards from your deck for an cost that increases every draw (resets at begging of the round) (ex. $5 -> $7 -> $9) <- draw price and inflation
+- you only getting a maximum amount of cards you can extra draw each round (stat)
 
+- in each round you are given 5 different stocks to trade from 
+- each of these stocks charts are previewed in the STOCK CHARTS section, but can be highlighted to view full stats
 
+- after 30 seconds, an event card will appear in the EVENT zone which will greatly positively or negatively affect your round
+- you cannot sell any event cards ever and no cards of any type can be put into the EVENT zone
+- you can add the event card to your hand for a price and it will be added to your deck at the end of the round
+- in the EVENT zone, cards effect are double
+    - so if it is a good card, you can leave it in the EVENT zone and risk losing it for double rewards, or you can add it to your deck permanently
+    - if it is a bad card, you can add it to your hand to decrease the effect, but you are at risk of getting it in the future from your deck, or you can leave it there and deal with the effects
+- if by the end of the round you do not move this card into your hand, it will be destroyed
+- you may also sell these cards by using "PERMA CHIPS" which are used every time you sell an unsellable card
 
-- 60 second rounds
-- draw three cards at beggining of the round from your deck
-- you can sell these hand cards (removes them forever and gets them out of your hand)
-- you can draw more cards into your hand from your deck (with an increasing price)
+- once the round is over, you will be graded on how much money you made, cards sold, cards drawn etc and get bonus money based on your grade
+- you will also get to draft out of 3 options consisting of cards, stat increases, money and PERMA CHIPS
+- these will either affect your person or be added to your deck
+- you can increase how many cards you can draft from a stat boost (from drafting -> RARE)
+- stat increases: (number of draw cards, hand slots, draft count, luck, extra draw max, draw price, draw price inflation,)
 
-- depending on how the round went you earn mor ecapital and can draft up to 3 cards into your deck 
-- any cards in your hand at the end of the round go back into your deck
+CARD IDEAS
 
-
-
-
-
-
-
-CARDS have a NUM of STATS
-
-- luck
-- money (int)
-- isLoan
-- 
-
-
-
-
-
-TO FIND THE VALUE OF A STOCK AT A SPECIFIC POINT
-
-
+- cash cards that you can sell for money
+- loan cards that you can sell for -money
 
 
 
@@ -68,8 +61,6 @@ FACTORS THAT AFFECT A STOCKS RISE AND FALL
 - global events
 - taxes
 - 
-
-// I wan
 
 
 

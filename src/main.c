@@ -325,9 +325,9 @@ void draw_cards(int num, bool message) {
     }
 }
 
-void draw_event_card(int id, bool message) {
+void draw_card_id(ZoneType ZONE, int id, bool message) {
 
-    if (playzones.num_cards[ZONE_EVENT] >= playzones.max_cards[ZONE_EVENT]) return; // check quickly to make sure the hand is not full
+    if (playzones.num_cards[ZONE] >= playzones.max_cards[ZONE]) return; // check quickly to make sure the hand is not full
 
     // check if there is any space in the hand
 
@@ -344,14 +344,20 @@ void draw_event_card(int id, bool message) {
 
     inplay.ID[inplayIndex] = id;
 
-    inplay.x[inplayIndex] = (playzones.x[ZONE_EVENT]+playzones.w[ZONE_EVENT]/2)*window_scale_x;
-    inplay.y[inplayIndex] = ((playzones.y[ZONE_EVENT]+playzones.h[ZONE_EVENT]/2)+500)*window_scale_y;
+    if (ZONE == ZONE_EVENT) {
+        inplay.x[inplayIndex] = (playzones.x[ZONE]+playzones.w[ZONE]/2)*window_scale_x;
+        inplay.y[inplayIndex] = ((playzones.y[ZONE]+playzones.h[ZONE]/2)+500)*window_scale_y;
+    } else {
+        inplay.x[inplayIndex] = (playzones.x[ZONE_DECK]+playzones.w[ZONE_DECK]/2)*window_scale_x;
+        inplay.y[inplayIndex] = ((playzones.y[ZONE_DECK]+playzones.h[ZONE_DECK]/2)+500)*window_scale_y;
+    }
+    
     inplay.w[inplayIndex] = CARD_WIDTH;
     inplay.h[inplayIndex] = CARD_HEIGHT;
 
-    playzones.num_cards[ZONE_EVENT]+=1;
-    inplay.zoneID[inplayIndex] = ZONE_EVENT;
-    inplay.zoneNum[inplayIndex]=playzones.num_cards[ZONE_EVENT];
+    playzones.num_cards[ZONE]+=1;
+    inplay.zoneID[inplayIndex] = ZONE;
+    inplay.zoneNum[inplayIndex]=playzones.num_cards[ZONE];
     inplay.zoneTime[inplayIndex] = (SDL_GetTicks()/1000.0f);
 
     inplay.isDragging[inplayIndex] = false;
@@ -488,7 +494,7 @@ void setup() {
         playzones.max_cards[i]=0;
     }
 
-    for (int i = 0; i < 3; i++) { add_card(rand() % TOTAL_CARDS, false); }
+    for (int i = 0; i < 10; i++) { add_card(rand() % TOTAL_CARDS, false); }
 
 }
 
@@ -513,7 +519,7 @@ void dev_tools() {
 
     // draws an event card when P key is pressed
     if (currKeyState[SDL_SCANCODE_P] && !prevKeyState[SDL_SCANCODE_P]) {
-        draw_event_card(rand() % TOTAL_CARDS, false);
+        draw_card_id(ZONE_HAND, rand() % TOTAL_CARDS, false);
     }
 
     // if you press the "1" key it will increase the number of hand_slots you have by 1
@@ -545,7 +551,7 @@ void update() {
 
     // draws an event card every 10 seconds
     int ticks = (int)(SDL_GetTicks() / 1000.0f) % 10;
-    if (ticks == 9) {draw_event_card(0, false);}
+    if (ticks == 9) {draw_card_id(ZONE_EVENT, 0, false);}
 
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!inplay.isActive[i]) continue;
@@ -565,12 +571,15 @@ void update() {
                 // if you put the card into a zone (and it is not full)
                 if (point_box_collision(inplay.tx[i], inplay.ty[i], playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]) && (playzones.num_cards[j] < playzones.max_cards[j])) {
 
-                    // if the card is non sellable and the zone is discard, you cant put that card there
-                    if (!(j == ZONE_DISCARD && !inplay.isSellable[i])) {
+                    // if the card is non sellable and the zone is event or discard, you cant put that card there
+                    if (!(!inplay.isSellable[i] && j == ZONE_DISCARD) && j != ZONE_EVENT) {
                         // in the zone the card just left, every card after that one shifts down one space
-                        // we put the card's data in that zone
-                        for (int l = 0; l < MAX_CARDS; l++) { if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) inplay.zoneNum[l] -= 1; }
+                        for (int l = 0; l < MAX_CARDS; l++) { 
+                            if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) 
+                                inplay.zoneNum[l] -= 1; 
+                        }
                         playzones.num_cards[inplay.zoneID[i]] -= 1;
+                        // we then put the card's data in the new zone
                         playzones.num_cards[j] += 1;
                         inplay.zoneNum[i] = playzones.num_cards[j];
                         inplay.zoneID[i] = j;
@@ -598,7 +607,7 @@ void update() {
         }
 
         // checks if a card is to be deleted
-        if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5) {
+        if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && !(inplay.zoneID[i] == ZONE_DISCARD && !inplay.isSellable[i])) {
             if (inplay.isDragging[i]) isDragging = false;
             playzones.num_cards[inplay.zoneID[i]] -= 1;
             // add_card(inplay.ID[i], true);
