@@ -29,7 +29,7 @@ float window_scale_y = 1.0f;
 
 int seed;
 float game_speed = 2;
-int hand_slots = 3;
+int profile;
 
 bool show_hitboxes = true;
 bool show_textures = false;
@@ -52,7 +52,22 @@ bool custom_cursor = false;
 
 typedef struct ProfileInfo {
     int ID[MAX_PROFILES]; // profile number
+    char name[MAX_PROFILES][256]; // profile name
 
+    int money[MAX_PROFILES]; // currency
+    // int permachips[MAX_PROFILES]; // used to delete unsellable cards
+    // int loans[MAX_PROFILES]; // how many loans you have left (3 per run)
+
+    int handslots[MAX_PROFILES]; // the maximum cards you can have in your hand
+    // int drawnum[MAX_PROFILES]; // number of cards you draw at the beggining of each round
+    // int exdrawprice[MAX_PROFILES]; // how much money the first extra draw is
+    // int exdrawinflation[MAX_PROFILES]; // how much money the draws increase by after the first one
+
+    // extra card drawing
+    // ------------
+    int extraprice[MAX_PROFILES]; // how much an extra card draw costs
+    int extrainflation[MAX_PROFILES]; // how much money the extra draw price increases by every time
+    int extracount[MAX_PROFILES]; // how many times you have drawn an extra card in a round
     
 
     // int money[MAX_PROFILES];
@@ -301,6 +316,8 @@ void draw_cards(int num, bool message) {
         if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) continue;
         // checks if there are any valid cards in your deck
         if (indeck.num <= 0) continue;
+        // checks if you have enough money
+        if (profileinfo.money[profile] < (profileinfo.extraprice[profile] + profileinfo.extrainflation[profile] * profileinfo.extracount[profile])) continue;
 
         // Finds all the valid cards in your deck
         // --------------------------------------
@@ -350,6 +367,9 @@ void draw_cards(int num, bool message) {
         
         inplay.num += 1;
 
+        profileinfo.money[profile] -= (profileinfo.extraprice[profile] + profileinfo.extrainflation[profile] * profileinfo.extracount[profile]);
+        profileinfo.extracount[profile] += 1;
+
         if (message) printf("draw card\n");
 
         // removes the card from your deck
@@ -357,10 +377,10 @@ void draw_cards(int num, bool message) {
     }
 }
 
-void draw_card_id(ZoneType ZONE, int id, bool message) {
+void draw_event(int id, bool message) {
 
     // checks if there any space in the targetted zone
-    if (playzones.num_cards[ZONE] >= playzones.max_cards[ZONE]) return;
+    if (playzones.num_cards[ZONE_EVENT] >= playzones.max_cards[ZONE_EVENT]) return;
 
     // finds the first empty space in your hand
     // ----------------------------------------
@@ -378,20 +398,14 @@ void draw_card_id(ZoneType ZONE, int id, bool message) {
 
     inplay.ID[inplayIndex] = id;
 
-    if (ZONE == ZONE_EVENT) {
-        inplay.x[inplayIndex] = (playzones.x[ZONE] + playzones.w[ZONE]/2);
-        inplay.y[inplayIndex] = ((playzones.y[ZONE] + playzones.h[ZONE]/2) - 1000);
-    } else {
-        inplay.x[inplayIndex] = (gamebuttons.x[BUTTON_DECK] + gamebuttons.w[BUTTON_DECK]/2);
-        inplay.y[inplayIndex] = ((gamebuttons.y[BUTTON_DECK] + gamebuttons.h[BUTTON_DECK]/2));
-    }
-    
+    inplay.x[inplayIndex] = (playzones.x[ZONE_EVENT] + playzones.w[ZONE_EVENT]/2);
+    inplay.y[inplayIndex] = ((playzones.y[ZONE_EVENT] + playzones.h[ZONE_EVENT]/2) - 1000);
     inplay.w[inplayIndex] = CARD_WIDTH;
     inplay.h[inplayIndex] = CARD_HEIGHT;
 
-    playzones.num_cards[ZONE] += 1;
-    inplay.zoneID[inplayIndex] = ZONE;
-    inplay.zoneNum[inplayIndex] = playzones.num_cards[ZONE];
+    playzones.num_cards[ZONE_EVENT] += 1;
+    inplay.zoneID[inplayIndex] = ZONE_EVENT;
+    inplay.zoneNum[inplayIndex] = playzones.num_cards[ZONE_EVENT];
     inplay.zoneTime[inplayIndex] = (SDL_GetTicks()/1000.0f);
 
     inplay.isDragging[inplayIndex] = false;
@@ -423,7 +437,7 @@ void shuffle_hand(bool message) {
 
 // SETUP FUNCTIONS ====================================================================================================
 
-void make_card(int id, const char* cardpath, const char* name, const char* description, float stats[6]) {
+void make_card(int id, const char* cardpath, const char* name, const char* description, float stats[100]) {
 
     // set string data
     // ---------------
@@ -434,14 +448,14 @@ void make_card(int id, const char* cardpath, const char* name, const char* descr
     // set stat data
     // -------------
 
-    // if (stats != NULL) {
-    //     cards.range[id] = stats[0]; // for ranged
-    //     cards.min_damage[id] = stats[1];
-    //     cards.max_damage[id] = stats[2];
-    //     cards.lifesteal[id] = stats[3];
-    //     cards.ammo[id] = stats[4];
-    //     cards.reload[id] = stats[5];
-    // }
+    if (stats != NULL) {
+        cards.price[id] = stats[0]; // for ranged
+        // cards.min_damage[id] = stats[1];
+        // cards.max_damage[id] = stats[2];
+        // cards.lifesteal[id] = stats[3];
+        // cards.ammo[id] = stats[4];
+        // cards.reload[id] = stats[5];
+    }
 
 }
 
@@ -484,13 +498,13 @@ void update_zones() {
 
     // new version
     // make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
-    // make_zone(ZONE_HAND, hand_slots, CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_HAND, profileinfo.handslots[profile], CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     // make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     // make_zone(ZONE_EQUIP_1, 1, CARD_MARGIN, CARD_MARGIN, 0, 0);
     // make_zone(ZONE_EQUIP_2, 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN, 0, 0);
 
     // pre idea change version
-    // make_zone(ZONE_HAND, hand_slots, CARD_MARGIN, CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_HAND, profileinfo.handslots[profile], CARD_MARGIN, CARD_MARGIN, 0, 0);
     // make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
     // make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     // make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
@@ -498,7 +512,7 @@ void update_zones() {
 
     // post idea change version
     make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    make_zone(ZONE_HAND, 7, 210, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 1080, 0);
+    make_zone(ZONE_HAND, profileinfo.handslots[profile], 210, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 1080, 0);
     make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
 
     make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
@@ -531,16 +545,16 @@ void setup() {
 
     // LOAD CARDS
     // ----------
-    make_card(0, "./resources/textures/card1.png", "card 1", "card of the number of one", NULL);
-    make_card(1, "./resources/textures/card2.png", "card 2", "card of the number of two", floatarr(6, 0, 1, 2, 3, 4, 6));
-    make_card(2, "./resources/textures/card3.png", "card 3", "card of the number of three", floatarr(6, 10, 3, 9, 8, 6, 1));
-    make_card(3, "./resources/textures/card4.png", "card 4", "card of the number of four", floatarr(6, 5, 4, 3, 2, 1, 1));
-    make_card(4, "./resources/textures/card5.png", "card 5", "card of the number of five", NULL);
-    make_card(5, "./resources/textures/card6.png", "card 6", "card of the number of six", NULL);
-    make_card(6, "./resources/textures/card7.png", "card 7", "card of the number of seven", NULL);
-    make_card(7, "./resources/textures/card8.png", "card 8", "card of the number of eight", NULL);
-    make_card(8, "./resources/textures/card9.png", "card 9", "card of the number of nine", NULL);
-    make_card(9, "./resources/textures/card10.png", "card 10", "card of the number of ten", NULL);
+    make_card(0, "./resources/textures/card1.png", "card 1", "card of the number of one", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(1, "./resources/textures/card2.png", "card 2", "card of the number of two", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(2, "./resources/textures/card3.png", "card 3", "card of the number of three", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(3, "./resources/textures/card4.png", "card 4", "card of the number of four", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(4, "./resources/textures/card5.png", "card 5", "card of the number of five", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(5, "./resources/textures/card6.png", "card 6", "card of the number of six", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(6, "./resources/textures/card7.png", "card 7", "card of the number of seven", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(7, "./resources/textures/card8.png", "card 8", "card of the number of eight", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(8, "./resources/textures/card9.png", "card 9", "card of the number of nine", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(9, "./resources/textures/card10.png", "card 10", "card of the number of ten", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
 
     update_window();
     update_zones();
@@ -566,7 +580,18 @@ void setup() {
 
     // ADD CARDS TO DECK
     // ---------------------
-    for (int i = 0; i < 10; i++) { add_card(rand() % TOTAL_CARDS, false); }
+    for (int i = 0; i < 1; i++) { add_card(rand() % TOTAL_CARDS, false); }
+
+    // INITIALIZE PROFILE INFO
+    // -----------------------
+    profile = 0;
+
+    profileinfo.handslots[profile] = 3;
+
+    profileinfo.money[profile] = 100;
+    profileinfo.extraprice[profile] = 7;
+    profileinfo.extrainflation[profile] = 2;
+    profileinfo.extracount[profile] = 0;
 
 }
 
@@ -605,8 +630,8 @@ void dev_tools() {
     // 3 - increase hand slots
     // -----------------------
     if (currKeyState[SDL_SCANCODE_3] && !prevKeyState[SDL_SCANCODE_3]) {
-        hand_slots += 1;
-        if (hand_slots > 8) hand_slots = 8;
+        profileinfo.handslots[profile] += 1;
+        if (profileinfo.handslots[profile] > 7) profileinfo.handslots[profile] = 7;
     }
 
     // 4 - shuffle hand into deck
@@ -618,7 +643,7 @@ void dev_tools() {
     // 5 - spawn event card
     // --------------------
     if (currKeyState[SDL_SCANCODE_5] && !prevKeyState[SDL_SCANCODE_5]) {
-        draw_card_id(ZONE_EVENT, rand() % TOTAL_CARDS, false);
+        draw_event(rand() % TOTAL_CARDS, false);
     }
 
 }
@@ -628,10 +653,10 @@ void update() {
     update_window();
     update_zones();
 
-    // Draws an event card once every 30 seconds
+    // Draws an event card once every 15 seconds
     // ------------------------------------
     int ticks = (int)(SDL_GetTicks() / 100.0f) % 150;
-    if (ticks == 150 - 1) {draw_card_id(ZONE_EVENT, 0, false);}
+    if (ticks == 150 - 1) {draw_event(0, false);}
 
     // CARD UPDATES
     // ------------
@@ -676,6 +701,18 @@ void update() {
             inplay.zoneTime[i] = (SDL_GetTicks() / 1000.0f);
         }
 
+        // Checks if a card should be sold
+        // -------------------------------
+        if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
+            if (inplay.isDragging[i]) isDragging = false;
+            profileinfo.money[profile] += (cards.price[inplay.ID[i]]);
+            playzones.num_cards[inplay.zoneID[i]] -= 1;
+            // add_card(inplay.ID[i], true);
+            // profileinfo.money[profile] += (int)(cards.price[inplay.ID[i]]);
+            // visual
+            discard_card(&inplay, i, true);
+        }
+
         // if you are dragging a card it goes to your mouse
         // if you are not, it goes back to its zone
         // ------------------------------------------------
@@ -686,16 +723,6 @@ void update() {
             float fanning = playzones.w[inplay.zoneID[i]]/2 - ((CARD_WIDTH + CARD_SPACING) / 2.0f)*window_scale_x * playzones.num_cards[inplay.zoneID[i]] - 5*window_scale_x;
             inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2 + CARD_SPACING + ((inplay.zoneNum[i] - 1)*(CARD_WIDTH + CARD_SPACING)))*window_scale_x + fanning;
             inplay.ty[i] = playzones.y[inplay.zoneID[i]] + playzones.h[inplay.zoneID[i]]/2;
-        }
-
-        // Checks if a card should be sold
-        // -------------------------------
-        if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
-            if (inplay.isDragging[i]) isDragging = false;
-            playzones.num_cards[inplay.zoneID[i]] -= 1;
-            // add_card(inplay.ID[i], true);
-            discard_card(&inplay, i, true);
-            // sell the card for / give player money
         }
 
         inplay.w[i] = CARD_WIDTH*window_scale_x;
@@ -725,18 +752,11 @@ void update() {
             gamebuttons.isClicked[i] = false;
         }
 
-
         // Deck Button
         // -----------
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) {
             if (playzones.num_cards[ZONE_HAND] < playzones.max_cards[ZONE_HAND]) draw_cards(1, true);
         }
-
-
-
-
-
-
     }
 }
 
@@ -867,6 +887,10 @@ void debug() {
     // }
 
     // printf("w:%d h:%d", window_width, window_height);
+
+    // printf("%d\n", profileinfo.money[profile]);
+
+    // printf("%f\n", cards.price[3]);
 }
 
 // MAIN FUNCTION ====================================================================================================
