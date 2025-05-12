@@ -256,7 +256,7 @@ void add_card(int id, bool message) {
     
     indeck.num += 1;
                             
-    if (message) printf("added to deck\n");
+    if (message) printf("card added to deck\n");
 
     return;
 }
@@ -283,7 +283,7 @@ void discard_card(Cards* cards, int id, bool message) {
     
     cards->num -= 1;
                             
-    if (message) printf("discard card\n");
+    if (message) printf("discarded card\n");
 
     return;
 }
@@ -373,7 +373,7 @@ void draw_card_id(ZoneType ZONE, int id, bool message) {
 
     if (ZONE == ZONE_EVENT) {
         inplay.x[inplayIndex] = (playzones.x[ZONE] + playzones.w[ZONE]/2);
-        inplay.y[inplayIndex] = ((playzones.y[ZONE] + playzones.h[ZONE]/2) + 500);
+        inplay.y[inplayIndex] = ((playzones.y[ZONE] + playzones.h[ZONE]/2) - 1000);
     } else {
         inplay.x[inplayIndex] = (gamebuttons.x[BUTTON_DECK] + gamebuttons.w[BUTTON_DECK]/2);
         inplay.y[inplayIndex] = ((gamebuttons.y[BUTTON_DECK] + gamebuttons.h[BUTTON_DECK]/2));
@@ -470,26 +470,33 @@ void make_button(ButtonType button, int x, int y, int w, int h) {
 
 void update_zones() {
     // original prototype
-    // make_zone(ZONE_DISCARD, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
-    // make_zone(ZONE_HAND, 9, CARD_MARGIN, (1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN));
-    // make_zone(ZONE_EQUIP_1, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN);
-    // make_zone(ZONE_DECK, 0, CARD_MARGIN, CARD_MARGIN);
+    // make_zone(ZONE_DISCARD, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_HAND, 9, CARD_MARGIN, (1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN), 0, 0);
+    // make_zone(ZONE_EQUIP_1, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
+    // make_button(BUTTON_DECK, CARD_MARGIN, CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
 
     // new version
-    // make_zone(ZONE_DECK, 0, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
-    // make_zone(ZONE_HAND, hand_slots, CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
-    // make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN);
-    // make_zone(ZONE_EQUIP_1, 1, CARD_MARGIN, CARD_MARGIN);
-    // make_zone(ZONE_EQUIP_2, 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN);
+    // make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    // make_zone(ZONE_HAND, hand_slots, CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_EQUIP_1, 1, CARD_MARGIN, CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_EQUIP_2, 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN, 0, 0);
 
-    // Planned version
-    // make_zone(ZONE_DECK, 0, CARD_MARGIN, 2000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    make_zone(ZONE_HAND, hand_slots, CARD_MARGIN, CARD_MARGIN, 0, 0);
-    make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
-    make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // pre idea change version
+    // make_zone(ZONE_HAND, hand_slots, CARD_MARGIN, CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
 
+    // post idea change version
     make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    make_zone(ZONE_HAND, 7, CARD_MARGIN+CARD_SPACING+CARD_WIDTH+10, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+
+
+    make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
 }
 
 SDL_Texture* deck;
@@ -864,7 +871,7 @@ int main() {
     srand(seed);
 
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("Retro FPS Deckbuilder", 1500, 1000, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
+    window = SDL_CreateWindow("Retro FPS Deckbuilder", 1500, 1000, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
