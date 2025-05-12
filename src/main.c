@@ -646,16 +646,16 @@ void setup() {
 
     // LOAD CARDS
     // ----------
-    make_card(0, "./resources/textures/card1.png", "card 1", "card of the number of one", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(1, "./resources/textures/card2.png", "card 2", "card of the number of two", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(2, "./resources/textures/card3.png", "card 3", "card of the number of three", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(3, "./resources/textures/card4.png", "card 4", "card of the number of four", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(4, "./resources/textures/card5.png", "card 5", "card of the number of five", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(5, "./resources/textures/card6.png", "card 6", "card of the number of six", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(6, "./resources/textures/card7.png", "card 7", "card of the number of seven", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(7, "./resources/textures/card8.png", "card 8", "card of the number of eight", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(8, "./resources/textures/card9.png", "card 9", "card of the number of nine", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(9, "./resources/textures/card10.png", "card 10", "card of the number of ten", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(0, "./resources/textures/card1.png", "Normal Joker", "card of the number of one", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(1, "./resources/textures/card2.png", "Flame Boy", "card of the number of two", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(2, "./resources/textures/card3.png", "Peaked", "card of the number of three", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(3, "./resources/textures/card4.png", "Eg", "card of the number of four", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(4, "./resources/textures/card5.png", "Ballot Joker", "card of the number of five", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(5, "./resources/textures/card6.png", "Pokemon Card Joker", "card of the number of six", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(6, "./resources/textures/card7.png", "Bunanu", "card of the number of seven", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(7, "./resources/textures/card8.png", "Caino", "card of the number of eight", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(8, "./resources/textures/card9.png", "Purple Magic", "card of the number of nine", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(9, "./resources/textures/card10.png", "Planet Joker", "card of the number of ten", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
 
     update_window();
     update_zones();
