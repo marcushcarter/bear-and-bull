@@ -303,8 +303,8 @@ void draw_cards(int num, bool message) {
 
         inplay.ID[inplayIndex] = indeck.ID[indexNum];
     
-        inplay.x[inplayIndex] = (playzones.x[ZONE_DECK]+playzones.w[ZONE_DECK]/2)*window_scale_x;
-        inplay.y[inplayIndex] = (playzones.y[ZONE_DECK]+playzones.h[ZONE_DECK]/2)*window_scale_y;
+        inplay.x[inplayIndex] = (playzones.x[ZONE_DECK]+playzones.w[ZONE_DECK]/2);
+        inplay.y[inplayIndex] = (playzones.y[ZONE_DECK]+playzones.h[ZONE_DECK]/2);
         inplay.w[inplayIndex] = CARD_WIDTH;
         inplay.h[inplayIndex] = CARD_HEIGHT;
     
@@ -349,11 +349,11 @@ void draw_card_id(ZoneType ZONE, int id, bool message) {
     inplay.ID[inplayIndex] = id;
 
     if (ZONE == ZONE_EVENT) {
-        inplay.x[inplayIndex] = (playzones.x[ZONE] + playzones.w[ZONE]/2) * window_scale_x;
-        inplay.y[inplayIndex] = ((playzones.y[ZONE] + playzones.h[ZONE]/2) + 500) * window_scale_y;
+        inplay.x[inplayIndex] = (playzones.x[ZONE] + playzones.w[ZONE]/2);
+        inplay.y[inplayIndex] = ((playzones.y[ZONE] + playzones.h[ZONE]/2) + 500);
     } else {
-        inplay.x[inplayIndex] = (playzones.x[ZONE_DECK] + playzones.w[ZONE_DECK]/2) * window_scale_x;
-        inplay.y[inplayIndex] = ((playzones.y[ZONE_DECK] + playzones.h[ZONE_DECK]/2) + 500) * window_scale_y;
+        inplay.x[inplayIndex] = (playzones.x[ZONE_DECK] + playzones.w[ZONE_DECK]/2);
+        inplay.y[inplayIndex] = ((playzones.y[ZONE_DECK] + playzones.h[ZONE_DECK]/2));
     }
     
     inplay.w[inplayIndex] = CARD_WIDTH;
@@ -561,7 +561,7 @@ void dev_tools() {
     // 5 - spawn event card
     // --------------------
     if (currKeyState[SDL_SCANCODE_5] && !prevKeyState[SDL_SCANCODE_5]) {
-        draw_card_id(ZONE_HAND, rand() % TOTAL_CARDS, false);
+        draw_card_id(ZONE_EVENT, rand() % TOTAL_CARDS, false);
     }
 
 }
@@ -638,7 +638,7 @@ void update() {
         }
 
         // Checks if a card should be sold
-        // ----------------------------------
+        // -------------------------------
         if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
             if (inplay.isDragging[i]) isDragging = false;
             playzones.num_cards[inplay.zoneID[i]] -= 1;
