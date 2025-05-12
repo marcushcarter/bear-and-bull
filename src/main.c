@@ -103,6 +103,8 @@ Cards indeck;
 
 typedef struct Zones {
     int ID[MAX_ZONES];
+    SDL_Texture* zonetexture[MAX_ZONES];
+    char zonepath[MAX_ZONES][256];
 
     float x[MAX_ZONES];
     float y[MAX_ZONES];
@@ -188,6 +190,9 @@ typedef enum ButtonType {
 
 typedef struct Buttons {
     int ID[MAX_BUTTONS];
+    SDL_Texture* buttontexture[MAX_BUTTONS];
+    char buttonpath[MAX_BUTTONS][256];
+
 
     float x[MAX_BUTTONS];
     float y[MAX_BUTTONS];
@@ -241,8 +246,12 @@ void control_fps(float target_fps) {
 // DRAWING / DISCARDING CARDS FUNCTIONS ====================================================================================================
 
 void clear_cards(Cards* cards, bool message) {
+
     for (int i = 0; i < MAX_CARDS; i++) {
         
+        // DELET CARD AT INDEX
+        // -------------------
+
         cards->ID[i] = -1;
 
         cards->x[i] = 0;
@@ -309,6 +318,7 @@ void add_to_deck(int id, bool message) {
 }
 
 void add_to_hand(int id, bool message) {
+    if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // chack if there is any space in your hand
 
     // FIND IF AND WHERE AN IN PLAY SLOT IS OPEN
     // -------------------------------------
@@ -348,6 +358,7 @@ void add_to_hand(int id, bool message) {
 }
 
 void deck_to_hand(bool message) {
+    if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // chack if there is any space in your hand
     // checks if you have enough money
     // if (profileinfo.money[profile] < (profileinfo.extraprice[profile] + profileinfo.extrainflation[profile] * profileinfo.extracount[profile])) return;
 
@@ -465,6 +476,7 @@ void hand_to_deck(int inplayIndex, bool message) {
 
     // HAND COPY DELETED
 
+    playzones.num_cards[inplay.zoneID[inplayIndex]] -= 1;
     inplay.ID[inplayIndex] = -1;
 
     inplay.x[inplayIndex] = 0;
@@ -536,7 +548,6 @@ void shuffle_hand(bool message) {
         if (!inplay.isActive[i]) continue;
         if (inplay.zoneID[i] == ZONE_SELL) continue;
         if (inplay.zoneID[i] == ZONE_EVENT) continue;
-        playzones.num_cards[inplay.zoneID[i]] -= 1;
         hand_to_deck(i, false);
     }
     
@@ -599,7 +610,9 @@ void make_card(int id, const char* cardpath, const char* name, const char* descr
 
 }
 
-void make_zone(ZoneType zone, int slots, int x, int y, int w, int h) {
+void make_zone(ZoneType zone, const char* zonepath, int slots, int x, int y, int w, int h) {
+    strcpy(playzones.zonepath[zone], zonepath);
+
     playzones.max_cards[zone] = slots;
     playzones.x[zone] = x * window_scale_x;
     playzones.y[zone] = y * window_scale_y;
@@ -618,7 +631,9 @@ void make_zone(ZoneType zone, int slots, int x, int y, int w, int h) {
     playzones.isActive[zone] = true;
 }
 
-void make_button(ButtonType button, int x, int y, int w, int h) {
+void make_button(ButtonType button, const char* buttonpath, int x, int y, int w, int h) {
+    strcpy(gamebuttons.buttonpath[button], buttonpath);
+
     gamebuttons.ID[button] = button;
     gamebuttons.x[button] = x * window_scale_x;
     gamebuttons.y[button] = y * window_scale_y;
@@ -651,11 +666,11 @@ void update_zones() {
     // make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
 
     // post idea change version
-    make_zone(ZONE_SELL, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    make_zone(ZONE_HAND, profileinfo.handslots[profile], 210, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 1080, 0);
-    make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
+    make_zone(ZONE_SELL, "./resources/textures/deck.png", 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    make_zone(ZONE_HAND, "./resources/textures/deck.png", profileinfo.handslots[profile], 210, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 1080, 0);
+    make_zone(ZONE_EVENT, "./resources/textures/deck.png", 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
 
-    make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
     // make_button(BUTTON_LOAN, )
 
 }
@@ -663,13 +678,26 @@ void update_zones() {
 SDL_Texture* deck;
 bool load_textures() {
 
+    // LOAD TEXTURES FOR CARDS
+    // -----------------------
     for (int i = 0; i < TOTAL_CARDS; i++) {
         cards.cardtexture[i] = IMG_LoadTexture(renderer, cards.cardpath[i]);
         SDL_SetTextureScaleMode(cards.cardtexture[i], SDL_SCALEMODE_NEAREST);
     }
 
-    deck = IMG_LoadTexture(renderer, "./resources/textures/deck.png");
-    SDL_SetTextureScaleMode(deck, SDL_SCALEMODE_NEAREST);
+    // LOAD TEXTURES FOR BUTTONS
+    // -----------------------
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+        gamebuttons.buttontexture[i] = IMG_LoadTexture(renderer, gamebuttons.buttonpath[i]);
+        SDL_SetTextureScaleMode(gamebuttons.buttontexture[i], SDL_SCALEMODE_NEAREST);
+    }
+
+    // LOAD TEXTURES FOR ZONES
+    // -----------------------
+    for (int i = 0; i < MAX_ZONES; i++) {
+        playzones.zonetexture[i] = IMG_LoadTexture(renderer, playzones.zonepath[i]);
+        SDL_SetTextureScaleMode(playzones.zonetexture[i], SDL_SCALEMODE_NEAREST);
+    }
 
 	return true;
 }
@@ -720,7 +748,7 @@ void setup() {
 
     // ADD CARDS TO DECK
     // ---------------------
-    for (int i = 0; i < 54; i++) { add_to_deck(rand() % TOTAL_CARDS, false); }
+    for (int i = 0; i < 1; i++) { add_to_deck(rand() % TOTAL_CARDS, false); }
 
     // INITIALIZE PROFILE INFO
     // -----------------------
@@ -786,7 +814,7 @@ void dev_tools() {
         event_card(rand() % TOTAL_CARDS, false);
     }
 
-    // 6 - shuffle hand into deck
+    // 6 - draw card id to hand
     // --------------------------
     if (currKeyState[SDL_SCANCODE_6] && !prevKeyState[SDL_SCANCODE_6]) {
         add_to_hand(rand() % TOTAL_CARDS, true);
@@ -829,7 +857,7 @@ void update() {
                 // CHecks a card is put into a zone that is not full
                 // Also checks it is not put into a invalid zone
                 // ---------------------------------------------
-                if (point_box_collision(inplay.tx[i], inplay.ty[i], playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j])) {
+                if (point_box_collision(inplay.tx[i], inplay.ty[i], playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]) && playzones.num_cards[j] < playzones.max_cards[j]) {
                     
                     // every card in the card's original zone shifts down one space
                     for (int l = 0; l < MAX_CARDS; l++) { 
@@ -911,7 +939,12 @@ void render() {
     for (int i = 0; i < MAX_ZONES; i++) {
         if (!playzones.isActive[i]) continue;
 
-        if (show_textures) {}
+        if (show_textures) {
+            float angle = 0;
+            SDL_FRect zonetexture = { playzones.x[i], playzones.y[i], playzones.w[i], playzones.h[i] };
+            SDL_FPoint center = {zonetexture.w / 2, zonetexture.h / 2};
+            SDL_RenderTextureRotated(renderer, playzones.zonetexture[i], NULL, &zonetexture, angle, &center, SDL_FLIP_NONE);
+        }
 
         if (show_hitboxes) {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -933,15 +966,15 @@ void render() {
             float button_grow_w = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.w[i];
             float button_grow_h = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.h[i];
 
-            SDL_FRect zone = {
+            SDL_FRect buttontexture = {
                 gamebuttons.x[i] - (button_grow_w/2), 
                 gamebuttons.y[i] - (button_grow_h/2), 
                 gamebuttons.w[i] + (button_grow_w*window_scale_x), 
                 gamebuttons.h[i] + (button_grow_h*window_scale_y)
             };
 
-            SDL_FPoint center = {zone.w / 2, zone.h / 2};
-            SDL_RenderTextureRotated(renderer, deck, NULL, &zone, angle, &center, SDL_FLIP_NONE);
+            SDL_FPoint center = {buttontexture.w / 2, buttontexture.h / 2};
+            SDL_RenderTextureRotated(renderer, gamebuttons.buttontexture[i], NULL, &buttontexture, angle, &center, SDL_FLIP_NONE);
         }
 
         if (show_hitboxes) {
@@ -1023,6 +1056,8 @@ void debug() {
             printf("%d %s -> sell: %d, i: %d\n", inplay.ID[i], cards.name[inplay.ID[i]], inplay.isSellable[i], i);
         }
     }
+
+    // printf("%d/%d\n", playzones.num_cards[ZONE_HAND], playzones.max_cards[ZONE_HAND]);
 
     // if (inplay.zoneID[0] != -1) {
     //     printf("This card is in zone ID %d\n", inplay.zoneID[0]);
