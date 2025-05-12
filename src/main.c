@@ -120,7 +120,7 @@ Zones eventzone;
 
 typedef enum ZoneType {
     ZONE_HAND,
-    ZONE_DISCARD,
+    ZONE_SELL,
     ZONE_EQUIP_1,
     ZONE_EQUIP_2,
     ZONE_EQUIP_3,
@@ -305,7 +305,8 @@ void add_to_deck(int id, bool message) {
 
     if (message) printf("id card added to deck\n");
 
-    return;}
+    return;
+}
 
 void deck_to_hand(bool message) {
     // checks if you have enough money
@@ -354,14 +355,12 @@ void deck_to_hand(bool message) {
     inplay.isActive[inplayIndex] = true;
     inplay.isSellable[inplayIndex] = indeck.isSellable[indeckIndex];
     
-    printf("%d\n", inplay.isSellable[inplayIndex]);
-    
     inplay.num += 1;
 
     // profileinfo.money[profile] -= (profileinfo.extraprice[profile] + profileinfo.extrainflation[profile] * profileinfo.extracount[profile]);
     // profileinfo.extracount[profile] += 1;
 
-    if (message) printf("draw card 2\n");
+    if (message) printf("draw card\n");
 
     // DISCARD DECK CARD
     // -----------------
@@ -422,7 +421,6 @@ void hand_to_deck(int inplayIndex, bool message) {
     indeck.isDragging[indeckIndex] = false;
     indeck.isActive[indeckIndex] = true;
     indeck.isSellable[indeckIndex] = inplay.isSellable[inplayIndex];
-    printf("%d\n", indeck.isSellable[indeckIndex]);
     
     indeck.num += 1;
 
@@ -449,7 +447,7 @@ void hand_to_deck(int inplayIndex, bool message) {
     
     inplay.num -= 1;
 
-    if (message) printf("shufle card 2\n");
+    if (message) printf("shuffled card into deck\n");
 }
 
 void event_card(int id, bool message) {
@@ -497,18 +495,16 @@ void event_card(int id, bool message) {
 void shuffle_hand(bool message) {
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!inplay.isActive[i]) continue;
-        if (inplay.zoneID[i] == ZONE_DISCARD) continue;
+        if (inplay.zoneID[i] == ZONE_SELL) continue;
         if (inplay.zoneID[i] == ZONE_EVENT) continue;
         playzones.num_cards[inplay.zoneID[i]] -= 1;
-        hand_to_deck(i, true);
+        hand_to_deck(i, false);
     }
     
     if (message) printf("shuffled hand into deck\n");
 }
 
 void sell_card(int inplayIndex, bool message) {
-    if (!inplay.isSellable[inplayIndex]) return;
-    if (!inplay.zoneID[inplayIndex] == ZONE_DISCARD) return;
     
     // DISCARD INPLAY CARD
     // -----------------
@@ -527,7 +523,7 @@ void sell_card(int inplayIndex, bool message) {
     inplay.w[inplayIndex] = CARD_WIDTH;
     inplay.h[inplayIndex] = CARD_HEIGHT;
 
-    playzones.num_cards[ZONE_DISCARD] = 0;
+    playzones.num_cards[ZONE_SELL] = 0;
     inplay.zoneID[inplayIndex] = -1;
     inplay.zoneNum[inplayIndex] = 0;
 
@@ -596,7 +592,7 @@ void make_button(ButtonType button, int x, int y, int w, int h) {
 
 void update_zones() {
     // original prototype
-    // make_zone(ZONE_DISCARD, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_SELL, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
     // make_zone(ZONE_HAND, 9, CARD_MARGIN, (1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN), 0, 0);
     // make_zone(ZONE_EQUIP_1, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
     // make_button(BUTTON_DECK, CARD_MARGIN, CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
@@ -604,19 +600,19 @@ void update_zones() {
     // new version
     // make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
     // make_zone(ZONE_HAND, profileinfo.handslots[profile], CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_SELL, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     // make_zone(ZONE_EQUIP_1, 1, CARD_MARGIN, CARD_MARGIN, 0, 0);
     // make_zone(ZONE_EQUIP_2, 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN, 0, 0);
 
     // pre idea change version
     // make_zone(ZONE_HAND, profileinfo.handslots[profile], CARD_MARGIN, CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_SELL, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
     // make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     // make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     // make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
 
     // post idea change version
-    make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    make_zone(ZONE_SELL, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     make_zone(ZONE_HAND, profileinfo.handslots[profile], 210, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 1080, 0);
     make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
 
@@ -685,7 +681,7 @@ void setup() {
 
     // ADD CARDS TO DECK
     // ---------------------
-    for (int i = 0; i < 1; i++) { add_to_deck(rand() % TOTAL_CARDS, false); }
+    for (int i = 0; i < 54; i++) { add_to_deck(rand() % TOTAL_CARDS, false); }
 
     // INITIALIZE PROFILE INFO
     // -----------------------
@@ -782,7 +778,7 @@ void update() {
             // checks for every active zone
             for (int j = 0; j < MAX_ZONES; j++) {
                 if (!playzones.isActive[j]) continue;
-                if (!inplay.isSellable[i] && j == ZONE_DISCARD) continue;
+                if (!inplay.isSellable[i] && j == ZONE_SELL) continue;
                 if (j == ZONE_EVENT) continue;
 
                 // CHecks a card is put into a zone that is not full
@@ -811,11 +807,9 @@ void update() {
         // Checks if a card should be sold
         // -------------------------------
         // if (((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5) {
-        if (inplay.zoneID[i] == ZONE_DISCARD) {
-            // if (inplay.isDragging[i]) isDragging = false;
+        if (inplay.zoneID[i] == ZONE_SELL && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
             // visual
             sell_card(i, true);
-            // hand_to_deck(i, true);
         }
 
         // if you are dragging a card it goes to your mouse
@@ -975,6 +969,15 @@ void render() {
 }
 
 void debug() {
+
+    // current lifted card
+    // -------------------
+    if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
+        for (int i = 0; i < MAX_CARDS; i++) {
+            if (!inplay.isDragging[i]) continue;
+            printf("%d %s -> sell: %d, i: %d\n", inplay.ID[i], cards.name[inplay.ID[i]], inplay.isSellable[i], i);
+        }
+    }
 
     // if (inplay.zoneID[0] != -1) {
     //     printf("This card is in zone ID %d\n", inplay.zoneID[0]);
