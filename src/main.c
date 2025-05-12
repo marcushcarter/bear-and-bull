@@ -639,7 +639,7 @@ void update() {
 
         // Checks if a card should be sold
         // ----------------------------------
-        if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && inplay.isSellable[i]) {
+        if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
             if (inplay.isDragging[i]) isDragging = false;
             playzones.num_cards[inplay.zoneID[i]] -= 1;
             // add_card(inplay.ID[i], true);
