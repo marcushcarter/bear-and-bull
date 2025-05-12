@@ -156,15 +156,13 @@ Zones eventzone;
 
 CardID cards;
 
-// COMMON FUNCTIONS ----------------------------------------------------------------------------------------------------
+// COMMON FUNCTIONS ====================================================================================================
 
-bool point_box_collision(float px, float py, float bx, float by, float bw, float bh) {
-    return (px >= bx && px <= bx + bw && py >= by && py <= by + bh);
-}
+bool point_box_collision(float px, float py, float bx, float by, float bw, float bh) { return (px >= bx && px <= bx + bw && py >= by && py <= by + bh); }
 
 float* floatarr(int num, ...) {
 	va_list args;
-	float* combined_array = (float*)malloc(num * sizeof(float)); // Allocate memory for the integers
+	float* combined_array = (float*)malloc(num * sizeof(float));
 	int count = 0;
 	va_start(args, num);
 	for (int i = 0; i < num; i++) combined_array[count++] = va_arg(args, double);
@@ -173,7 +171,7 @@ float* floatarr(int num, ...) {
 	return combined_array;
 }
 
-// DELTA TIME (dt) FUNCTIONS ----------------------------------------------------------------------------------------------------
+// DELTA TIME (dt) FUNCTIONS ====================================================================================================
 
 clock_t previous_time = 0;
 float dt;
@@ -195,14 +193,14 @@ void control_fps(float target_fps) {
 	}
 }
 
-// DRAWING / DISCARDING CARDS FUNCTIONS ----------------------------------------------------------------------------------------------------
+// DRAWING / DISCARDING CARDS FUNCTIONS ====================================================================================================
 
 void add_card(int id, bool message) {
+    // checks if there is any space in your deck
+    if (!(indeck.num+1 < MAX_CARDS)) return;
 
-    if (!(indeck.num+1 < MAX_CARDS)) return; // checks quickly for if there is any space in your deck
-
-    // checks for the first space that is open in your deck
-
+    // finds the first open space in your deck
+    // ---------------------------------------
     int index = -1;
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!indeck.isActive[i]) {
@@ -210,10 +208,10 @@ void add_card(int id, bool message) {
             break;
         }
     }
-
     if (index == -1) return;
 
-    // add the card to that index
+    // adds the card at that index
+    // ---------------------------
     
     indeck.ID[index] = id;
 
@@ -269,25 +267,28 @@ void discard_card(Cards* cards, int id, bool message) {
 
 void draw_cards(int num, bool message) {
     for (int i = 0; i < num; i++) {
-        if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) continue; // check quickly to make sure the hand is not full
-        if (indeck.num <= 0) continue; // quick check for if there is actually any cards in the deck
+        // checks if there is any space in your hand
+        if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) continue;
+        // checks if there are any valid cards in your deck
+        if (indeck.num <= 0) continue;
 
-        // cehcks if there are any valid cards in your deck
-
+        // Finds all the valid cards in your deck
+        // --------------------------------------
         int validIndex[MAX_CARDS];
         int numValid = 0;
         for (int j = 0; j < MAX_CARDS; j++) {
             if (indeck.isActive[j]) 
                 validIndex[numValid++] = j;
         }
-
         if (numValid == 0) return;
 
+        // Picks a random one out of those valid cards
+        // -------------------------------------------
         int randIndex = rand() % numValid; 
-        int indexNum = validIndex[randIndex]; // picks a random card out of the valid ones and giveus us the index of that card (indexNum)
+        int indexNum = validIndex[randIndex];
 
-        // check if there is any space in the hand
-
+        // finds the first empty space in your hand
+        // ----------------------------------------
         int inplayIndex = -1;
         for (int k = 0; k < MAX_CARDS; k++) {
             if (!inplay.isActive[k]) {
@@ -295,10 +296,10 @@ void draw_cards(int num, bool message) {
                 break;
             }
         }
-
         if (inplayIndex == -1) return;
 
-        // copy card to that inplayIndex
+        // copies that random valid card to that empty space in your hand
+        // ------------------------------------------------------------
 
         inplay.ID[inplayIndex] = indeck.ID[indexNum];
     
@@ -321,16 +322,18 @@ void draw_cards(int num, bool message) {
 
         if (message) printf("draw card\n");
 
-        discard_card(&indeck, indexNum, false); // delete card at indexNum
+        // removes the card from your deck
+        discard_card(&indeck, indexNum, false);
     }
 }
 
 void draw_card_id(ZoneType ZONE, int id, bool message) {
 
-    if (playzones.num_cards[ZONE] >= playzones.max_cards[ZONE]) return; // check quickly to make sure the hand is not full
+    // checks if there any space in the targetted zone
+    if (playzones.num_cards[ZONE] >= playzones.max_cards[ZONE]) return;
 
-    // check if there is any space in the hand
-
+    // finds the first empty space in your hand
+    // ----------------------------------------
     int inplayIndex = -1;
     for (int k = 0; k < MAX_CARDS; k++) {
         if (!inplay.isActive[k]) {
@@ -340,7 +343,8 @@ void draw_card_id(ZoneType ZONE, int id, bool message) {
     }
     if (inplayIndex == -1) return;
 
-    // draw that card
+    // adds the card with the ID to that zone
+    // ------------------------------------------------------------
 
     inplay.ID[inplayIndex] = id;
 
@@ -370,6 +374,8 @@ void draw_card_id(ZoneType ZONE, int id, bool message) {
 }
 
 void shuffle_hand(bool message) {
+    // moves card from your hand to the deck
+    // -------------------------------------
     for (int i = 0; i < MAX_CARDS; i++) {
         if (inplay.isActive[i] == false) continue;
 
@@ -382,12 +388,18 @@ void shuffle_hand(bool message) {
     if (message) printf("shuffled hand into deck\n");
 }
 
-// SETUP FUNCTIONS ----------------------------------------------------------------------------------------------------
+// SETUP FUNCTIONS ====================================================================================================
 
 void make_card(int id, const char* cardpath, const char* name, const char* description, float stats[6]) {
+
+    // set string data
+    // ---------------
     strcpy(cards.cardpath[id], cardpath);
     strcpy(cards.name[id], name);
     strcpy(cards.description[id], description);
+
+    // set stat data
+    // -------------
 
     // if (stats != NULL) {
     //     cards.range[id] = stats[0]; // for ranged
@@ -398,27 +410,26 @@ void make_card(int id, const char* cardpath, const char* name, const char* descr
     //     cards.reload[id] = stats[5];
     // }
 
-
 }
 
-void make_zone(ZoneType num, int slots, int x, int y, int w, int h) {
-    playzones.max_cards[num] = slots;
-    playzones.x[num]=x*window_scale_x;
-    playzones.y[num]=y*window_scale_y;
-    if (num == ZONE_DECK) slots = 1;
+void make_zone(ZoneType zone, int slots, int x, int y, int w, int h) {
+    playzones.max_cards[zone] = slots;
+    playzones.x[zone]=x*window_scale_x;
+    playzones.y[zone]=y*window_scale_y;
+    if (zone == ZONE_DECK) slots = 1;
     if (w != 0) {
-        playzones.w[num] = w*window_scale_x;
+        playzones.w[zone] = w*window_scale_x;
     } else {
-        playzones.w[num]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*slots)*window_scale_x;
+        playzones.w[zone]=(CARD_SPACING+(CARD_WIDTH+CARD_SPACING)*slots)*window_scale_x;
     }
 
     if (h != 0) {
-        playzones.h[num] = h*window_scale_y;
+        playzones.h[zone] = h*window_scale_y;
     } else {
-        playzones.h[num]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale_y;
+        playzones.h[zone]=(CARD_HEIGHT+CARD_SPACING*2)*window_scale_y;
     }
     
-    playzones.isActive[num]=true;
+    playzones.isActive[zone]=true;
 }
 
 void update_zones() {
@@ -458,15 +469,16 @@ bool load_textures() {
 }
 
 void update_window() {
-    // get window sizes and set window scaling coefficient
+    // get window sizes and set window scaling x/y coefficients
     SDL_GetWindowSize(window, &window_width, &window_height);
     window_scale_x = window_width/1500.0f;  
     window_scale_y = window_height/1000.0f;
 }
 
 void setup() {
-    // LOAD CARDS
 
+    // LOAD CARDS
+    // ----------
     make_card(0, "./resources/textures/card1.png", "card 1", "card of the number of one", NULL);
     make_card(1, "./resources/textures/card2.png", "card 2", "card of the number of two", floatarr(6, 0, 1, 2, 3, 4, 6));
     make_card(2, "./resources/textures/card3.png", "card 3", "card of the number of three", floatarr(6, 10, 3, 9, 8, 6, 1));
@@ -485,20 +497,23 @@ void setup() {
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
 
+    // SETUP CARDS AND ZONES
+    // ---------------------
     for (int i = 0; i < MAX_CARDS; i++) { discard_card(&inplay, i, false); inplay.num = 0; }
     for (int i = 0; i < MAX_CARDS; i++) { discard_card(&indeck, i, false); indeck.num = 0; }
-
     for (int i = 0; i < MAX_ZONES; i++) {
         playzones.isActive[i] = false;
         playzones.num_cards[i] = 0;
         playzones.max_cards[i]=0;
     }
 
+    // ADD CARDS TO DECK
+    // ---------------------
     for (int i = 0; i < 10; i++) { add_card(rand() % TOTAL_CARDS, false); }
 
 }
 
-// LOOP FUNCTIONS ----------------------------------------------------------------------------------------------------
+// LOOP FUNCTIONS ====================================================================================================
 
 void inputs() {
     while (SDL_PollEvent(&event) != 0) {
@@ -512,24 +527,9 @@ void inputs() {
 
 void dev_tools() {
 
-    // shuffle hand into deck
-    if (currKeyState[SDL_SCANCODE_3] && !prevKeyState[SDL_SCANCODE_3]) {
-        shuffle_hand(true);
-    }
-
-    // draws an event card when P key is pressed
-    if (currKeyState[SDL_SCANCODE_P] && !prevKeyState[SDL_SCANCODE_P]) {
-        draw_card_id(ZONE_HAND, rand() % TOTAL_CARDS, false);
-    }
-
-    // if you press the "1" key it will increase the number of hand_slots you have by 1
-    if (currKeyState[SDL_SCANCODE_1] && !prevKeyState[SDL_SCANCODE_1]) {
-        hand_slots+=1;
-        if (hand_slots > 8) hand_slots = 8;
-    }
-
-    // press space to toggle hitboxes
-    if (currKeyState[SDL_SCANCODE_SPACE] && !prevKeyState[SDL_SCANCODE_SPACE]){
+    // 1 - toggle hitboxes
+    // -------------------
+    if (currKeyState[SDL_SCANCODE_1] && !prevKeyState[SDL_SCANCODE_1]){
         if (show_hitboxes) {
             show_hitboxes = false;
             show_textures = true;
@@ -539,8 +539,30 @@ void dev_tools() {
         }
     }
 
-    // press the "2" key to toggle custom cursor
-    if (currKeyState[SDL_SCANCODE_2] && !prevKeyState[SDL_SCANCODE_2]) custom_cursor = !custom_cursor;
+    // 2 - toggle custom cursor
+    // ------------------------
+    if (currKeyState[SDL_SCANCODE_2] && !prevKeyState[SDL_SCANCODE_2]) {
+        custom_cursor = !custom_cursor;
+    }
+
+    // 3 - increase hand slots
+    // -----------------------
+    if (currKeyState[SDL_SCANCODE_3] && !prevKeyState[SDL_SCANCODE_3]) {
+        hand_slots+=1;
+        if (hand_slots > 8) hand_slots = 8;
+    }
+
+    // 4 - shuffle hand into deck
+    // --------------------------
+    if (currKeyState[SDL_SCANCODE_4] && !prevKeyState[SDL_SCANCODE_4]) {
+        shuffle_hand(true);
+    }
+
+    // 5 - spawn event card
+    // --------------------
+    if (currKeyState[SDL_SCANCODE_5] && !prevKeyState[SDL_SCANCODE_5]) {
+        draw_card_id(ZONE_HAND, rand() % TOTAL_CARDS, false);
+    }
 
 }
 
@@ -549,44 +571,53 @@ void update() {
     update_window();
     update_zones();
 
-    // draws an event card every 10 seconds
-    int ticks = (int)(SDL_GetTicks() / 1000.0f) % 10;
-    if (ticks == 9) {draw_card_id(ZONE_EVENT, 0, false);}
+    // Draws an event card once every 30 seconds
+    // ------------------------------------
+    int ticks = (int)(SDL_GetTicks() / 100.0f) % 300;
+    if (ticks == 300-1) {draw_card_id(ZONE_EVENT, 0, false);}
 
+    // Checks if you want to draw a card
+    // ---------------------------------
+    if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, playzones.x[ZONE_DECK], playzones.y[ZONE_DECK], playzones.w[ZONE_DECK], playzones.h[ZONE_DECK])) {
+        if (playzones.num_cards[ZONE_HAND] < playzones.max_cards[ZONE_HAND]) draw_cards(1, true);
+    }
+
+    // CARD UPDATES
+    // ------------
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!inplay.isActive[i]) continue;
 
-        // if the cursor is not dragging anything, the card is not being dragged and the mouse clicks on the card, it will be picked up
+        // Checks if a card should be picked up
+        // ------------------------------------
         if (!isDragging && !inplay.isDragging[i] && point_box_collision(mousex, mousey, inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
             inplay.isDragging[i] = true;
             isDragging = true;
         }
 
-        // if the card is being dragged and it is let go of (putting the card down)
+        // Checks if a card should be released
+        // -----------------------------------
         if (inplay.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
 
+            // checks for every active zone
             for (int j = 0; j < MAX_ZONES; j++) {
                 if (!playzones.isActive[j]) continue;
 
-                // if you put the card into a zone (and it is not full)
+                // CHecks a card is put into a zone that is not full
+                // Also checks it is not put into a invalid zone
+                // ---------------------------------------------
                 if (point_box_collision(inplay.tx[i], inplay.ty[i], playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]) && (playzones.num_cards[j] < playzones.max_cards[j])) {
-
-                    // if the card is non sellable and the zone is event or discard, you cant put that card there
                     if (!(!inplay.isSellable[i] && j == ZONE_DISCARD) && j != ZONE_EVENT) {
-                        // in the zone the card just left, every card after that one shifts down one space
+                        // every card in the card's original zone shifts down one space
                         for (int l = 0; l < MAX_CARDS; l++) { 
                             if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) 
                                 inplay.zoneNum[l] -= 1; 
                         }
                         playzones.num_cards[inplay.zoneID[i]] -= 1;
-                        // we then put the card's data in the new zone
                         playzones.num_cards[j] += 1;
                         inplay.zoneNum[i] = playzones.num_cards[j];
                         inplay.zoneID[i] = j;
                         inplay.zoneTime[i] = (SDL_GetTicks()/1000.0f);
                     }
-
-                    break;
                 }
             }
 
@@ -595,8 +626,8 @@ void update() {
         }
 
         // if you are dragging a card it goes to your mouse
-        // if you are not dragging it, it goes back to the zone id it belongs to (with spacing / no overlap)
-        // if it is in a multi card zone, the cards will fan
+        // if you are not, it goes back to its zone
+        // ------------------------------------------------
         if (inplay.isDragging[i]) {
             inplay.tx[i] = mousex;
             inplay.ty[i] = mousey;
@@ -606,8 +637,9 @@ void update() {
             inplay.ty[i] = playzones.y[inplay.zoneID[i]] + playzones.h[inplay.zoneID[i]]/2;
         }
 
-        // checks if a card is to be deleted
-        if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && !(inplay.zoneID[i] == ZONE_DISCARD && !inplay.isSellable[i])) {
+        // Checks if a card should be sold
+        // ----------------------------------
+        if (inplay.zoneID[i] == ZONE_DISCARD && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && inplay.isSellable[i]) {
             if (inplay.isDragging[i]) isDragging = false;
             playzones.num_cards[inplay.zoneID[i]] -= 1;
             // add_card(inplay.ID[i], true);
@@ -623,11 +655,6 @@ void update() {
         inplay.y[i] += inplay.vy[i] * dt;
         inplay.x[i] += inplay.vx[i] * dt;
 
-    }
-
-    // if you click on the deck, it will draw a card
-    if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, playzones.x[ZONE_DECK], playzones.y[ZONE_DECK], playzones.w[ZONE_DECK], playzones.h[ZONE_DECK])) {
-        if (playzones.num_cards[ZONE_HAND] < playzones.max_cards[ZONE_HAND]) draw_cards(1, true);
     }
 }
 
@@ -742,11 +769,10 @@ void debug() {
     // }
 }
 
-// MAIN FUNCTION ----------------------------------------------------------------------------------------------------
+// MAIN FUNCTION ====================================================================================================
 
 int main() {
     
-    // set the seed for the game
     // seed = time(NULL);
     seed = 0;
     srand(seed);
