@@ -24,7 +24,6 @@ float mousex, mousey;
 bool isDragging;
 
 int window_width, window_height;
-
 float window_scale_x = 1.0f;
 float window_scale_y = 1.0f;
 
@@ -33,25 +32,33 @@ float game_speed = 2;
 int hand_slots = 3;
 
 bool show_hitboxes = true;
-bool show_textures = true;
+bool show_textures = false;
 bool custom_cursor = false;
 
 #define LERP_SPEED 0.25
-
-#define MAX_CARDS 10
-#define MAX_ZONES 10
-
 #define CARD_HEIGHT 190
 #define CARD_WIDTH 142
 #define CARD_SPACING 10
 #define CARD_GROW 0.05
-#define CARD_MARGIN 50
+#define CARD_MARGIN 40
 
+#define MAX_CARDS 10
+#define MAX_ZONES 10
 #define TOTAL_CARDS 10
-
 #define MAX_BUTTONS 20
+#define MAX_PROFILES 1
 
 // CLASSES ====================================================================================================
+
+typedef struct ProfileInfo {
+    int ID[MAX_PROFILES]; // profile number
+
+    
+
+    // int money[MAX_PROFILES];
+} ProfileInfo;
+
+ProfileInfo profileinfo;
 
 typedef struct Cards {
     int ID[MAX_CARDS];
@@ -490,13 +497,13 @@ void update_zones() {
     // make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
 
     // post idea change version
-    make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
     make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    make_zone(ZONE_HAND, 7, CARD_MARGIN+CARD_SPACING+CARD_WIDTH+10, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-
-
+    make_zone(ZONE_HAND, 7, 210, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 1080, 0);
     make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
+
+    make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    // make_button(BUTTON_LOAN, )
+
 }
 
 SDL_Texture* deck;
@@ -623,8 +630,8 @@ void update() {
 
     // Draws an event card once every 30 seconds
     // ------------------------------------
-    int ticks = (int)(SDL_GetTicks() / 100.0f) % 300;
-    if (ticks == 300 - 1) {draw_card_id(ZONE_EVENT, 0, false);}
+    int ticks = (int)(SDL_GetTicks() / 100.0f) % 150;
+    if (ticks == 150 - 1) {draw_card_id(ZONE_EVENT, 0, false);}
 
     // CARD UPDATES
     // ------------
