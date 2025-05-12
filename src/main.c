@@ -377,7 +377,10 @@ void shuffle_hand(bool message) {
     // moves card from your hand to the deck
     // -------------------------------------
     for (int i = 0; i < MAX_CARDS; i++) {
-        if (inplay.isActive[i] == false) continue;
+        if (!inplay.isActive[i]) continue;
+        if (inplay.zoneID[i] == ZONE_DISCARD) continue;
+        if (inplay.zoneID[i] == ZONE_EVENT) continue;
+
 
         if (inplay.isDragging[i]) isDragging = false;
         playzones.num_cards[inplay.zoneID[i]] -= 1;
