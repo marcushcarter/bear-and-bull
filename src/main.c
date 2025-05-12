@@ -308,6 +308,45 @@ void add_to_deck(int id, bool message) {
     return;
 }
 
+void add_to_hand(int id, bool message) {
+
+    // FIND IF AND WHERE AN IN PLAY SLOT IS OPEN
+    // -------------------------------------
+    int index = -1;
+    for (int i = 0; i < MAX_CARDS; i++) {
+        if (!inplay.isActive[i]) {
+            index = i;
+            break;
+        }
+    }
+    if (index == -1) return;
+
+    // ACTIVATE NEW CARD WITH ID AT THAT INDEX
+    // ---------------------------------------
+    
+    inplay.ID[index] = id;
+
+    inplay.x[index] = (1500/2);
+    inplay.y[index] = ((playzones.y[ZONE_EVENT] + playzones.h[ZONE_EVENT]/2) + 1000);
+    inplay.w[index] = CARD_WIDTH;
+    inplay.h[index] = CARD_HEIGHT;
+
+    playzones.num_cards[ZONE_HAND] += 1;
+    inplay.zoneID[index] = ZONE_HAND;
+    inplay.zoneNum[index] = playzones.num_cards[ZONE_HAND];
+    inplay.zoneTime[index] = (SDL_GetTicks()/1000.0f);
+
+    inplay.isDragging[index] = false;
+    inplay.isActive[index] = true;
+    inplay.isSellable[index] = true;
+    
+    inplay.num += 1;
+
+    if (message) printf("id card added to hand\n");
+
+    return;
+}
+
 void deck_to_hand(bool message) {
     // checks if you have enough money
     // if (profileinfo.money[profile] < (profileinfo.extraprice[profile] + profileinfo.extrainflation[profile] * profileinfo.extracount[profile])) return;
@@ -745,6 +784,12 @@ void dev_tools() {
     // --------------------
     if (currKeyState[SDL_SCANCODE_5] && !prevKeyState[SDL_SCANCODE_5]) {
         event_card(rand() % TOTAL_CARDS, false);
+    }
+
+    // 6 - shuffle hand into deck
+    // --------------------------
+    if (currKeyState[SDL_SCANCODE_6] && !prevKeyState[SDL_SCANCODE_6]) {
+        add_to_hand(rand() % TOTAL_CARDS, true);
     }
 
 }
