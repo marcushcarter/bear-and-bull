@@ -653,13 +653,13 @@ void update() {
                         playzones.num_cards[j] += 1;
                         inplay.zoneNum[i] = playzones.num_cards[j];
                         inplay.zoneID[i] = j;
-                        inplay.zoneTime[i] = (SDL_GetTicks() / 1000.0f);
                     }
                 }
             }
 
             inplay.isDragging[i] = false;
             isDragging = false;
+            inplay.zoneTime[i] = (SDL_GetTicks() / 1000.0f);
         }
 
         // if you are dragging a card it goes to your mouse
@@ -703,26 +703,19 @@ void update() {
         // ------------------------------
         if (point_box_collision(mousex, mousey, gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i])) {
             // button is pressed
-            if (currMouseState & SDL_BUTTON_LMASK) {
-                gamebuttons.isPressed[i] = true;
-            } else {
-                gamebuttons.isPressed[i] = false;
-            }
-
+            if (currMouseState & SDL_BUTTON_LMASK) { gamebuttons.isPressed[i] = true; } else { gamebuttons.isPressed[i] = false; }
             // button is clicked
-            if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
-                gamebuttons.isClicked[i] = true;
-            } else {
-                gamebuttons.isClicked[i] = false;
-            }
-
-            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) {
-                if (playzones.num_cards[ZONE_HAND] < playzones.max_cards[ZONE_HAND]) draw_cards(1, true);
-            }
-
+            if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { gamebuttons.isClicked[i] = true; } else { gamebuttons.isClicked[i] = false; }
         } else {
             gamebuttons.isPressed[i] = false;
             gamebuttons.isClicked[i] = false;
+        }
+
+
+        // Deck Button
+        // -----------
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) {
+            if (playzones.num_cards[ZONE_HAND] < playzones.max_cards[ZONE_HAND]) draw_cards(1, true);
         }
 
 
