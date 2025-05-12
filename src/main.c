@@ -782,24 +782,25 @@ void update() {
             // checks for every active zone
             for (int j = 0; j < MAX_ZONES; j++) {
                 if (!playzones.isActive[j]) continue;
+                if (!inplay.isSellable[i] && j == ZONE_DISCARD) continue;
+                if (j == ZONE_EVENT) continue;
 
                 // CHecks a card is put into a zone that is not full
                 // Also checks it is not put into a invalid zone
                 // ---------------------------------------------
                 if (point_box_collision(inplay.tx[i], inplay.ty[i], playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j])) {
-                    // if (1==1) {
-                        // every card in the card's original zone shifts down one space
-                        for (int l = 0; l < MAX_CARDS; l++) { 
-                            if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) 
-                                inplay.zoneNum[l] -= 1; 
-                        }
-
-                        playzones.num_cards[inplay.zoneID[i]] -= 1;
-                        playzones.num_cards[j] += 1;
-                        inplay.zoneNum[i] = playzones.num_cards[j];
-                        inplay.zoneID[i] = j;
+                    
+                    // every card in the card's original zone shifts down one space
+                    for (int l = 0; l < MAX_CARDS; l++) { 
+                        if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) 
+                            inplay.zoneNum[l] -= 1; 
                     }
-                // }
+
+                    playzones.num_cards[inplay.zoneID[i]] -= 1;
+                    playzones.num_cards[j] += 1;
+                    inplay.zoneNum[i] = playzones.num_cards[j];
+                    inplay.zoneID[i] = j;
+                }
             }
 
             inplay.isDragging[i] = false;
