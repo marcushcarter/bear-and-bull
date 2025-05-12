@@ -49,6 +49,10 @@ bool custom_cursor = false;
 
 #define TOTAL_CARDS 10
 
+#define MAX_BUTTONS 20
+
+// CLASSES ====================================================================================================
+
 typedef struct Cards {
     int ID[MAX_CARDS];
 
@@ -72,6 +76,9 @@ typedef struct Cards {
     int num;
 } Cards;
 
+Cards inplay;
+Cards indeck;
+
 typedef struct Zones {
     int ID[MAX_ZONES];
 
@@ -86,8 +93,10 @@ typedef struct Zones {
     float isActive[MAX_ZONES];
 } Zones; 
 
+Zones playzones;
+Zones eventzone;
+
 typedef enum ZoneType {
-    ZONE_DECK,
     ZONE_HAND,
     ZONE_DISCARD,
     ZONE_EQUIP_1,
@@ -146,15 +155,29 @@ typedef struct CardID{
     // float armor_use[TOTAL_CARDS];
     // float tickets_use[TOTAL_CARDS];
 
-} CardID; 
-
-Cards inplay;
-Cards indeck;
-
-Zones playzones;
-Zones eventzone;
+} CardID;
 
 CardID cards;
+
+typedef enum ButtonType {
+    BUTTON_DECK,
+    BUTTON_LOAN,
+} ButtonType;
+
+typedef struct Buttons {
+    int ID[MAX_BUTTONS];
+
+    float x[MAX_BUTTONS];
+    float y[MAX_BUTTONS];
+    float w[MAX_BUTTONS];
+    float h[MAX_BUTTONS];
+
+    bool isPressed[MAX_BUTTONS];
+    bool isClicked[MAX_BUTTONS];
+    bool isActive[MAX_BUTTONS];
+} Buttons;
+
+Buttons gamebuttons;
 
 // COMMON FUNCTIONS ====================================================================================================
 
@@ -303,8 +326,8 @@ void draw_cards(int num, bool message) {
 
         inplay.ID[inplayIndex] = indeck.ID[indexNum];
     
-        inplay.x[inplayIndex] = (playzones.x[ZONE_DECK]+playzones.w[ZONE_DECK]/2);
-        inplay.y[inplayIndex] = (playzones.y[ZONE_DECK]+playzones.h[ZONE_DECK]/2);
+        inplay.x[inplayIndex] = (gamebuttons.x[BUTTON_DECK]+gamebuttons.w[BUTTON_DECK]/2);
+        inplay.y[inplayIndex] = (gamebuttons.y[BUTTON_DECK]+gamebuttons.h[BUTTON_DECK]/2);
         inplay.w[inplayIndex] = CARD_WIDTH;
         inplay.h[inplayIndex] = CARD_HEIGHT;
     
@@ -352,8 +375,8 @@ void draw_card_id(ZoneType ZONE, int id, bool message) {
         inplay.x[inplayIndex] = (playzones.x[ZONE] + playzones.w[ZONE]/2);
         inplay.y[inplayIndex] = ((playzones.y[ZONE] + playzones.h[ZONE]/2) + 500);
     } else {
-        inplay.x[inplayIndex] = (playzones.x[ZONE_DECK] + playzones.w[ZONE_DECK]/2);
-        inplay.y[inplayIndex] = ((playzones.y[ZONE_DECK] + playzones.h[ZONE_DECK]/2));
+        inplay.x[inplayIndex] = (gamebuttons.x[BUTTON_DECK] + gamebuttons.w[BUTTON_DECK]/2);
+        inplay.y[inplayIndex] = ((gamebuttons.y[BUTTON_DECK] + gamebuttons.h[BUTTON_DECK]/2));
     }
     
     inplay.w[inplayIndex] = CARD_WIDTH;
@@ -419,7 +442,6 @@ void make_zone(ZoneType zone, int slots, int x, int y, int w, int h) {
     playzones.max_cards[zone] = slots;
     playzones.x[zone] = x * window_scale_x;
     playzones.y[zone] = y * window_scale_y;
-    if (zone == ZONE_DECK) slots = 1;
     if (w != 0) {
         playzones.w[zone] = w * window_scale_x;
     } else {
@@ -433,6 +455,17 @@ void make_zone(ZoneType zone, int slots, int x, int y, int w, int h) {
     }
     
     playzones.isActive[zone] = true;
+}
+
+void make_button(ButtonType button, int x, int y, int w, int h) {
+    gamebuttons.ID[button] = button;
+    gamebuttons.x[button] = x * window_scale_x;
+    gamebuttons.y[button] = y * window_scale_y;
+    gamebuttons.w[button] = w * window_scale_x;
+    gamebuttons.h[button] = h * window_scale_y;
+
+    gamebuttons.isActive[button] = true;
+    // gamebuttons.[button] = ;
 }
 
 void update_zones() {
@@ -450,11 +483,13 @@ void update_zones() {
     // make_zone(ZONE_EQUIP_2, 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN);
 
     // Planned version
-    make_zone(ZONE_DECK, 0, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_DECK, 0, CARD_MARGIN, 2000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     make_zone(ZONE_HAND, hand_slots, CARD_MARGIN, CARD_MARGIN, 0, 0);
     make_zone(ZONE_DISCARD, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
     make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+
+    make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
 }
 
 SDL_Texture* deck;
@@ -500,7 +535,7 @@ void setup() {
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
 
-    // SETUP CARDS AND ZONES
+    // SETUP CARDS, BUTTONS AND ZONES
     // ---------------------
     for (int i = 0; i < MAX_CARDS; i++) { discard_card(&inplay, i, false); inplay.num = 0; }
     for (int i = 0; i < MAX_CARDS; i++) { discard_card(&indeck, i, false); indeck.num = 0; }
@@ -508,6 +543,11 @@ void setup() {
         playzones.isActive[i] = false;
         playzones.num_cards[i] = 0;
         playzones.max_cards[i] = 0;
+    }
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+        gamebuttons.isActive[i] = false;
+        gamebuttons.isPressed[i] = false;
+        gamebuttons.ID[i] = -1;
     }
 
     // ADD CARDS TO DECK
@@ -578,12 +618,6 @@ void update() {
     // ------------------------------------
     int ticks = (int)(SDL_GetTicks() / 100.0f) % 300;
     if (ticks == 300 - 1) {draw_card_id(ZONE_EVENT, 0, false);}
-
-    // Checks if you want to draw a card
-    // ---------------------------------
-    if (!isDragging && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && point_box_collision(mousex, mousey, playzones.x[ZONE_DECK], playzones.y[ZONE_DECK], playzones.w[ZONE_DECK], playzones.h[ZONE_DECK])) {
-        if (playzones.num_cards[ZONE_HAND] < playzones.max_cards[ZONE_HAND]) draw_cards(1, true);
-    }
 
     // CARD UPDATES
     // ------------
@@ -659,6 +693,44 @@ void update() {
         inplay.x[i] += inplay.vx[i] * dt;
 
     }
+
+    // BUTTON UPDATES
+    // --------------
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+        if (!gamebuttons.isActive[i]) continue;
+
+        // Checks different button states
+        // ------------------------------
+        if (point_box_collision(mousex, mousey, gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i])) {
+            // button is pressed
+            if (currMouseState & SDL_BUTTON_LMASK) {
+                gamebuttons.isPressed[i] = true;
+            } else {
+                gamebuttons.isPressed[i] = false;
+            }
+
+            // button is clicked
+            if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
+                gamebuttons.isClicked[i] = true;
+            } else {
+                gamebuttons.isClicked[i] = false;
+            }
+
+            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) {
+                if (playzones.num_cards[ZONE_HAND] < playzones.max_cards[ZONE_HAND]) draw_cards(1, true);
+            }
+
+        } else {
+            gamebuttons.isPressed[i] = false;
+            gamebuttons.isClicked[i] = false;
+        }
+
+
+
+
+
+
+    }
 }
 
 void render() {
@@ -668,28 +740,44 @@ void render() {
     for (int i = 0; i < MAX_ZONES; i++) {
         if (!playzones.isActive[i]) continue;
 
-        if (show_textures) {
-            if (i == ZONE_DECK) {
-                float sineh = 5 * sin(2.0f * (SDL_GetTicks() / 1000.0f));
-                float sinea = 2.5 * sin(SDL_GetTicks() / 1000.0f);
-                float angle = sinea;
-
-                SDL_FRect zone = {
-                    playzones.x[i], 
-                    playzones.y[i] - (sineh*window_scale_y), 
-                    playzones.w[i], 
-                    playzones.h[i]
-                };
-
-                SDL_FPoint center = {zone.w / 2, zone.h / 2};
-                SDL_RenderTextureRotated(renderer, deck, NULL, &zone, angle, &center, SDL_FLIP_NONE);
-            }
-        }
+        if (show_textures) {}
 
         if (show_hitboxes) {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             SDL_FRect zonehitbox = {playzones.x[i], playzones.y[i], playzones.w[i], playzones.h[i]};
             SDL_RenderRect(renderer, &zonehitbox);
+        }
+    }
+
+    // BUTTONS
+    // -------
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+        if (!gamebuttons.isActive[i]) continue;
+
+        if (show_textures) {
+            float sineh = 5 * sin(2.0f * (SDL_GetTicks() / 1000.0f));
+            float sinea = 2.5 * sin(SDL_GetTicks() / 1000.0f);
+            float angle = sinea;
+
+            float button_grow_w = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.w[i];
+            float button_grow_h = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.h[i];
+
+            SDL_FRect zone = {
+                gamebuttons.x[i] - (button_grow_w/2), 
+                gamebuttons.y[i] - (button_grow_h/2), 
+                gamebuttons.w[i] + (button_grow_w*window_scale_x), 
+                gamebuttons.h[i] + (button_grow_h*window_scale_y)
+            };
+
+            SDL_FPoint center = {zone.w / 2, zone.h / 2};
+            SDL_RenderTextureRotated(renderer, deck, NULL, &zone, angle, &center, SDL_FLIP_NONE);
+        }
+
+        if (show_hitboxes) {
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            if (gamebuttons.isPressed[i]) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            SDL_FRect buttonhitbox = {gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i]};
+            SDL_RenderRect(renderer, &buttonhitbox);
         }
     }
 
