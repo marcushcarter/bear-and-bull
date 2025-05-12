@@ -707,8 +707,6 @@ void update() {
             if (inplay.isDragging[i]) isDragging = false;
             profileinfo.money[profile] += (cards.price[inplay.ID[i]]);
             playzones.num_cards[inplay.zoneID[i]] -= 1;
-            // add_card(inplay.ID[i], true);
-            // profileinfo.money[profile] += (int)(cards.price[inplay.ID[i]]);
             // visual
             discard_card(&inplay, i, true);
         }
