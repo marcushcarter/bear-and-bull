@@ -730,12 +730,12 @@ void update_zones() {
     make_zone(ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     make_zone(ZONE_HAND, "", profileinfo.handslots[profile], WINDOW_WIDTH/2 - 725/2, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 725, 0);
     make_zone(ZONE_EVENT, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
-    make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    make_button(BUTTON_DECK, "./resources/button textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
     // buttons
-    make_button(BUTTON_LOAN, "./resources/textures/loan.png", 15, CARD_MARGIN+130, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15), 50);
-    make_button(BUTTON_PAUSE, "./resources/textures/pause.png", 10, 10, 40, 40);
-    make_button(BUTTON_SELL_STOCK, "./resources/textures/minus.png", 15, CARD_MARGIN+195, 50, 50);
-    make_button(BUTTON_BUY_STOCK, "./resources/textures/plus.png", 175, CARD_MARGIN+195, 50, 50);
+    make_button(BUTTON_LOAN, "./resources/button textures/loan2.png", 15, CARD_MARGIN+130, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15), 50);
+    make_button(BUTTON_PAUSE, "./resources/button textures/pause.png", 10, 10, 40, 40);
+    make_button(BUTTON_SELL_STOCK, "./resources/button textures/minus.png", 15, CARD_MARGIN+195, 50, 50);
+    make_button(BUTTON_BUY_STOCK, "./resources/button textures/plus.png", 175, CARD_MARGIN+195, 50, 50);
 }
 
 SDL_Texture* temp;
@@ -779,18 +779,17 @@ void setup() {
 
     // LOAD CARDS
     // ----------
-    make_card(0, "./resources/textures/loan.png", "$100 Loan", "card of the number of one", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
-    
-    make_card(1, "./resources/textures/card2.png", "Flame Boy", "card of the number of two", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(2, "./resources/textures/card3.png", "Peaked", "card of the number of three", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(3, "./resources/textures/card4.png", "Eg", "card of the number of four", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(4, "./resources/textures/card5.png", "Ballot Joker", "card of the number of five", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(5, "./resources/textures/card6.png", "Pokemon Card Joker", "card of the number of six", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(6, "./resources/textures/card7.png", "Bunanu", "card of the number of seven", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(7, "./resources/textures/card8.png", "Caino", "card of the number of eight", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(8, "./resources/textures/card9.png", "Purple Magic", "card of the number of nine", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(9, "./resources/textures/card10.png", "Planet Joker", "card of the number of ten", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(10, "./resources/textures/card1.png", "Normal Joker", "card of the number of one", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(0, "./resources/card textures/card1.png", "$100 Loan", "card of the number of one", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
+    make_card(1, "./resources/card textures/card2.png", "Flame Boy", "card of the number of two", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(2, "./resources/card textures/card3.png", "Peaked", "card of the number of three", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(3, "./resources/card textures/card4.png", "Eg", "card of the number of four", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(4, "./resources/card textures/card5.png", "Ballot Joker", "card of the number of five", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(5, "./resources/card textures/card6.png", "Pokemon Card Joker", "card of the number of six", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(6, "./resources/card textures/card7.png", "Bunanu", "card of the number of seven", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(7, "./resources/card textures/card8.png", "Caino", "card of the number of eight", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(8, "./resources/card textures/card9.png", "Purple Magic", "card of the number of nine", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(9, "./resources/card textures/card10.png", "Planet Joker", "card of the number of ten", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(10, "./resources/card textures/card11.png", "Normal Joker", "card of the number of one", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
     
     update_window();
     update_zones();
@@ -1017,7 +1016,8 @@ void render_headline() {
     // --------------------------
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_FRect headlinehitbox = {(CARD_MARGIN+15)*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-15-50)*window_scale_y, (WINDOW_WIDTH-CARD_MARGIN-CARD_MARGIN+CARD_SPACING-30)*window_scale_x, 50*window_scale_y};
-    SDL_RenderRect(renderer, &headlinehitbox);}
+    SDL_RenderRect(renderer, &headlinehitbox);
+}
 
 void render() {
 
