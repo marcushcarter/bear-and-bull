@@ -610,6 +610,7 @@ void shuffle_hand() {
 void sell_card(int inplayIndex) {
 
     if (!inplay.isSellable[inplayIndex]) return; // checks if the card is sellable
+    if (inplay.ID[inplayIndex] == 0 && profileinfo.money[profile] < 100) return; // checks if you have enough money to sell a loan
 
     // INCREASE MONEY
     // --------------
@@ -742,23 +743,12 @@ void update_zones() {
     make_button(BUTTON_DECK, "./resources/button textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
     // buttons
     make_button(BUTTON_LOAN, "./resources/button textures/loan2.png", 15, CARD_MARGIN+130, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15), 50);
-    make_button(BUTTON_PAUSE, "./resources/button textures/pause.png", 10, 10, 40, 40);
+    make_button(BUTTON_PAUSE, "./resources/button textures/pause.png", 15, 15, 30, 30);
     make_button(BUTTON_SELL_STOCK, "./resources/button textures/minus.png", 15, CARD_MARGIN+195, 50, 50);
     make_button(BUTTON_BUY_STOCK, "./resources/button textures/plus.png", 175, CARD_MARGIN+195, 50, 50);
 }
 
-Uint8 colors[100][3] = {
-  	{0,0,0},        //0-Black
-  	{255,255,255},  //1-White
-  	{100,100,100},  //2-grey
-  	{255,0,0},      //3-Red
-	{255, 85,  0},	//4-fireorange
-};
-
-TTF_Font* font;
-SDL_Color textColor;
-SDL_Surface *textSurface;
-SDL_Texture *textTexture;
+TTF_Font* font24;
 
 bool load_textures() {
 
@@ -783,32 +773,12 @@ bool load_textures() {
         SDL_SetTextureScaleMode(playzones.zonetexture[i], SDL_SCALEMODE_NEAREST);
     }
 
-    font = TTF_OpenFont("./resources/Times New Roman.ttf", 24);
-    if (font == NULL) {
+    font24 = TTF_OpenFont("./resources/balatro.ttf", 24);
+    if (font24 == NULL) {
         return false;
     }
     
 	return true;
-}
-
-// TEMPORARY
-// ---------
-void write_text(SDL_Renderer* renderer, char text[100], float x, float y, int color, int transparency, bool center) {
-	textColor.r = colors[color][0];
-	textColor.g = colors[color][1];
-	textColor.b = colors[color][2];
-	textColor.a = transparency;
-	textSurface = TTF_RenderText_Solid(font, text, strlen(text), textColor);
-	textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    float textWidth = textSurface->w;
-    float textHeight = textSurface->h;
-	if (center) {
-		x = x-textWidth/2;
-		y = y-textHeight/2;
-	}
-	SDL_FRect renderQuad = { x, y, textWidth, textHeight };
-    SDL_RenderTexture(renderer, textTexture, NULL, &renderQuad);
-    SDL_DestroySurface(textSurface);
 }
 
 void update_window() {
@@ -1132,7 +1102,13 @@ void render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_FRect moneyhitbox = {0, CARD_MARGIN*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
     SDL_RenderRect(renderer, &moneyhitbox);
-    write_text(renderer, stringf("money: $%d", profileinfo.money[profile]), 0, CARD_MARGIN*window_scale_y, 3, 255, false);
+
+    // RENDER TEXT
+    SDL_Surface *textSurface = TTF_RenderText_Solid(font24, stringf("money: $%d", profileinfo.money[profile]), strlen(stringf("money: $%d", profileinfo.money[profile])), {0, 0, 0, 255});
+    SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+	SDL_FRect textQuad = { 15*window_scale_x, CARD_MARGIN*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+    SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+    SDL_DestroySurface(textSurface);
 
     SDL_FRect moneyhitbox2 = {0, (CARD_MARGIN+65)*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
     SDL_RenderRect(renderer, &moneyhitbox2);
@@ -1181,7 +1157,11 @@ void render() {
     if (custom_cursor) {
         SDL_HideCursor();
 
-        if (show_textures) {}
+        if (show_textures) {
+            SDL_FRect cursorhitbox = {mousex, mousey, 30.0f * window_scale_x, 30.0f * window_scale_y};
+            SDL_RenderRect(renderer, &cursorhitbox);
+            SDL_RenderTexture(renderer, gamebuttons.buttontexture[0], NULL, &cursorhitbox);
+        }
 
         if (show_hitboxes) {
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
