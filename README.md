@@ -45,6 +45,8 @@
 - you can increase how many cards you can draft from a stat boost (from drafting -> RARE)
 - stat increases: (number of draw cards, hand slots, draft count, luck, extra draw max, draw price, draw price inflation,)
 
+- You may get loans as teh round goes on but you must pay them back for your run to be validated
+
 CARD IDEAS
 
 - cash cards that you can sell for money

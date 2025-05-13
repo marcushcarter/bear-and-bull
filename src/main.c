@@ -600,7 +600,6 @@ void shuffle_hand(bool message) {
         if (!inplay.isActive[i]) continue;
         if (inplay.zoneID[i] == ZONE_SELL) continue;
         if (inplay.zoneID[i] == ZONE_EVENT) continue;
-        if (inplay.ID[i] == 0) continue;
         hand_to_deck(i, false);
     }
     
@@ -993,6 +992,9 @@ void update() {
 
 void render() {
 
+    // BACKGROUND
+    // ----------
+
     // ZONES TEXTURES / HITBOX
     // -----------------------
     for (int i = 0; i < MAX_ZONES; i++) {
@@ -1135,7 +1137,7 @@ void debug() {
 
     // printf("w:%d h:%d", window_width, window_height);
 
-    printf("%d\n", profileinfo.money[profile]);
+    // printf("%d\n", profileinfo.money[profile]);
 
     // printf("%f\n", cards.price[3]);
 }
