@@ -747,6 +747,19 @@ void update_zones() {
     make_button(BUTTON_BUY_STOCK, "./resources/button textures/plus.png", 175, CARD_MARGIN+195, 50, 50);
 }
 
+Uint8 colors[100][3] = {
+  	{0,0,0},        //0-Black
+  	{255,255,255},  //1-White
+  	{100,100,100},  //2-grey
+  	{255,0,0},      //3-Red
+	{255, 85,  0},	//4-fireorange
+};
+
+TTF_Font* font;
+SDL_Color textColor;
+SDL_Surface *textSurface;
+SDL_Texture *textTexture;
+
 bool load_textures() {
 
     // LOAD TEXTURES FOR CARDS
@@ -769,8 +782,33 @@ bool load_textures() {
         playzones.zonetexture[i] = IMG_LoadTexture(renderer, playzones.zonepath[i]);
         SDL_SetTextureScaleMode(playzones.zonetexture[i], SDL_SCALEMODE_NEAREST);
     }
+
+    font = TTF_OpenFont("./resources/Times New Roman.ttf", 24);
+    if (font == NULL) {
+        return false;
+    }
     
 	return true;
+}
+
+// TEMPORARY
+// ---------
+void write_text(SDL_Renderer* renderer, char text[100], float x, float y, int color, int transparency, bool center) {
+	textColor.r = colors[color][0];
+	textColor.g = colors[color][1];
+	textColor.b = colors[color][2];
+	textColor.a = transparency;
+	textSurface = TTF_RenderText_Solid(font, text, strlen(text), textColor);
+	textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    float textWidth = textSurface->w;
+    float textHeight = textSurface->h;
+	if (center) {
+		x = x-textWidth/2;
+		y = y-textHeight/2;
+	}
+	SDL_FRect renderQuad = { x, y, textWidth, textHeight };
+    SDL_RenderTexture(renderer, textTexture, NULL, &renderQuad);
+    SDL_DestroySurface(textSurface);
 }
 
 void update_window() {
@@ -1094,6 +1132,7 @@ void render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_FRect moneyhitbox = {0, CARD_MARGIN*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
     SDL_RenderRect(renderer, &moneyhitbox);
+    write_text(renderer, stringf("money: $%d", profileinfo.money[profile]), 0, CARD_MARGIN*window_scale_y, 3, 255, false);
 
     SDL_FRect moneyhitbox2 = {0, (CARD_MARGIN+65)*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
     SDL_RenderRect(renderer, &moneyhitbox2);
@@ -1164,6 +1203,8 @@ void debug() {
         for (int i = 0; i < MAX_CARDS; i++) {
             if (!inplay.isDragging[i]) continue;
             printf("%d %s -> sell: %d, i: %d\n", inplay.ID[i], cards.name[inplay.ID[i]], inplay.isSellable[i], i);
+            
+            // write_text(renderer, stringf("money: $%d", profileinfo.money[profile]), mousex*window_scale_x, (mousey+100)*window_scale_y, 3, 255, false);
         }
     }
 
@@ -1200,6 +1241,7 @@ int main() {
     srand(seed);
 
     SDL_Init(SDL_INIT_VIDEO);
+    TTF_Init();
     window = SDL_CreateWindow("Stockmarket Deckbuilder Roguelike", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
