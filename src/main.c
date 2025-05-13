@@ -230,6 +230,15 @@ float* floatarr(int num, ...) {
 	return combined_array;
 }
 
+char* stringf(const char* format, ...) { //converts a data type to a string ("%d", x)
+    static char output[128];
+    va_list args;
+    va_start(args, format);
+    vsprintf(output, format, args);
+    va_end(args);
+    return output;
+}
+
 // DELTA TIME (dt) FUNCTIONS ====================================================================================================
 
 clock_t previous_time = 0;
@@ -738,7 +747,6 @@ void update_zones() {
     make_button(BUTTON_BUY_STOCK, "./resources/button textures/plus.png", 175, CARD_MARGIN+195, 50, 50);
 }
 
-SDL_Texture* temp;
 bool load_textures() {
 
     // LOAD TEXTURES FOR CARDS
@@ -762,9 +770,6 @@ bool load_textures() {
         SDL_SetTextureScaleMode(playzones.zonetexture[i], SDL_SCALEMODE_NEAREST);
     }
     
-    temp = IMG_LoadTexture(renderer, "./resources/textures/idea.png");
-    SDL_SetTextureScaleMode(temp, SDL_SCALEMODE_NEAREST);
-
 	return true;
 }
 
@@ -1195,7 +1200,7 @@ int main() {
     srand(seed);
 
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("Retro FPS Deckbuilder", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("Stockmarket Deckbuilder Roguelike", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
