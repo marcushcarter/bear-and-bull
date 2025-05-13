@@ -44,7 +44,7 @@ bool custom_cursor = false;
 
 #define MAX_CARDS 10
 #define MAX_ZONES 10
-#define TOTAL_CARDS 10
+#define TOTAL_CARDS 11
 #define MAX_BUTTONS 20
 #define MAX_PROFILES 1
 
@@ -68,6 +68,9 @@ typedef struct ProfileInfo {
     int extraprice[MAX_PROFILES]; // how much an extra card draw costs
     int extrainflation[MAX_PROFILES]; // how much money the extra draw price increases by every time
     int extracount[MAX_PROFILES]; // how many times you have drawn an extra card in a round
+
+    // Loans
+    int loans[MAX_PROFILES]; // how many more loans you can take out
     
 
     // int money[MAX_PROFILES];
@@ -186,6 +189,9 @@ CardID cards;
 typedef enum ButtonType {
     BUTTON_DECK,
     BUTTON_LOAN,
+    BUTTON_BUY_STOCK,
+    BUTTON_SELL_STOCK,
+    BUTTON_PAUSE,
 } ButtonType;
 
 typedef struct Buttons {
@@ -318,7 +324,8 @@ void add_to_deck(int id, bool message) {
 }
 
 void add_to_hand(int id, bool message) {
-    if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // chack if there is any space in your hand
+
+    if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // check if there is any space in your hand
 
     // FIND IF AND WHERE AN IN PLAY SLOT IS OPEN
     // -------------------------------------
@@ -358,9 +365,8 @@ void add_to_hand(int id, bool message) {
 }
 
 void deck_to_hand(bool message) {
-    if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // chack if there is any space in your hand
-    // checks if you have enough money
-    // if (profileinfo.money[profile] < (profileinfo.extraprice[profile] + profileinfo.extrainflation[profile] * profileinfo.extracount[profile])) return;
+
+    if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // check if there is any space in your hand
 
     // PICKS A RANDOM VALID CARD FROM YOUR DECK
     // ----------------------------------------
@@ -502,8 +508,8 @@ void hand_to_deck(int inplayIndex, bool message) {
 }
 
 void event_card(int id, bool message) {
-    // checks if there any space in the event zone
-    if (playzones.num_cards[ZONE_EVENT] >= playzones.max_cards[ZONE_EVENT]) return;
+
+    if (playzones.num_cards[ZONE_EVENT] >= playzones.max_cards[ZONE_EVENT]) return; // check if there is any space in the event zone
 
     // finds the first empty space in your hand
     // ----------------------------------------
@@ -543,11 +549,58 @@ void event_card(int id, bool message) {
 
 }
 
+void loan_card(bool message) {
+    
+    if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // chack if there is any space in your hand
+    if (profileinfo.loans[profile] <= 0) return;
+
+    int id = 0; // loan card index in CardID (cards.ID)
+
+    // FIND IF AND WHERE AN IN PLAY SLOT IS OPEN
+    // -------------------------------------
+    int index = -1;
+    for (int i = 0; i < MAX_CARDS; i++) {
+        if (!inplay.isActive[i]) {
+            index = i;
+            break;
+        }
+    }
+    if (index == -1) return;
+
+    // ACTIVATE NEW CARD WITH ID AT THAT INDEX
+    // ---------------------------------------
+    
+    profileinfo.money[profile] += 100;
+    inplay.ID[index] = id;
+
+    inplay.x[index] = (1500/2);
+    inplay.y[index] = ((playzones.y[ZONE_EVENT] + playzones.h[ZONE_EVENT]/2) + 1000);
+    inplay.w[index] = CARD_WIDTH;
+    inplay.h[index] = CARD_HEIGHT;
+
+    playzones.num_cards[ZONE_HAND] += 1;
+    inplay.zoneID[index] = ZONE_HAND;
+    inplay.zoneNum[index] = playzones.num_cards[ZONE_HAND];
+    inplay.zoneTime[index] = (SDL_GetTicks()/1000.0f);
+
+    inplay.isDragging[index] = false;
+    inplay.isActive[index] = true;
+    inplay.isSellable[index] = true;
+    
+    inplay.num += 1;
+    profileinfo.loans[profile] -= 1;
+
+    if (message) printf("took out a $100 loan\n");
+
+    return;
+}
+
 void shuffle_hand(bool message) {
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!inplay.isActive[i]) continue;
         if (inplay.zoneID[i] == ZONE_SELL) continue;
         if (inplay.zoneID[i] == ZONE_EVENT) continue;
+        if (inplay.ID[i] == 0) continue;
         hand_to_deck(i, false);
     }
     
@@ -555,11 +608,21 @@ void shuffle_hand(bool message) {
 }
 
 void sell_card(int inplayIndex, bool message) {
+
+    if (!inplay.isSellable[inplayIndex]) return; // checks if the card is sellable
+
+    // INCREASE MONEY
+    // --------------
     
-    // DISCARD INPLAY CARD
-    // -----------------
-    
-    profileinfo.money[profile] += (cards.price[inplay.ID[inplayIndex]]);
+    if (inplay.ID[inplayIndex] == 0) {
+        profileinfo.money[profile] -= 100;
+    } else {
+        profileinfo.money[profile] += (cards.price[inplay.ID[inplayIndex]])/2;
+    }
+
+    // DELETE INPLAY CARD
+    // ------------------
+
     playzones.num_cards[inplay.zoneID[inplayIndex]] -= 1;
     
     inplay.ID[inplayIndex] = -1;
@@ -646,36 +709,33 @@ void make_button(ButtonType button, const char* buttonpath, int x, int y, int w,
 
 void update_zones() {
     // original prototype
-    // make_zone(ZONE_SELL, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_HAND, 9, CARD_MARGIN, (1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN), 0, 0);
-    // make_zone(ZONE_EQUIP_1, 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
-    // make_button(BUTTON_DECK, CARD_MARGIN, CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    // make_zone(ZONE_SELL, "", 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_HAND, "", 9, CARD_MARGIN, (1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN), 0, 0);
+    // make_zone(ZONE_EQUIP_1, "", 1, (1500-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
+    // make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
 
     // new version
-    // make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
-    // make_zone(ZONE_HAND, profileinfo.handslots[profile], CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_SELL, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_EQUIP_1, 1, CARD_MARGIN, CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_EQUIP_2, 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN, 0, 0);
+    // make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    // make_zone(ZONE_HAND, "", profileinfo.handslots[profile], CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_SELL, "", 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_EQUIP_1, "", 1, CARD_MARGIN, CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_EQUIP_2, "", 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN, 0, 0);
 
     // pre idea change version
-    // make_zone(ZONE_HAND, profileinfo.handslots[profile], CARD_MARGIN, CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_SELL, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_EQUIP_1, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_EVENT, 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    // make_button(BUTTON_DECK, CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    // make_zone(ZONE_HAND, "", profileinfo.handslots[profile], CARD_MARGIN, CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_SELL, "", 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_EQUIP_1, "", 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // make_zone(ZONE_EVENT, "", 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    // make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
 
     // post idea change version
-    make_zone(ZONE_SELL, "./resources/textures/deck.png", 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    make_zone(ZONE_HAND, "./resources/textures/deck.png", profileinfo.handslots[profile], 210, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 1080, 0);
-    make_zone(ZONE_EVENT, "./resources/textures/deck.png", 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
-
+    make_zone(ZONE_SELL, "", 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+    make_zone(ZONE_HAND, "", profileinfo.handslots[profile], 210, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 1080, 0);
+    make_zone(ZONE_EVENT, "", 1, 1500-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
     make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, 1000-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
-    // make_button(BUTTON_LOAN, )
-
+    make_button(BUTTON_LOAN, "./resources/textures/deck.png", CARD_MARGIN, 500, 100, 50);
 }
 
-SDL_Texture* deck;
 bool load_textures() {
 
     // LOAD TEXTURES FOR CARDS
@@ -713,7 +773,8 @@ void setup() {
 
     // LOAD CARDS
     // ----------
-    make_card(0, "./resources/textures/card1.png", "Normal Joker", "card of the number of one", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(0, "./resources/textures/loan.png", "$100 Loan", "card of the number of one", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
+    
     make_card(1, "./resources/textures/card2.png", "Flame Boy", "card of the number of two", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
     make_card(2, "./resources/textures/card3.png", "Peaked", "card of the number of three", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
     make_card(3, "./resources/textures/card4.png", "Eg", "card of the number of four", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
@@ -723,7 +784,8 @@ void setup() {
     make_card(7, "./resources/textures/card8.png", "Caino", "card of the number of eight", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
     make_card(8, "./resources/textures/card9.png", "Purple Magic", "card of the number of nine", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
     make_card(9, "./resources/textures/card10.png", "Planet Joker", "card of the number of ten", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-
+    make_card(10, "./resources/textures/card1.png", "Normal Joker", "card of the number of one", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    
     update_window();
     update_zones();
 
@@ -753,13 +815,14 @@ void setup() {
     // INITIALIZE PROFILE INFO
     // -----------------------
     profile = 0;
-
-    profileinfo.handslots[profile] = 3;
-
+    // used
     profileinfo.money[profile] = 100;
-    profileinfo.extraprice[profile] = 7;
-    profileinfo.extrainflation[profile] = 2;
-    profileinfo.extracount[profile] = 0;
+    profileinfo.handslots[profile] = 3;
+    profileinfo.loans[profile] = 3;
+    // not used
+    // profileinfo.extraprice[profile] = 7;
+    // profileinfo.extrainflation[profile] = 2;
+    // profileinfo.extracount[profile] = 0;
 
 }
 
@@ -830,7 +893,7 @@ void update() {
     // Draws an event card once every 15 seconds
     // ------------------------------------
     int ticks = (int)(SDL_GetTicks() / 100.0f) % 50;
-    if (ticks == 50 - 1) { event_card(rand() % TOTAL_CARDS, false); }
+    if (ticks == 50 - 1) { event_card((rand() % TOTAL_CARDS-1) + 1, false); }
 
     // CARD UPDATES
     // ------------
@@ -912,23 +975,19 @@ void update() {
     for (int i = 0; i < MAX_BUTTONS; i++) {
         if (!gamebuttons.isActive[i]) continue;
 
-        // Checks different button states
-        // ------------------------------
+        // Checks different button states (pressed/clicked)
+        // ------------------------------------------------
         if (point_box_collision(mousex, mousey, gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i])) {
-            // button is pressed
             if (currMouseState & SDL_BUTTON_LMASK) { gamebuttons.isPressed[i] = true; } else { gamebuttons.isPressed[i] = false; }
-            // button is clicked
             if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { gamebuttons.isClicked[i] = true; } else { gamebuttons.isClicked[i] = false; }
         } else {
             gamebuttons.isPressed[i] = false;
             gamebuttons.isClicked[i] = false;
         }
 
-        // Deck Button
-        // -----------
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) {
-            if (playzones.num_cards[ZONE_HAND] < playzones.max_cards[ZONE_HAND]) deck_to_hand(true);
-        }
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) deck_to_hand(true); // DECK BUTTON
+
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(true); // LOAN BUTTON
     }
 }
 
@@ -1076,7 +1135,7 @@ void debug() {
 
     // printf("w:%d h:%d", window_width, window_height);
 
-    // printf("%d\n", profileinfo.money[profile]);
+    printf("%d\n", profileinfo.money[profile]);
 
     // printf("%f\n", cards.price[3]);
 }
