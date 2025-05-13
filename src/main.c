@@ -524,8 +524,8 @@ void event_card(int id) {
 
     inplay.ID[inplayIndex] = id;
 
-    inplay.x[inplayIndex] = (playzones.x[ZONE_EVENT] + playzones.w[ZONE_EVENT]/2);
-    inplay.y[inplayIndex] = ((playzones.y[ZONE_EVENT] + playzones.h[ZONE_EVENT]/2) - WINDOW_HEIGHT);
+    inplay.x[inplayIndex] = (playzones.x[ZONE_EVENT] + playzones.w[ZONE_EVENT]/2)  * window_scale_x;
+    inplay.y[inplayIndex] = ((playzones.y[ZONE_EVENT] + playzones.h[ZONE_EVENT]/2) - 1000)  * window_scale_y;
     inplay.w[inplayIndex] = CARD_WIDTH;
     inplay.h[inplayIndex] = CARD_HEIGHT;
 
@@ -567,8 +567,8 @@ void loan_card() {
     profileinfo.money[profile] += 100;
     inplay.ID[index] = id;
 
-    inplay.x[index] = (WINDOW_WIDTH/2);
-    inplay.y[index] = ((playzones.y[ZONE_EVENT] + playzones.h[ZONE_EVENT]/2) + WINDOW_HEIGHT);
+    inplay.x[index] = (WINDOW_WIDTH/2) * window_scale_x;
+    inplay.y[index] = ((playzones.y[ZONE_EVENT] + playzones.h[ZONE_EVENT]/2) + 1000) * window_scale_y;
     inplay.w[index] = CARD_WIDTH;
     inplay.h[index] = CARD_HEIGHT;
 
@@ -731,7 +731,11 @@ void update_zones() {
     make_zone(ZONE_HAND, "", profileinfo.handslots[profile], WINDOW_WIDTH/2 - 725/2, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 725, 0);
     make_zone(ZONE_EVENT, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
     make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
-    make_button(BUTTON_LOAN, "./resources/textures/deck.png", CARD_MARGIN, 300, CARD_WIDTH+CARD_SPACING, 50);
+    // buttons
+    make_button(BUTTON_LOAN, "./resources/textures/loan.png", 15, CARD_MARGIN+130, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15), 50);
+    make_button(BUTTON_PAUSE, "./resources/textures/pause.png", 10, 10, 40, 40);
+    make_button(BUTTON_SELL_STOCK, "./resources/textures/minus.png", 15, CARD_MARGIN+195, 50, 50);
+    make_button(BUTTON_BUY_STOCK, "./resources/textures/plus.png", 175, CARD_MARGIN+195, 50, 50);
 }
 
 SDL_Texture* temp;
@@ -992,6 +996,29 @@ void update() {
     }
 }
 
+void render_charts() {
+    // STOCK CHARTS TEXTURES / HITBOX
+    // ------------------------------
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_FRect charthitbox = {(WINDOW_WIDTH/2 - 725/2)*window_scale_x, CARD_MARGIN*window_scale_y, 725*window_scale_x, 440*window_scale_y};
+    SDL_RenderRect(renderer, &charthitbox);
+}
+
+void render_assistant() {
+    // ASSISTANT TEXTURES / HITBOX
+    // ---------------------------
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_FRect assistanthitbox = {((600+725/2) + 15)*window_scale_x, (CARD_MARGIN+CARD_SPACING+CARD_HEIGHT+20)*window_scale_y, (WINDOW_WIDTH-CARD_MARGIN-CARD_MARGIN+CARD_SPACING-30)*window_scale_x, 250*window_scale_y};
+    SDL_RenderRect(renderer, &assistanthitbox);
+}
+
+void render_headline() {
+    // HEADLINE TEXTURES / HITBOX
+    // --------------------------
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_FRect headlinehitbox = {(CARD_MARGIN+15)*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-15-50)*window_scale_y, (WINDOW_WIDTH-CARD_MARGIN-CARD_MARGIN+CARD_SPACING-30)*window_scale_x, 50*window_scale_y};
+    SDL_RenderRect(renderer, &headlinehitbox);}
+
 void render() {
 
     // BACKGROUND
@@ -1054,23 +1081,20 @@ void render() {
         }
     }
 
-    // STOCK CHARTS TEXTURES / HITBOX
-    // ------------------------------
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_FRect charthitbox = {(WINDOW_WIDTH/2 - 725/2), CARD_MARGIN, 725, 440};
-    SDL_RenderRect(renderer, &charthitbox);
+    render_charts();
+    render_assistant();
+    render_headline();
 
-    // ASSISTANT TEXTURES / HITBOX
-    // ---------------------------
+    // MONEY
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_FRect assistanthitbox = {(600+725/2) + 15, CARD_MARGIN+CARD_SPACING+CARD_HEIGHT+20, (WINDOW_WIDTH-CARD_MARGIN-CARD_MARGIN+CARD_SPACING-30)*window_scale_x, 250*window_scale_y};
-    SDL_RenderRect(renderer, &assistanthitbox);
+    SDL_FRect moneyhitbox = {0, CARD_MARGIN*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
+    SDL_RenderRect(renderer, &moneyhitbox);
 
-    // HEADLINE TEXTURES / HITBOX
-    // --------------------------
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_FRect headlinehitbox = {(CARD_MARGIN+15)*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-15-50)*window_scale_y, (WINDOW_WIDTH-CARD_MARGIN-CARD_MARGIN+CARD_SPACING-30)*window_scale_x, 50*window_scale_y};
-    SDL_RenderRect(renderer, &headlinehitbox);
+    SDL_FRect moneyhitbox2 = {0, (CARD_MARGIN+65)*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
+    SDL_RenderRect(renderer, &moneyhitbox2);
+
+    SDL_FRect moneyhitbox5 = {15*window_scale_x, (CARD_MARGIN+260)*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15)*window_scale_x, 180*window_scale_y};
+    SDL_RenderRect(renderer, &moneyhitbox5);
 
     // CARDS TEXTURES / HITBOX
     // -----------------------
