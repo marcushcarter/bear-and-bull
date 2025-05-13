@@ -31,6 +31,8 @@ int seed;
 float game_speed = 2;
 int profile;
 
+float time_passed = 0;
+
 bool show_hitboxes = true;
 bool show_textures = true;
 bool custom_cursor = false;
@@ -1015,14 +1017,30 @@ void update() {
 
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(); // LOAN BUTTON
     }
+
+    // CHARTS STOCK SIMULATION
+
+
 }
 
 void render_charts() {
-    // STOCK CHARTS TEXTURES / HITBOX
+    
+    // STOCK CHARTS TEXTURES
     // ------------------------------
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_FRect charthitbox = {(WINDOW_WIDTH/2 - 725/2)*window_scale_x, CARD_MARGIN*window_scale_y, 725*window_scale_x, 440*window_scale_y};
-    SDL_RenderRect(renderer, &charthitbox);
+    if (show_textures) {
+        // repeat for each of the five stocks selected
+        // draw points of the graph up to the round time passed (eg 20s only render 20 points)
+        // draw the lines connecting the points together
+    }
+
+    // STOCK CHARTS HITBOX
+    // ------------------------------
+
+    if (show_hitboxes) {
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_FRect charthitbox = {(WINDOW_WIDTH/2 - 725/2)*window_scale_x, CARD_MARGIN*window_scale_y, 725*window_scale_x, 440*window_scale_y};
+        SDL_RenderRect(renderer, &charthitbox);
+    }
 }
 
 void render_assistant() {
@@ -1102,10 +1120,6 @@ void render() {
             SDL_RenderRect(renderer, &buttonhitbox);
         }
     }
-
-    render_charts();
-    render_assistant();
-    render_headline();
 
     // MONEY
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -1259,6 +1273,9 @@ int main() {
 
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
+        render_charts();
+        // render_assistant();
+        // render_headline();
         render();
         SDL_RenderPresent(renderer);
 

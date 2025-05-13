@@ -65,7 +65,18 @@ FACTORS THAT AFFECT A STOCKS RISE AND FALL
 - taxes
 - 
 
+## Candlesticks (OCHL)
 
+Open (O) - the frist price in a time interval
+Close (C) - The last price in a time interval
+High (H) - the highest price in that time interval
+Low (L) - the lowest price in that time interval
+
+    |         ← High
+   ┌┴┐        ← Open (top of red candle)
+   │ │        ← Body (Open to Close)
+   └┬┘        ← Close (bottom of red candle)
+    |         ← Low
 
 
 
