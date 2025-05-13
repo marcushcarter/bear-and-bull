@@ -378,6 +378,8 @@ void deck_to_hand() {
 
     if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // check if there is any space in your hand
 
+    if (profileinfo.money[profile] < profileinfo.extraprice[profile] + profileinfo.extrainflation[profile]*profileinfo.extracount[profile]) return; // checks if you have enough money to draw a card
+
     // PICKS A RANDOM VALID CARD FROM YOUR DECK
     // ----------------------------------------
     int validIndex[MAX_CARDS];
@@ -423,8 +425,8 @@ void deck_to_hand() {
     
     inplay.num += 1;
 
-    // profileinfo.money[profile] -= (profileinfo.extraprice[profile] + profileinfo.extrainflation[profile] * profileinfo.extracount[profile]);
-    // profileinfo.extracount[profile] += 1;
+    profileinfo.money[profile] -= profileinfo.extraprice[profile] + profileinfo.extrainflation[profile]*profileinfo.extracount[profile];
+    profileinfo.extracount[profile] += 1;
 
     // DISCARD DECK CARD
     // -----------------
@@ -1005,7 +1007,11 @@ void update() {
             gamebuttons.isClicked[i] = false;
         }
 
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) deck_to_hand(); // DECK BUTTON
+        // DECK BUTTON
+        // -----------
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) {
+            deck_to_hand();
+        }
 
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(); // LOAN BUTTON
     }
@@ -1107,7 +1113,7 @@ void render() {
     SDL_RenderRect(renderer, &moneyhitbox);
 
     // RENDER TEXT
-    SDL_Surface *textSurface = TTF_RenderText_Solid(font24, stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extraprice[profile]*profileinfo.extracount[profile]), strlen(stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extraprice[profile]*profileinfo.extracount[profile])), {0, 0, 0, 255});
+    SDL_Surface *textSurface = TTF_RenderText_Solid(font24, stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extrainflation[profile]*profileinfo.extracount[profile]), strlen(stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extraprice[profile]*profileinfo.extracount[profile])), {0, 0, 0, 255});
     SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
 	SDL_FRect textQuad = { CARD_MARGIN*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-12)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
     SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
