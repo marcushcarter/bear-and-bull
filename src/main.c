@@ -251,7 +251,7 @@ void control_fps(float target_fps) {
 
 // DRAWING / DISCARDING CARDS FUNCTIONS ====================================================================================================
 
-void clear_cards(Cards* cards, bool message) {
+void clear_cards(Cards* cards) {
 
     for (int i = 0; i < MAX_CARDS; i++) {
         
@@ -279,10 +279,10 @@ void clear_cards(Cards* cards, bool message) {
 
     cards->num = 0;
 
-    if (message) printf("cleared cards\n");
+    return;
 }
 
-void add_to_deck(int id, bool message) {
+void add_to_deck(int id) {
 
     // FIND IF AND WHERE A DECK SLOT IS OPEN
     // -------------------------------------
@@ -318,12 +318,10 @@ void add_to_deck(int id, bool message) {
     
     indeck.num += 1;
 
-    if (message) printf("id card added to deck\n");
-
     return;
 }
 
-void add_to_hand(int id, bool message) {
+void add_to_hand(int id) {
 
     if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // check if there is any space in your hand
 
@@ -359,12 +357,10 @@ void add_to_hand(int id, bool message) {
     
     inplay.num += 1;
 
-    if (message) printf("id card added to hand\n");
-
     return;
 }
 
-void deck_to_hand(bool message) {
+void deck_to_hand() {
 
     if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // check if there is any space in your hand
 
@@ -416,8 +412,6 @@ void deck_to_hand(bool message) {
     // profileinfo.money[profile] -= (profileinfo.extraprice[profile] + profileinfo.extrainflation[profile] * profileinfo.extracount[profile]);
     // profileinfo.extracount[profile] += 1;
 
-    if (message) printf("draw card\n");
-
     // DISCARD DECK CARD
     // -----------------
     
@@ -444,7 +438,7 @@ void deck_to_hand(bool message) {
     return;
 }
 
-void hand_to_deck(int inplayIndex, bool message) {
+void hand_to_deck(int inplayIndex) {
 
     // FIND IF AND WHERE A DECK SLOT IS OPEN
     // -----------------------------------------
@@ -504,10 +498,10 @@ void hand_to_deck(int inplayIndex, bool message) {
     
     inplay.num -= 1;
 
-    if (message) printf("shuffled card into deck\n");
+    return;
 }
 
-void event_card(int id, bool message) {
+void event_card(int id) {
 
     if (playzones.num_cards[ZONE_EVENT] >= playzones.max_cards[ZONE_EVENT]) return; // check if there is any space in the event zone
 
@@ -543,13 +537,10 @@ void event_card(int id, bool message) {
     
     inplay.num += 1;
 
-    if (message) printf("event card\n");
-
     return;
-
 }
 
-void loan_card(bool message) {
+void loan_card() {
     
     if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // chack if there is any space in your hand
     if (profileinfo.loans[profile] <= 0) return;
@@ -590,23 +581,21 @@ void loan_card(bool message) {
     inplay.num += 1;
     profileinfo.loans[profile] -= 1;
 
-    if (message) printf("took out a $100 loan\n");
-
     return;
 }
 
-void shuffle_hand(bool message) {
+void shuffle_hand() {
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!inplay.isActive[i]) continue;
         if (inplay.zoneID[i] == ZONE_SELL) continue;
         if (inplay.zoneID[i] == ZONE_EVENT) continue;
-        hand_to_deck(i, false);
+        hand_to_deck(i);
     }
-    
-    if (message) printf("shuffled hand into deck\n");
+
+    return;
 }
 
-void sell_card(int inplayIndex, bool message) {
+void sell_card(int inplayIndex) {
 
     if (!inplay.isSellable[inplayIndex]) return; // checks if the card is sellable
 
@@ -645,7 +634,7 @@ void sell_card(int inplayIndex, bool message) {
     
     inplay.num -= 1;
                             
-    if (message) printf("card sold\n");
+    return;
 }
 
 // SETUP FUNCTIONS ====================================================================================================
@@ -794,8 +783,8 @@ void setup() {
 
     // SETUP CARDS, BUTTONS AND ZONES
     // ---------------------
-    for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&inplay, true); }
-    for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&indeck, true); }
+    for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&inplay); }
+    for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&indeck); }
     for (int i = 0; i < MAX_ZONES; i++) {
         playzones.isActive[i] = false;
         playzones.num_cards[i] = 0;
@@ -809,7 +798,7 @@ void setup() {
 
     // ADD CARDS TO DECK
     // ---------------------
-    for (int i = 0; i < 1; i++) { add_to_deck(rand() % TOTAL_CARDS, false); }
+    for (int i = 0; i < 1; i++) { add_to_deck(rand() % TOTAL_CARDS); }
 
     // INITIALIZE PROFILE INFO
     // -----------------------
@@ -867,19 +856,19 @@ void dev_tools() {
     // 4 - shuffle hand into deck
     // --------------------------
     if (currKeyState[SDL_SCANCODE_4] && !prevKeyState[SDL_SCANCODE_4]) {
-        shuffle_hand(true);
+        shuffle_hand();
     }
 
     // 5 - spawn event card
     // --------------------
     if (currKeyState[SDL_SCANCODE_5] && !prevKeyState[SDL_SCANCODE_5]) {
-        event_card(rand() % TOTAL_CARDS, false);
+        event_card(rand() % TOTAL_CARDS);
     }
 
     // 6 - draw card id to hand
     // --------------------------
     if (currKeyState[SDL_SCANCODE_6] && !prevKeyState[SDL_SCANCODE_6]) {
-        add_to_hand(rand() % TOTAL_CARDS, true);
+        add_to_hand(rand() % TOTAL_CARDS);
     }
 
 }
@@ -892,7 +881,7 @@ void update() {
     // Draws an event card once every 15 seconds
     // ------------------------------------
     int ticks = (int)(SDL_GetTicks() / 100.0f) % 50;
-    if (ticks == 50 - 1) { event_card((rand() % TOTAL_CARDS-1) + 1, false); }
+    if (ticks == 50 - 1) { event_card((rand() % TOTAL_CARDS-1) + 1); }
 
     // CARD UPDATES
     // ------------
@@ -944,7 +933,7 @@ void update() {
         // if (((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5) {
         if (inplay.zoneID[i] == ZONE_SELL && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
             // visual
-            sell_card(i, true);
+            sell_card(i);
         }
 
         // if you are dragging a card it goes to your mouse
@@ -984,9 +973,9 @@ void update() {
             gamebuttons.isClicked[i] = false;
         }
 
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) deck_to_hand(true); // DECK BUTTON
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) deck_to_hand(); // DECK BUTTON
 
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(true); // LOAN BUTTON
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(); // LOAN BUTTON
     }
 }
 
