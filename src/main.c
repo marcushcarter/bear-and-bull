@@ -207,6 +207,8 @@ typedef struct Buttons {
     float y[MAX_BUTTONS];
     float w[MAX_BUTTONS];
     float h[MAX_BUTTONS];
+    
+    float clickTime[MAX_CARDS];
 
     bool isPressed[MAX_BUTTONS];
     bool isClicked[MAX_BUTTONS];
@@ -838,9 +840,9 @@ void setup() {
     profileinfo.handslots[profile] = 3;
     profileinfo.loans[profile] = 3;
     // not used
-    // profileinfo.extraprice[profile] = 7;
-    // profileinfo.extrainflation[profile] = 2;
-    // profileinfo.extracount[profile] = 0;
+    profileinfo.extraprice[profile] = 7;
+    profileinfo.extrainflation[profile] = 2;
+    profileinfo.extracount[profile] = 0;
 
 }
 
@@ -994,6 +996,7 @@ void update() {
 
         // Checks different button states (pressed/clicked)
         // ------------------------------------------------
+        if (gamebuttons.isPressed[i]) gamebuttons.clickTime[i] = (SDL_GetTicks() / 1000.0f);
         if (point_box_collision(mousex, mousey, gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i])) {
             if (currMouseState & SDL_BUTTON_LMASK) { gamebuttons.isPressed[i] = true; } else { gamebuttons.isPressed[i] = false; }
             if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { gamebuttons.isClicked[i] = true; } else { gamebuttons.isClicked[i] = false; }
@@ -1068,8 +1071,8 @@ void render() {
         if (!gamebuttons.isActive[i]) continue;
 
         if (show_textures) {
-            float sineh = 5 * sin(2.0f * (SDL_GetTicks() / 1000.0f));
-            float sinea = 2.5 * sin(SDL_GetTicks() / 1000.0f);
+            float sineh = 5 * sin(2.0f * (gamebuttons.clickTime[i] - SDL_GetTicks() / 1000.0f));
+            float sinea = 2.5 * sin(gamebuttons.clickTime[i] - SDL_GetTicks() / 1000.0f);
             float angle = sinea;
 
             float button_grow_w = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.w[i];
@@ -1104,11 +1107,19 @@ void render() {
     SDL_RenderRect(renderer, &moneyhitbox);
 
     // RENDER TEXT
-    SDL_Surface *textSurface = TTF_RenderText_Solid(font24, stringf("money: $%d", profileinfo.money[profile]), strlen(stringf("money: $%d", profileinfo.money[profile])), {0, 0, 0, 255});
+    SDL_Surface *textSurface = TTF_RenderText_Solid(font24, stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extraprice[profile]*profileinfo.extracount[profile]), strlen(stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extraprice[profile]*profileinfo.extracount[profile])), {0, 0, 0, 255});
     SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-	SDL_FRect textQuad = { 15*window_scale_x, CARD_MARGIN*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+	SDL_FRect textQuad = { CARD_MARGIN*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-12)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
     SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
     SDL_DestroySurface(textSurface);
+
+    
+    textSurface = TTF_RenderText_Solid(font24, stringf("money: $%d", profileinfo.money[profile]), strlen(stringf("money: $%d", profileinfo.money[profile])), {0, 0, 0, 255});
+    textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+	textQuad = { 15*window_scale_x, CARD_MARGIN*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+    SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+    SDL_DestroySurface(textSurface);
+
 
     SDL_FRect moneyhitbox2 = {0, (CARD_MARGIN+65)*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
     SDL_RenderRect(renderer, &moneyhitbox2);
