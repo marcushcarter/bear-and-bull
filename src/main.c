@@ -219,6 +219,18 @@ typedef struct Buttons {
 
 Buttons gamebuttons;
 
+typedef struct StonkData {
+    char name[256];
+
+    float time_started;
+    float price[61];
+    float h[61];
+    float o[61];
+    float c[61];
+    float l[61];
+    float integrity;
+} StonkData; StonkData stonk;
+
 // COMMON FUNCTIONS ====================================================================================================
 
 bool point_box_collision(float px, float py, float bx, float by, float bw, float bh) { return (px >= bx && px <= bx + bw && py >= by && py <= by + bh); }
@@ -656,6 +668,32 @@ void sell_card(int inplayIndex) {
     return;
 }
 
+// STOCK FUNCTIONS ====================================================================================================
+
+void reset_stock() {
+    
+    stonk.time_started = SDL_GetTicks() / 1000.0f;
+    for (int i = 0; i < 60; i++) {
+        stonk.h[i] = 0;
+        stonk.o[60] = 0;
+        stonk.c[60] = 0;
+        stonk.l[60] = 0;
+        stonk.integrity = 1.0f;
+    }
+}
+
+void update_stonk() {
+    float price = 10;
+    for (int i = 0; i < 60; i++) {
+        float delta = ((rand() % 2001) - 1000) / 1000.0f; // -10.0 to +10.0
+        price += delta;
+        stonk.c[i] = price;
+        stonk.o[i] = stonk.c[i-1];
+        stonk.h[i] = price+1;
+        stonk.l[i] = price-1;
+    }
+}
+
 // SETUP FUNCTIONS ====================================================================================================
 
 void make_card(int id, const char* cardpath, const char* name, const char* description, float stats[100]) {
@@ -848,6 +886,9 @@ void setup() {
     profileinfo.extrainflation[profile] = 2;
     profileinfo.extracount[profile] = 0;
 
+    reset_stock();
+    update_stonk();
+
 }
 
 // LOOP FUNCTIONS ====================================================================================================
@@ -1023,15 +1064,76 @@ void update() {
 
 }
 
+// void draw_candle(float x, float h, float o, float c, float l) {
+//     if (o > c) {
+//         // loss
+//         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+//     } else {
+//         // gain
+//         SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+//     }
+//     SDL_RenderLine(renderer, (x*3)*window_scale_x, h*window_scale_y, (x*3)*window_scale_x, l*window_scale_y);
+//     SDL_FRect candle = {((x*3)-3)*window_scale_x, (o)*window_scale_y, 6*window_scale_x, (c-o)*window_scale_y};
+//     SDL_RenderRect(renderer, &candle);
+//     // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+//     // SDL_RenderLine(renderer, (x-1)*3*window_scale_x, o*window_scale_y, (x)*3*window_scale_x, c*window_scale_y);
+// }
+
+void draw_candle(float x, float h, float o, float c, float l) {
+    // Flip Y-axis
+    float H = window_height - (h * window_scale_y);
+    float O = window_height - (o * window_scale_y);
+    float C = window_height - (c * window_scale_y);
+    float L = window_height - (l * window_scale_y);
+
+    if (o > c) {
+        // loss
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    } else {
+        // gain
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+    }
+
+    // Vertical wick (line)
+    SDL_RenderLine(renderer, (WINDOW_WIDTH/2 - 725/2)+(x * 3) * window_scale_x, H, (WINDOW_WIDTH/2 - 725/2)+(x * 3) * window_scale_x, L);
+
+    // Body of the candle
+    SDL_FRect candle;
+    candle.x = ((WINDOW_WIDTH/2 - 725/2)+(x * 3) - 3) * window_scale_x;
+    candle.y = (o > c) ? C : O; // Top of the rectangle
+    candle.w = 6 * window_scale_x;
+    candle.h = fabsf(C - O);    // Height should always be positive
+
+    SDL_RenderRect(renderer, &candle);
+}
+
+
 void render_charts() {
     
     // STOCK CHARTS TEXTURES
     // ------------------------------
     if (show_textures) {
+        int bottom_border = 0;
+        int left_border = 0;
         // repeat for each of the five stocks selected
         // draw points of the graph up to the round time passed (eg 20s only render 20 points)
         // draw the lines connecting the points together
+        
+        for (int i = 0; i < 60; i++) {
+            draw_candle(i*3, stonk.h[i]*25, stonk.o[i]*25, stonk.c[i]*25, stonk.l[i]*25);
+        }
+
+        // for (int i = 0; i < 60; i++) {
+        //     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        //     SDL_RenderLine(renderer, (i-1)*3*3*window_scale_x, stonk.o[i]*25*window_scale_y, i*3*window_scale_x, stonk.c[i]*25*window_scale_y); 
+        // }
+
+        // draw_candle(10.0f*window_scale_x, 235.0f*window_scale_y, 190.0f*window_scale_y, 212.0f*window_scale_y, 185.0f*window_scale_y);
+        // draw_candle(20.0f*window_scale_x, 217.0f*window_scale_y, 212.0f*window_scale_y, 186.0f*window_scale_y, 186.0f*window_scale_y);
     }
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderLine(renderer, 0, mousey*window_scale_y, window_width, mousey*window_scale_y);
+    SDL_RenderLine(renderer, mousex*window_scale_x, 0, mousex*window_scale_x, window_height);
 
     // STOCK CHARTS HITBOX
     // ------------------------------
