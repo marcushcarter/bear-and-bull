@@ -752,7 +752,12 @@ void make_button(ButtonType button, const char* buttonpath, int x, int y, int w,
     // gamebuttons.[button] = ;
 }
 
-void update_zones() {
+void update_window() {
+    // get window sizes and set window scaling x/y coefficients
+    SDL_GetWindowSize(window, &window_width, &window_height);
+    window_scale_x = window_width / 1200.0f;  
+    window_scale_y = window_height / 800.0f;
+
     // original prototype
     // make_zone(ZONE_SELL, "", 1, (WINDOW_WIDTH-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
     // make_zone(ZONE_HAND, "", 9, CARD_MARGIN, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN), 0, 0);
@@ -825,14 +830,11 @@ bool load_textures() {
 	return true;
 }
 
-void update_window() {
-    // get window sizes and set window scaling x/y coefficients
-    SDL_GetWindowSize(window, &window_width, &window_height);
-    window_scale_x = window_width / 1200.0f;  
-    window_scale_y = window_height / 800.0f;
-}
-
 void setup() {
+    
+    seed = time(NULL);
+    // seed = 0;
+    srand(seed);
 
     // LOAD CARDS
     // ----------
@@ -849,7 +851,6 @@ void setup() {
     make_card(10, "./resources/card textures/card11.png", "Normal Joker", "card of the number of one", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
     
     update_window();
-    update_zones();
 
     const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
@@ -953,7 +954,6 @@ void dev_tools() {
 void update() {
 
     update_window();
-    update_zones();
 
     // Draws an event card once every 15 seconds
     // ------------------------------------
@@ -1064,28 +1064,7 @@ void update() {
 
 }
 
-// void draw_candle(float x, float h, float o, float c, float l) {
-//     if (o > c) {
-//         // loss
-//         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-//     } else {
-//         // gain
-//         SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-//     }
-//     SDL_RenderLine(renderer, (x*3)*window_scale_x, h*window_scale_y, (x*3)*window_scale_x, l*window_scale_y);
-//     SDL_FRect candle = {((x*3)-3)*window_scale_x, (o)*window_scale_y, 6*window_scale_x, (c-o)*window_scale_y};
-//     SDL_RenderRect(renderer, &candle);
-//     // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-//     // SDL_RenderLine(renderer, (x-1)*3*window_scale_x, o*window_scale_y, (x)*3*window_scale_x, c*window_scale_y);
-// }
-
 void draw_candle(float x, float h, float o, float c, float l) {
-    // Flip Y-axis
-    float H = window_height - (h * window_scale_y);
-    float O = window_height - (o * window_scale_y);
-    float C = window_height - (c * window_scale_y);
-    float L = window_height - (l * window_scale_y);
-
     if (o > c) {
         // loss
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -1093,19 +1072,40 @@ void draw_candle(float x, float h, float o, float c, float l) {
         // gain
         SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
     }
-
-    // Vertical wick (line)
-    SDL_RenderLine(renderer, (WINDOW_WIDTH/2 - 725/2)+(x * 3) * window_scale_x, H, (WINDOW_WIDTH/2 - 725/2)+(x * 3) * window_scale_x, L);
-
-    // Body of the candle
-    SDL_FRect candle;
-    candle.x = ((WINDOW_WIDTH/2 - 725/2)+(x * 3) - 3) * window_scale_x;
-    candle.y = (o > c) ? C : O; // Top of the rectangle
-    candle.w = 6 * window_scale_x;
-    candle.h = fabsf(C - O);    // Height should always be positive
-
+    SDL_RenderLine(renderer, (x*3)*window_scale_x, h*window_scale_y, (x*3)*window_scale_x, l*window_scale_y);
+    SDL_FRect candle = {((x*3)-3)*window_scale_x, (o)*window_scale_y, 6*window_scale_x, (c-o)*window_scale_y};
     SDL_RenderRect(renderer, &candle);
+    // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    // SDL_RenderLine(renderer, (x-1)*3*window_scale_x, o*window_scale_y, (x)*3*window_scale_x, c*window_scale_y);
 }
+
+// void draw_candle(float x, float h, float o, float c, float l) {
+//     // Flip Y-axis
+//     float H = window_height - (h * window_scale_y);
+//     float O = window_height - (o * window_scale_y);
+//     float C = window_height - (c * window_scale_y);
+//     float L = window_height - (l * window_scale_y);
+
+//     if (o > c) {
+//         // loss
+//         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+//     } else {
+//         // gain
+//         SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+//     }
+
+//     // Vertical wick (line)
+//     SDL_RenderLine(renderer, ((WINDOW_WIDTH/2 - 725/2)+(x * 3) - 3) * window_scale_x, H, ((WINDOW_WIDTH/2 - 725/2)+(x * 3) - 3) * window_scale_x, L);
+
+//     // Body of the candle
+//     SDL_FRect candle;
+//     candle.x = ((WINDOW_WIDTH/2 - 725/2)+(x * 3) - 3) * window_scale_x;
+//     candle.y = (o > c) ? C : O; // Top of the rectangle
+//     candle.w = 6 * window_scale_x;
+//     candle.h = fabsf(C - O);    // Height should always be positive
+
+//     SDL_RenderRect(renderer, &candle);
+// }
 
 
 void render_charts() {
@@ -1120,7 +1120,7 @@ void render_charts() {
         // draw the lines connecting the points together
         
         for (int i = 0; i < 60; i++) {
-            draw_candle(i*3, stonk.h[i]*25, stonk.o[i]*25, stonk.c[i]*25, stonk.l[i]*25);
+            draw_candle(i*3, 0, stonk.o[i]*25, stonk.c[i]*25, 0);
         }
 
         // for (int i = 0; i < 60; i++) {
@@ -1348,10 +1348,6 @@ void debug() {
 // MAIN FUNCTION ====================================================================================================
 
 int main() {
-    
-    // seed = time(NULL);
-    seed = 0;
-    srand(seed);
 
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();
