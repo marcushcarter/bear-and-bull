@@ -1079,35 +1079,6 @@ void draw_candle(float x, float h, float o, float c, float l) {
     // SDL_RenderLine(renderer, (x-1)*3*window_scale_x, o*window_scale_y, (x)*3*window_scale_x, c*window_scale_y);
 }
 
-// void draw_candle(float x, float h, float o, float c, float l) {
-//     // Flip Y-axis
-//     float H = window_height - (h * window_scale_y);
-//     float O = window_height - (o * window_scale_y);
-//     float C = window_height - (c * window_scale_y);
-//     float L = window_height - (l * window_scale_y);
-
-//     if (o > c) {
-//         // loss
-//         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-//     } else {
-//         // gain
-//         SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-//     }
-
-//     // Vertical wick (line)
-//     SDL_RenderLine(renderer, ((WINDOW_WIDTH/2 - 725/2)+(x * 3) - 3) * window_scale_x, H, ((WINDOW_WIDTH/2 - 725/2)+(x * 3) - 3) * window_scale_x, L);
-
-//     // Body of the candle
-//     SDL_FRect candle;
-//     candle.x = ((WINDOW_WIDTH/2 - 725/2)+(x * 3) - 3) * window_scale_x;
-//     candle.y = (o > c) ? C : O; // Top of the rectangle
-//     candle.w = 6 * window_scale_x;
-//     candle.h = fabsf(C - O);    // Height should always be positive
-
-//     SDL_RenderRect(renderer, &candle);
-// }
-
-
 void render_charts() {
     
     // STOCK CHARTS TEXTURES
@@ -1151,14 +1122,51 @@ void render_assistant() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_FRect assistanthitbox = {((600+725/2) + 15)*window_scale_x, (CARD_MARGIN+CARD_SPACING+CARD_HEIGHT+20)*window_scale_y, (WINDOW_WIDTH-CARD_MARGIN-CARD_MARGIN+CARD_SPACING-30)*window_scale_x, 250*window_scale_y};
     SDL_RenderRect(renderer, &assistanthitbox);
+
+    // IF YOU ARE HOLDING A CARD IT WILL SHOW A DESC
+    if (isDragging) {
+            for (int i = 0; i < MAX_CARDS; i++) {
+                if (!inplay.isDragging[i]) continue;
+                
+                // RENDER TEXT
+
+                SDL_Surface *textSurface = TTF_RenderText_Solid(font24, stringf("%s", cards.name[inplay.ID[i]]), strlen(stringf("%s", cards.name[inplay.ID[i]])), {0, 0, 0, 255});
+                SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+                SDL_FRect textQuad = { ((600+725/2) + 15)*window_scale_x, (CARD_MARGIN+CARD_SPACING+CARD_HEIGHT+20)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+                SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+                SDL_DestroySurface(textSurface);
+            }
+    }
 }
 
 void render_headline() {
+
     // HEADLINE TEXTURES / HITBOX
     // --------------------------
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_FRect headlinehitbox = {(CARD_MARGIN+15)*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-15-50)*window_scale_y, (WINDOW_WIDTH-CARD_MARGIN-CARD_MARGIN+CARD_SPACING-30)*window_scale_x, 50*window_scale_y};
     SDL_RenderRect(renderer, &headlinehitbox);
+
+    // TEXT
+    // ----
+    // char headline[256];
+    // strcpy(headline, "Hello, World!");
+    // if (isDragging) {
+    //     for (int i = 0; i < MAX_CARDS; i++) {
+    //         if (!inplay.isDragging[i]) continue;
+    //         // strcpy(headline, cards.name[inplay.ID[i]]);
+    //         strcpy(headline, stringf("#%d - %s -> %s", inplay.ID[i], cards.name[inplay.ID[i]], cards.description[inplay.ID[i]]));
+    //     }
+    // }
+
+    // float sine = 25*sin(SDL_GetTicks()/100.0f) + 175;
+    // SDL_Color color = {(Uint8)sine, (Uint8)sine, 0, 255};
+    // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    // SDL_Surface *textSurface = TTF_RenderText_Solid(font24, headline, strlen(headline), color);
+    // SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    // SDL_FRect textQuad = { (600-textSurface->w/2)*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-15-50+12)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+    // SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+    // SDL_DestroySurface(textSurface);
 }
 
 void render() {
@@ -1238,7 +1246,7 @@ void render() {
     
     textSurface = TTF_RenderText_Solid(font24, stringf("money: $%d", profileinfo.money[profile]), strlen(stringf("money: $%d", profileinfo.money[profile])), {0, 0, 0, 255});
     textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-	textQuad = { 15*window_scale_x, CARD_MARGIN*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+	textQuad = { 15*window_scale_x, (CARD_MARGIN+15)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
     SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
     SDL_DestroySurface(textSurface);
 
@@ -1372,8 +1380,8 @@ int main() {
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
         render_charts();
-        // render_assistant();
-        // render_headline();
+        render_assistant();
+        render_headline();
         render();
         SDL_RenderPresent(renderer);
 
