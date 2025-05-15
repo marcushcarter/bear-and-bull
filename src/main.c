@@ -53,7 +53,7 @@ bool custom_cursor = false;
 #define MAX_BUTTONS 20
 #define MAX_PROFILES 1
 
-// CLASSES ====================================================================================================
+// CARDS / ZONESCLASSES ====================================================================================================
 
 typedef struct ProfileInfo {
     int ID[MAX_PROFILES]; // profile number
@@ -143,49 +143,13 @@ typedef struct CardID{
     char name[TOTAL_CARDS][256];
     char description[TOTAL_CARDS][256];
 
-    // float money_mult[TOTAL_CARDS]; // added form each card to a base of 1 and that is multiplied by the money at the end of the round
-    // float capital[TOTAL_CARDS]; // this extra money added at the end of every round
-    // float luck[TOTAL_CARDS];
-    // float passive[TOTAL_CARDS]; // how many seconds to earn 1 coin passively
-    // float price[TOTAL_CARDS]; // card can be bought for this price and sold for half of it
-    // float speed[TOTAL_CARDS]; // higher your speed stat, the slower the 60 second round goes
-    // float market_stability[TOTAL_CARDS]; //
-
     // GENERAL
 
     float price[TOTAL_CARDS]; // price of the card
     float passive[TOTAL_CARDS]; // (int) money earned at the end of every round
     float mult[TOTAL_CARDS]; // added to 1 and that number is multiplied by the total money earned at the end of the round (before the passive income addition)
 
-    // IN ROUND STOCKS
-
     float stock_cost[TOTAL_CARDS];
-
-    // SPECIFIC
-
-    // float range[TOTAL_CARDS]; // for ranged
-    // float min_damage[TOTAL_CARDS];
-    // float max_damage[TOTAL_CARDS];
-    // float lifesteal[TOTAL_CARDS];
-    // float ammo[TOTAL_CARDS];
-    // float reload[TOTAL_CARDS];
-
-    // passive
-
-    // float speed_up[TOTAL_CARDS];
-    // float stamina_up[TOTAL_CARDS];
-    // float health_up[TOTAL_CARDS];
-    // float luck_up[TOTAL_CARDS];
-    // float ammo_up[TOTAL_CARDS];
-    // float armor_up[TOTAL_CARDS]; // also called defense
-    // float damage_up[TOTAL_CARDS];
-    // float heal_up[TOTAL_CARDS]; // health points per second amount over time (heal per second)
-
-    // used card stats
-
-    // float health_use[TOTAL_CARDS];
-    // float armor_use[TOTAL_CARDS];
-    // float tickets_use[TOTAL_CARDS];
 
 } CardID;
 
@@ -230,6 +194,13 @@ typedef struct StonkData {
     float l[61];
     float integrity;
 } StonkData; StonkData stonk;
+
+// SCREEN CLASSES ====================================================================================================
+
+typedef enum GameState {
+    STATE_PICK_CARD,
+    STATE_STOCK_TRADE,
+} GameState;
 
 // COMMON FUNCTIONS ====================================================================================================
 
@@ -613,6 +584,49 @@ void loan_card() {
 
     return;
 }
+
+
+void pick_card(int id) {
+    
+    if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // chack if there is any space in your hand
+
+    // FIND IF AND WHERE AN IN PLAY SLOT IS OPEN
+    // -------------------------------------
+    int index = -1;
+    for (int i = 0; i < MAX_CARDS; i++) {
+        if (!inplay.isActive[i]) {
+            index = i;
+            break;
+        }
+    }
+    if (index == -1) return;
+
+    // ACTIVATE NEW CARD WITH ID AT THAT INDEX
+    // ---------------------------------------
+    
+    profileinfo.money[profile] += 100;
+    inplay.ID[index] = id;
+
+    inplay.x[index] = (WINDOW_WIDTH/2) * window_scale_x;
+    inplay.y[index] = ((playzones.y[ZONE_EVENT] + playzones.h[ZONE_EVENT]/2) + 1000) * window_scale_y;
+    inplay.w[index] = CARD_WIDTH;
+    inplay.h[index] = CARD_HEIGHT;
+
+    playzones.num_cards[ZONE_HAND] += 1;
+    inplay.zoneID[index] = ZONE_HAND;
+    inplay.zoneNum[index] = playzones.num_cards[ZONE_HAND];
+    inplay.zoneTime[index] = (SDL_GetTicks()/1000.0f);
+
+    inplay.isDragging[index] = false;
+    inplay.isActive[index] = true;
+    inplay.isSellable[index] = true;
+    
+    inplay.num += 1;
+    profileinfo.loans[profile] -= 1;
+
+    return;
+}
+
 
 void shuffle_hand() {
     for (int i = 0; i < MAX_CARDS; i++) {
