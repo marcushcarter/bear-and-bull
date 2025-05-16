@@ -126,7 +126,6 @@ typedef struct Zones {
 } Zones; 
 
 Zones playzones;
-Zones eventzone;
 
 typedef enum ZoneType {
     ZONE_HAND,
@@ -135,6 +134,8 @@ typedef enum ZoneType {
     ZONE_EQUIP_2,
     ZONE_EQUIP_3,
     ZONE_EVENT,
+    ZONE_DRAFT_HAND,
+    ZONE_DRAFT_SELECT,
 } ZoneType;
 
 typedef struct CardID{
@@ -198,9 +199,12 @@ typedef struct StonkData {
 // SCREEN CLASSES ====================================================================================================
 
 typedef enum GameState {
-    STATE_PICK_CARD,
-    STATE_STOCK_TRADE,
+    STATE_MENU,
+    STATE_DRAFT,
+    STATE_TRADE,
 } GameState;
+
+GameState gamestate = STATE_TRADE;
 
 // COMMON FUNCTIONS ====================================================================================================
 
@@ -731,37 +735,37 @@ void make_card(int id, const char* cardpath, const char* name, const char* descr
 
 }
 
-void make_zone(ZoneType zone, const char* zonepath, int slots, int x, int y, int w, int h) {
-    strcpy(playzones.zonepath[zone], zonepath);
+void make_zone(Zones *zone, ZoneType type, const char* zonepath, int slots, int x, int y, int w, int h) {
+    strcpy(zone->zonepath[type], zonepath);
 
-    playzones.max_cards[zone] = slots;
-    playzones.x[zone] = x * window_scale_x;
-    playzones.y[zone] = y * window_scale_y;
+    zone->max_cards[type] = slots;
+    zone->x[type] = x * window_scale_x;
+    zone->y[type] = y * window_scale_y;
     if (w != 0) {
-        playzones.w[zone] = w * window_scale_x;
+        zone->w[type] = w * window_scale_x;
     } else {
-        playzones.w[zone] = (CARD_SPACING + (CARD_WIDTH + CARD_SPACING) * slots) * window_scale_x;
+        zone->w[type] = (CARD_SPACING + (CARD_WIDTH + CARD_SPACING) * slots) * window_scale_x;
     }
 
     if (h != 0) {
-        playzones.h[zone] = h * window_scale_y;
+        zone->h[type] = h * window_scale_y;
     } else {
-        playzones.h[zone] = (CARD_HEIGHT + CARD_SPACING * 2) * window_scale_y;
+        zone->h[type] = (CARD_HEIGHT + CARD_SPACING * 2) * window_scale_y;
     }
     
-    playzones.isActive[zone] = true;
+    zone->isActive[type] = true;
 }
 
-void make_button(ButtonType button, const char* buttonpath, int x, int y, int w, int h) {
-    strcpy(gamebuttons.buttonpath[button], buttonpath);
+void make_button(Buttons *button, ButtonType type, const char* buttonpath, int x, int y, int w, int h) {
+    strcpy(button->buttonpath[type], buttonpath);
 
-    gamebuttons.ID[button] = button;
-    gamebuttons.x[button] = x * window_scale_x;
-    gamebuttons.y[button] = y * window_scale_y;
-    gamebuttons.w[button] = w * window_scale_x;
-    gamebuttons.h[button] = h * window_scale_y;
+    button->ID[type] = type;
+    button->x[type] = x * window_scale_x;
+    button->y[type] = y * window_scale_y;
+    button->w[type] = w * window_scale_x;
+    button->h[type] = h * window_scale_y;
 
-    gamebuttons.isActive[button] = true;
+    button->isActive[type] = true;
     // gamebuttons.[button] = ;
 }
 
@@ -771,43 +775,51 @@ void update_window() {
     window_scale_x = window_width / 1200.0f;  
     window_scale_y = window_height / 800.0f;
 
-    // original prototype
-    // make_zone(ZONE_SELL, "", 1, (WINDOW_WIDTH-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_HAND, "", 9, CARD_MARGIN, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN), 0, 0);
-    // make_zone(ZONE_EQUIP_1, "", 1, (WINDOW_WIDTH-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
-    // make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    if (gamestate == STATE_TRADE) {
 
-    // new version
-    // make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
-    // make_zone(ZONE_HAND, "", profileinfo.handslots[profile], CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_EQUIP_1, "", 1, CARD_MARGIN, CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_EQUIP_2, "", 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN, 0, 0);
+        // original prototype
+        // make_zone(ZONE_SELL, "", 1, (WINDOW_WIDTH-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
+        // make_zone(ZONE_HAND, "", 9, CARD_MARGIN, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN), 0, 0);
+        // make_zone(ZONE_EQUIP_1, "", 1, (WINDOW_WIDTH-CARD_MARGIN-CARD_WIDTH-CARD_SPACING-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
+        // make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
 
-    // pre idea change version
-    // make_zone(ZONE_HAND, "", profileinfo.handslots[profile], CARD_MARGIN, CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_EQUIP_1, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_EVENT, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    // make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+        // new version
+        // make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+        // make_zone(ZONE_HAND, "", profileinfo.handslots[profile], CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+        // make_zone(ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+        // make_zone(ZONE_EQUIP_1, "", 1, CARD_MARGIN, CARD_MARGIN, 0, 0);
+        // make_zone(ZONE_EQUIP_2, "", 1, CARD_MARGIN+CARD_WIDTH+CARD_SPACING+CARD_MARGIN, CARD_MARGIN, 0, 0);
 
-    // // post idea change version
-    // make_zone(ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    // make_zone(ZONE_HAND, "", profileinfo.handslots[profile], 210, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 1080, 0);
-    // make_zone(ZONE_EVENT, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
-    // make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
-    // make_button(BUTTON_LOAN, "./resources/textures/deck.png", CARD_MARGIN, 500, 100, 50);
+        // pre idea change version
+        // make_zone(ZONE_HAND, "", profileinfo.handslots[profile], CARD_MARGIN, CARD_MARGIN, 0, 0);
+        // make_zone(ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
+        // make_zone(ZONE_EQUIP_1, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+        // make_zone(ZONE_EVENT, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH-CARD_MARGIN-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+        // make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
 
-    // somewhat planned version
-    make_zone(ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
-    make_zone(ZONE_HAND, "", profileinfo.handslots[profile], WINDOW_WIDTH/2 - 725/2, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 725, 0);
-    make_zone(ZONE_EVENT, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
-    make_button(BUTTON_DECK, "./resources/button textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
-    // buttons
-    make_button(BUTTON_LOAN, "./resources/button textures/loan2.png", 15, CARD_MARGIN+130, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15), 50);
-    make_button(BUTTON_PAUSE, "./resources/button textures/pause.png", 15, 15, 30, 30);
-    make_button(BUTTON_SELL_STOCK, "./resources/button textures/minus.png", 15, CARD_MARGIN+195, 50, 50);
-    make_button(BUTTON_BUY_STOCK, "./resources/button textures/plus.png", 175, CARD_MARGIN+195, 50, 50);
+        // // post idea change version
+        // make_zone(ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+        // make_zone(ZONE_HAND, "", profileinfo.handslots[profile], 210, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 1080, 0);
+        // make_zone(ZONE_EVENT, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
+        // make_button(BUTTON_DECK, "./resources/textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+        // make_button(BUTTON_LOAN, "./resources/textures/deck.png", CARD_MARGIN, 500, 100, 50);
+
+        // somewhat planned version
+        make_zone(&playzones, ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
+        make_zone(&playzones, ZONE_HAND, "", profileinfo.handslots[profile], WINDOW_WIDTH/2 - 725/2, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 725, 0);
+        make_zone(&playzones, ZONE_EVENT, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
+        make_button(&gamebuttons, BUTTON_DECK, "./resources/button textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+        // buttons
+        make_button(&gamebuttons, BUTTON_LOAN, "./resources/button textures/loan2.png", 15, CARD_MARGIN+130, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15), 50);
+        make_button(&gamebuttons, BUTTON_PAUSE, "./resources/button textures/pause.png", 15, 15, 30, 30);
+        make_button(&gamebuttons, BUTTON_SELL_STOCK, "./resources/button textures/minus.png", 15, CARD_MARGIN+195, 50, 50);
+        make_button(&gamebuttons, BUTTON_BUY_STOCK, "./resources/button textures/plus.png", 175, CARD_MARGIN+195, 50, 50);
+    }
+
+    if (gamestate == STATE_DRAFT) {
+        make_zone(&playzones, ZONE_DRAFT_HAND, "", 6, 15, 15, 0, 0);
+        make_zone(&playzones, ZONE_DRAFT_SELECT, "", 1, 15, 15, 0, 0);
+    }
 }
 
 TTF_Font* fontBalatro;
@@ -963,120 +975,128 @@ void dev_tools() {
         add_to_hand(rand() % TOTAL_CARDS);
     }
 
+    // 7 - switch Game state
+    // --------------------------
+    if (currKeyState[SDL_SCANCODE_7] && !prevKeyState[SDL_SCANCODE_7]) {
+        gamestate = STATE_DRAFT;
+    }
+
 }
 
 void update() {
 
     update_window();
 
-    // Draws an event card once every 15 seconds
-    // ------------------------------------
-    int ticks = (int)(SDL_GetTicks() / 100.0f) % 150;
-    if (ticks == 150 - 1) { event_card((rand() % TOTAL_CARDS-1) + 1); }
+    if (gamestate == STATE_TRADE) {
 
-    // CARD UPDATES
-    // ------------
-    for (int i = 0; i < MAX_CARDS; i++) {
-        if (!inplay.isActive[i]) continue;
-
-        // Checks if a card should be picked up
+        // Draws an event card once every 15 seconds
         // ------------------------------------
-        if (!isDragging && !inplay.isDragging[i] && point_box_collision(mousex, mousey, inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
-            inplay.isDragging[i] = true;
-            isDragging = true;
-        }
+        int ticks = (int)(SDL_GetTicks() / 100.0f) % 150;
+        if (ticks == 150 - 1) { event_card((rand() % TOTAL_CARDS-1) + 1); }
 
-        // Checks if a card should be released
-        // -----------------------------------
-        if (inplay.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
+        // CARD UPDATES
+        // ------------
+        for (int i = 0; i < MAX_CARDS; i++) {
+            if (!inplay.isActive[i]) continue;
 
-            // checks for every active zone
-            for (int j = 0; j < MAX_ZONES; j++) {
-                if (!playzones.isActive[j]) continue;
-                if (!inplay.isSellable[i] && j == ZONE_SELL) continue;
-                if (j == ZONE_EVENT) continue;
-
-                // CHecks a card is put into a zone that is not full
-                // Also checks it is not put into a invalid zone
-                // ---------------------------------------------
-                if (point_box_collision(inplay.tx[i], inplay.ty[i], playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]) && playzones.num_cards[j] < playzones.max_cards[j]) {
-                    
-                    // every card in the card's original zone shifts down one space
-                    for (int l = 0; l < MAX_CARDS; l++) { 
-                        if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) 
-                            inplay.zoneNum[l] -= 1; 
-                    }
-
-                    playzones.num_cards[inplay.zoneID[i]] -= 1;
-                    playzones.num_cards[j] += 1;
-                    inplay.zoneNum[i] = playzones.num_cards[j];
-                    inplay.zoneID[i] = j;
-                }
+            // Checks if a card should be picked up
+            // ------------------------------------
+            if (!isDragging && !inplay.isDragging[i] && point_box_collision(mousex, mousey, inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
+                inplay.isDragging[i] = true;
+                isDragging = true;
             }
 
-            inplay.isDragging[i] = false;
-            isDragging = false;
-            inplay.zoneTime[i] = (SDL_GetTicks() / 1000.0f);
+            // Checks if a card should be released
+            // -----------------------------------
+            if (inplay.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
+
+                // checks for every active zone
+                for (int j = 0; j < MAX_ZONES; j++) {
+                    if (!playzones.isActive[j]) continue;
+                    if (!inplay.isSellable[i] && j == ZONE_SELL) continue;
+                    if (j == ZONE_EVENT) continue;
+
+                    // CHecks a card is put into a zone that is not full
+                    // Also checks it is not put into a invalid zone
+                    // ---------------------------------------------
+                    if (point_box_collision(inplay.tx[i], inplay.ty[i], playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]) && playzones.num_cards[j] < playzones.max_cards[j]) {
+                        
+                        // every card in the card's original zone shifts down one space
+                        for (int l = 0; l < MAX_CARDS; l++) { 
+                            if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) 
+                                inplay.zoneNum[l] -= 1; 
+                        }
+
+                        playzones.num_cards[inplay.zoneID[i]] -= 1;
+                        playzones.num_cards[j] += 1;
+                        inplay.zoneNum[i] = playzones.num_cards[j];
+                        inplay.zoneID[i] = j;
+                    }
+                }
+
+                inplay.isDragging[i] = false;
+                isDragging = false;
+                inplay.zoneTime[i] = (SDL_GetTicks() / 1000.0f);
+            }
+
+            // Checks if a card should be sold
+            // -------------------------------
+            if (inplay.zoneID[i] == ZONE_SELL && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
+                // visual
+                sell_card(i);
+            }
+
+            // if you are dragging a card it goes to your mouse
+            // if you are not, it goes back to its zone
+            // ------------------------------------------------
+            if (inplay.isDragging[i]) {
+                inplay.tx[i] = mousex;
+                inplay.ty[i] = mousey;
+            } else {
+                float fanning = playzones.w[inplay.zoneID[i]]/2 - ((CARD_WIDTH + CARD_SPACING) / 2.0f)*window_scale_x * playzones.num_cards[inplay.zoneID[i]] - 5*window_scale_x;
+                inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2 + CARD_SPACING + ((inplay.zoneNum[i] - 1)*(CARD_WIDTH + CARD_SPACING)))*window_scale_x + fanning;
+                inplay.ty[i] = playzones.y[inplay.zoneID[i]] + playzones.h[inplay.zoneID[i]]/2;
+            }
+
+            inplay.w[i] = CARD_WIDTH*window_scale_x;
+            inplay.h[i] = CARD_HEIGHT*window_scale_y;
+
+            inplay.vx[i] = (inplay.tx[i] - inplay.x[i]) / LERP_SPEED;
+            inplay.vy[i] = (inplay.ty[i] - inplay.y[i]) / LERP_SPEED;
+            inplay.y[i] += inplay.vy[i] * dt;
+            inplay.x[i] += inplay.vx[i] * dt;
+
         }
 
-        // Checks if a card should be sold
-        // -------------------------------
-        if (inplay.zoneID[i] == ZONE_SELL && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
-            // visual
-            sell_card(i);
+        // BUTTON UPDATES
+        // --------------
+        for (int i = 0; i < MAX_BUTTONS; i++) {
+            if (!gamebuttons.isActive[i]) continue;
+
+            // Checks different button states (pressed/clicked)
+            // ------------------------------------------------
+            if (gamebuttons.isPressed[i]) gamebuttons.clickTime[i] = (SDL_GetTicks() / 1000.0f);
+            if (point_box_collision(mousex, mousey, gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i])) {
+                if (currMouseState & SDL_BUTTON_LMASK) { gamebuttons.isPressed[i] = true; } else { gamebuttons.isPressed[i] = false; }
+                if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { gamebuttons.isClicked[i] = true; } else { gamebuttons.isClicked[i] = false; }
+            } else {
+                gamebuttons.isPressed[i] = false;
+                gamebuttons.isClicked[i] = false;
+            }
+
+            // DECK BUTTON
+            // -----------
+            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) {
+                deck_to_hand();
+            }
+
+            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(); // LOAN BUTTON
+            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_BUY_STOCK) profileinfo.money[profile] += 50; // MINUS STOCK BUTTON
+            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_SELL_STOCK) profileinfo.handslots[profile] += 1; // PLUSS STOCK BUTTON
         }
 
-        // if you are dragging a card it goes to your mouse
-        // if you are not, it goes back to its zone
-        // ------------------------------------------------
-        if (inplay.isDragging[i]) {
-            inplay.tx[i] = mousex;
-            inplay.ty[i] = mousey;
-        } else {
-            float fanning = playzones.w[inplay.zoneID[i]]/2 - ((CARD_WIDTH + CARD_SPACING) / 2.0f)*window_scale_x * playzones.num_cards[inplay.zoneID[i]] - 5*window_scale_x;
-            inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2 + CARD_SPACING + ((inplay.zoneNum[i] - 1)*(CARD_WIDTH + CARD_SPACING)))*window_scale_x + fanning;
-            inplay.ty[i] = playzones.y[inplay.zoneID[i]] + playzones.h[inplay.zoneID[i]]/2;
-        }
-
-        inplay.w[i] = CARD_WIDTH*window_scale_x;
-        inplay.h[i] = CARD_HEIGHT*window_scale_y;
-
-        inplay.vx[i] = (inplay.tx[i] - inplay.x[i]) / LERP_SPEED;
-        inplay.vy[i] = (inplay.ty[i] - inplay.y[i]) / LERP_SPEED;
-        inplay.y[i] += inplay.vy[i] * dt;
-        inplay.x[i] += inplay.vx[i] * dt;
-
+        // CHARTS STOCK SIMULATION
     }
-
-    // BUTTON UPDATES
-    // --------------
-    for (int i = 0; i < MAX_BUTTONS; i++) {
-        if (!gamebuttons.isActive[i]) continue;
-
-        // Checks different button states (pressed/clicked)
-        // ------------------------------------------------
-        if (gamebuttons.isPressed[i]) gamebuttons.clickTime[i] = (SDL_GetTicks() / 1000.0f);
-        if (point_box_collision(mousex, mousey, gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i])) {
-            if (currMouseState & SDL_BUTTON_LMASK) { gamebuttons.isPressed[i] = true; } else { gamebuttons.isPressed[i] = false; }
-            if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { gamebuttons.isClicked[i] = true; } else { gamebuttons.isClicked[i] = false; }
-        } else {
-            gamebuttons.isPressed[i] = false;
-            gamebuttons.isClicked[i] = false;
-        }
-
-        // DECK BUTTON
-        // -----------
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) {
-            deck_to_hand();
-        }
-
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(); // LOAN BUTTON
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_BUY_STOCK) profileinfo.money[profile] += 50; // MINUS STOCK BUTTON
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_SELL_STOCK) profileinfo.handslots[profile] += 1; // PLUSS STOCK BUTTON
-    }
-
-    // CHARTS STOCK SIMULATION
-
 
 }
 
@@ -1084,35 +1104,37 @@ void debug() {
 
     // current lifted card
     // -------------------
-    // if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
-    //     for (int i = 0; i < MAX_CARDS; i++) {
-    //         if (!inplay.isDragging[i]) continue;
-    //         printf("%d %s -> sell: %d, i: %d\n", inplay.ID[i], cards.name[inplay.ID[i]], inplay.isSellable[i], i);
-    //     }
-    // }
+    if (gamestate == STATE_TRADE) {
+        // if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
+        //     for (int i = 0; i < MAX_CARDS; i++) {
+        //         if (!inplay.isDragging[i]) continue;
+        //         printf("%d %s -> sell: %d, i: %d\n", inplay.ID[i], cards.name[inplay.ID[i]], inplay.isSellable[i], i);
+        //     }
+        // }
 
-    // printf("%d/%d\n", playzones.num_cards[ZONE_HAND], playzones.max_cards[ZONE_HAND]);
+        // printf("%d/%d\n", playzones.num_cards[ZONE_HAND], playzones.max_cards[ZONE_HAND]);
 
-    // if (inplay.zoneID[0] != -1) {
-    //     printf("This card is in zone ID %d\n", inplay.zoneID[0]);
-    // }
-    // printf("%d\n", inplay.num);
-    // printf("Zone 3 cards: %d Card Number: %d\n", playzones.num_cards[3], cards.zoneNum[0]);
-    // if (indeck.num > -1) printf("%d\n", indeck.ID[0]);
-    // printf("%d\n", inplay.ID[0]);
+        // if (inplay.zoneID[0] != -1) {
+        //     printf("This card is in zone ID %d\n", inplay.zoneID[0]);
+        // }
+        // printf("%d\n", inplay.num);
+        // printf("Zone 3 cards: %d Card Number: %d\n", playzones.num_cards[3], cards.zoneNum[0]);
+        // if (indeck.num > -1) printf("%d\n", indeck.ID[0]);
+        // printf("%d\n", inplay.ID[0]);
 
-    // for (int i = 0; i < MAX_CARDS; i++) {
-    //     if (inplay.zoneID[i] == ZONE_HAND) {
-    //         printf("%d\n", inplay.ID[i]);
-    //         // break;
-    //     }
-    // }
+        // for (int i = 0; i < MAX_CARDS; i++) {
+        //     if (inplay.zoneID[i] == ZONE_HAND) {
+        //         printf("%d\n", inplay.ID[i]);
+        //         // break;
+        //     }
+        // }
 
-    // printf("w:%d h:%d", window_width, window_height);
+        // printf("w:%d h:%d", window_width, window_height);
 
-    // printf("%d\n", profileinfo.money[profile]);
+        // printf("%d\n", profileinfo.money[profile]);
 
-    // printf("%f\n", cards.price[3]);
+        // printf("%f\n", cards.price[3]);
+    }
 }
 
 // RENDER FUNCTIONS ====================================================================================================
@@ -1225,144 +1247,153 @@ void render() {
         // SDL_RenderTextureRotated(renderer, temp, NULL, &texture, angle, &center, SDL_FLIP_NONE);
     }
 
-    // ZONES TEXTURES / HITBOX
-    // -----------------------
-    for (int i = 0; i < MAX_ZONES; i++) {
-        if (!playzones.isActive[i]) continue;
+    if (gamestate == STATE_TRADE) {
 
-        if (show_textures) {
-            float angle = 0;
-            SDL_FRect zonetexture = { playzones.x[i], playzones.y[i], playzones.w[i], playzones.h[i] };
-            SDL_FPoint center = {zonetexture.w / 2, zonetexture.h / 2};
-            SDL_RenderTextureRotated(renderer, playzones.zonetexture[i], NULL, &zonetexture, angle, &center, SDL_FLIP_NONE);
-        }
+        // ZONES TEXTURES / HITBOX
+        // -----------------------
+        for (int i = 0; i < MAX_ZONES; i++) {
+            if (!playzones.isActive[i]) continue;
 
-        if (show_hitboxes) {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_FRect zonehitbox = {playzones.x[i], playzones.y[i], playzones.w[i], playzones.h[i]};
-            SDL_RenderRect(renderer, &zonehitbox);
-        }
-    }
-
-    // BUTTONS
-    // -------
-    for (int i = 0; i < MAX_BUTTONS; i++) {
-        if (!gamebuttons.isActive[i]) continue;
-
-        if (show_textures) {
-            float sineh = 5 * sin(2.0f * (gamebuttons.clickTime[i] - SDL_GetTicks() / 1000.0f));
-            float sinea = 2.5 * sin(gamebuttons.clickTime[i] - SDL_GetTicks() / 1000.0f);
-            float angle = sinea;
-
-            float button_grow_w = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.w[i];
-            float button_grow_h = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.h[i];
-
-            SDL_FRect buttontexture = {
-                gamebuttons.x[i] - (button_grow_w/2), 
-                gamebuttons.y[i] - (button_grow_h/2), 
-                gamebuttons.w[i] + (button_grow_w*window_scale_x), 
-                gamebuttons.h[i] + (button_grow_h*window_scale_y)
-            };
-
-            SDL_FPoint center = {buttontexture.w / 2, buttontexture.h / 2};
-            SDL_RenderTextureRotated(renderer, gamebuttons.buttontexture[i], NULL, &buttontexture, angle, &center, SDL_FLIP_NONE);
-        }
-
-        if (show_hitboxes) {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            if (gamebuttons.isPressed[i]) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-            SDL_FRect buttonhitbox = {gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i]};
-            SDL_RenderRect(renderer, &buttonhitbox);
-        }
-    }
-
-    // MONEY
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_FRect moneyhitbox = {0, CARD_MARGIN*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
-    SDL_RenderRect(renderer, &moneyhitbox);
-
-    // RENDER TEXT
-    SDL_Surface *textSurface = TTF_RenderText_Solid(fontBalatro, stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extrainflation[profile]*profileinfo.extracount[profile]), strlen(stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extraprice[profile]*profileinfo.extracount[profile])), {0, 0, 0, 255});
-    SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-	SDL_FRect textQuad = { CARD_MARGIN*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-12)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
-    SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
-    SDL_DestroySurface(textSurface);
-
-    textSurface = TTF_RenderText_Solid(fontBalatro, "Round #", strlen("Round #"), {0, 0, 0, 255});
-    textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-	textQuad = { 15*window_scale_x, (CARD_MARGIN+65+10)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
-    SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
-    SDL_DestroySurface(textSurface);
-
-    
-    textSurface = TTF_RenderText_Solid(fontBalatro, stringf("money: $%d", profileinfo.money[profile]), strlen(stringf("money: $%d", profileinfo.money[profile])), {0, 0, 0, 255});
-    textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-	textQuad = { 15*window_scale_x, (CARD_MARGIN+10)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
-    SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
-    SDL_DestroySurface(textSurface);
-
-
-    SDL_FRect moneyhitbox2 = {0, (CARD_MARGIN+65)*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
-    SDL_RenderRect(renderer, &moneyhitbox2);
-
-    SDL_FRect moneyhitbox5 = {15*window_scale_x, (CARD_MARGIN+260)*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15)*window_scale_x, 180*window_scale_y};
-    SDL_RenderRect(renderer, &moneyhitbox5);
-
-    // CARDS TEXTURES / HITBOX
-    // -----------------------
-    for (int i = 0; i < MAX_CARDS; i++) {
-        if (!inplay.isActive[i]) continue;
-
-        if (show_textures) {
-
-            float card_grow_w = inplay.isDragging[i] * CARD_GROW * inplay.w[i];
-            float card_grow_h = inplay.isDragging[i] * CARD_GROW * inplay.h[i];
-
-            float sineh = 0, sinea = 0, fanning = 0;
-            if (!inplay.isDragging[i]) {
-                sineh = 5 *  sin(2 * (inplay.zoneTime[i] - SDL_GetTicks() / 1000.0f));
-                fanning = (inplay.zoneNum[i] - ((playzones.num_cards[inplay.zoneID[i]] + 1) / 2.0f)) * 2.5f;
-                sinea = 2.5f * sin(inplay.zoneTime[i] - SDL_GetTicks() / 1000.0f);
+            if (show_textures) {
+                float angle = 0;
+                SDL_FRect zonetexture = { playzones.x[i], playzones.y[i], playzones.w[i], playzones.h[i] };
+                SDL_FPoint center = {zonetexture.w / 2, zonetexture.h / 2};
+                SDL_RenderTextureRotated(renderer, playzones.zonetexture[i], NULL, &zonetexture, angle, &center, SDL_FLIP_NONE);
             }
-            double angle = inplay.vx[i]/60 + sinea + fanning;
 
-            SDL_FRect cardtexture = {  
-                inplay.x[i] - (inplay.w[i]/2) - (card_grow_w/2), 
-                inplay.y[i] - (inplay.h[i]/2) - (card_grow_h/2) - (sineh*window_scale_y), 
-                inplay.w[i] + (card_grow_w*window_scale_x), 
-                inplay.h[i] + (card_grow_h*window_scale_y)
-            };
-
-            SDL_FPoint center = {cardtexture.w / 2, cardtexture.h / 2};
-            SDL_RenderTextureRotated(renderer, cards.cardtexture[inplay.ID[i]], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
+            if (show_hitboxes) {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                SDL_FRect zonehitbox = {playzones.x[i], playzones.y[i], playzones.w[i], playzones.h[i]};
+                SDL_RenderRect(renderer, &zonehitbox);
+            }
         }
 
-        if (show_hitboxes) {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_FRect cardhitbox = {inplay.x[i] - inplay.w[i]/2, inplay.y[i] - inplay.h[i]/2 , inplay.w[i], inplay.h[i]};
-            SDL_RenderRect(renderer, &cardhitbox);
+        // BUTTONS
+        // -------
+        for (int i = 0; i < MAX_BUTTONS; i++) {
+            if (!gamebuttons.isActive[i]) continue;
+
+            if (show_textures) {
+                float sineh = 5 * sin(2.0f * (gamebuttons.clickTime[i] - SDL_GetTicks() / 1000.0f));
+                float sinea = 2.5 * sin(gamebuttons.clickTime[i] - SDL_GetTicks() / 1000.0f);
+                float angle = sinea;
+
+                float button_grow_w = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.w[i];
+                float button_grow_h = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.h[i];
+
+                SDL_FRect buttontexture = {
+                    gamebuttons.x[i] - (button_grow_w/2), 
+                    gamebuttons.y[i] - (button_grow_h/2), 
+                    gamebuttons.w[i] + (button_grow_w*window_scale_x), 
+                    gamebuttons.h[i] + (button_grow_h*window_scale_y)
+                };
+
+                SDL_FPoint center = {buttontexture.w / 2, buttontexture.h / 2};
+                SDL_RenderTextureRotated(renderer, gamebuttons.buttontexture[i], NULL, &buttontexture, angle, &center, SDL_FLIP_NONE);
+            }
+
+            if (show_hitboxes) {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                if (gamebuttons.isPressed[i]) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                SDL_FRect buttonhitbox = {gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i]};
+                SDL_RenderRect(renderer, &buttonhitbox);
+            }
         }
-    }
 
-    // CURSOR TEXTURES / HITBOX
-    // ------------------------
-    if (custom_cursor) {
-        SDL_HideCursor();
+        // MONEY
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_FRect moneyhitbox = {0, CARD_MARGIN*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
+        SDL_RenderRect(renderer, &moneyhitbox);
 
-        if (show_textures) {
-            SDL_FRect cursorhitbox = {mousex, mousey, 30.0f * window_scale_x, 30.0f * window_scale_y};
-            SDL_RenderRect(renderer, &cursorhitbox);
-            SDL_RenderTexture(renderer, gamebuttons.buttontexture[0], NULL, &cursorhitbox);
+        // RENDER TEXT
+        SDL_Color color = {0, 0, 0, 255};
+
+        SDL_Surface *textSurface = TTF_RenderText_Solid(fontBalatro, stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extrainflation[profile]*profileinfo.extracount[profile]), strlen(stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extraprice[profile]*profileinfo.extracount[profile])), color);
+        SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        SDL_FRect textQuad = { CARD_MARGIN*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-12)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+        SDL_DestroySurface(textSurface);
+
+        textSurface = TTF_RenderText_Solid(fontBalatro, "Round #", strlen("Round #"), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        SDL_FRect textQuad2 = { 15*window_scale_x, (CARD_MARGIN+65+10)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad2);
+        SDL_DestroySurface(textSurface);
+
+        
+        textSurface = TTF_RenderText_Solid(fontBalatro, stringf("money: $%d", profileinfo.money[profile]), strlen(stringf("money: $%d", profileinfo.money[profile])), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        SDL_FRect textQuad3 = { 15*window_scale_x, (CARD_MARGIN+10)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad3);
+        SDL_DestroySurface(textSurface);
+
+
+        SDL_FRect moneyhitbox2 = {0, (CARD_MARGIN+65)*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
+        SDL_RenderRect(renderer, &moneyhitbox2);
+
+        SDL_FRect moneyhitbox5 = {15*window_scale_x, (CARD_MARGIN+260)*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15)*window_scale_x, 180*window_scale_y};
+        SDL_RenderRect(renderer, &moneyhitbox5);
+
+        render_charts();
+        render_assistant();
+        render_headline();
+
+        // CARDS TEXTURES / HITBOX
+        // -----------------------
+        for (int i = 0; i < MAX_CARDS; i++) {
+            if (!inplay.isActive[i]) continue;
+
+            if (show_textures) {
+
+                float card_grow_w = inplay.isDragging[i] * CARD_GROW * inplay.w[i];
+                float card_grow_h = inplay.isDragging[i] * CARD_GROW * inplay.h[i];
+
+                float sineh = 0, sinea = 0, fanning = 0;
+                if (!inplay.isDragging[i]) {
+                    sineh = 5 *  sin(2 * (inplay.zoneTime[i] - SDL_GetTicks() / 1000.0f));
+                    fanning = (inplay.zoneNum[i] - ((playzones.num_cards[inplay.zoneID[i]] + 1) / 2.0f)) * 2.5f;
+                    sinea = 2.5f * sin(inplay.zoneTime[i] - SDL_GetTicks() / 1000.0f);
+                }
+                double angle = inplay.vx[i]/60 + sinea + fanning;
+
+                SDL_FRect cardtexture = {  
+                    inplay.x[i] - (inplay.w[i]/2) - (card_grow_w/2), 
+                    inplay.y[i] - (inplay.h[i]/2) - (card_grow_h/2) - (sineh*window_scale_y), 
+                    inplay.w[i] + (card_grow_w*window_scale_x), 
+                    inplay.h[i] + (card_grow_h*window_scale_y)
+                };
+
+                SDL_FPoint center = {cardtexture.w / 2, cardtexture.h / 2};
+                SDL_RenderTextureRotated(renderer, cards.cardtexture[inplay.ID[i]], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
+            }
+
+            if (show_hitboxes) {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                SDL_FRect cardhitbox = {inplay.x[i] - inplay.w[i]/2, inplay.y[i] - inplay.h[i]/2 , inplay.w[i], inplay.h[i]};
+                SDL_RenderRect(renderer, &cardhitbox);
+            }
         }
 
-        if (show_hitboxes) {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_FRect cursorhitbox = {mousex, mousey, 30.0f * window_scale_x, 30.0f * window_scale_y};
-            SDL_RenderRect(renderer, &cursorhitbox);
-        }
+        // CURSOR TEXTURES / HITBOX
+        // ------------------------
+        if (custom_cursor) {
+            SDL_HideCursor();
 
-    } else {
-        SDL_ShowCursor();
+            if (show_textures) {
+                SDL_FRect cursorhitbox = {mousex, mousey, 30.0f * window_scale_x, 30.0f * window_scale_y};
+                SDL_RenderRect(renderer, &cursorhitbox);
+                SDL_RenderTexture(renderer, gamebuttons.buttontexture[0], NULL, &cursorhitbox);
+            }
+
+            if (show_hitboxes) {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                SDL_FRect cursorhitbox = {mousex, mousey, 30.0f * window_scale_x, 30.0f * window_scale_y};
+                SDL_RenderRect(renderer, &cursorhitbox);
+            }
+
+        } else {
+            SDL_ShowCursor();
+        }
     }
 
 }
@@ -1393,9 +1424,6 @@ int main() {
 
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
-        render_charts();
-        render_assistant();
-        render_headline();
         render();
         SDL_RenderPresent(renderer);
 
