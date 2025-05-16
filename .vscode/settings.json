@@ -5,6 +5,7 @@
         "string.h": "c",
         "stdbool.h": "c",
         "stdlib.h": "c",
-        "sdl_ttf.h": "c"
+        "sdl_ttf.h": "c",
+        "*.rh": "c"
     }
 }

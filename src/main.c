@@ -585,7 +585,6 @@ void loan_card() {
     return;
 }
 
-
 void pick_card(int id) {
     
     if (playzones.num_cards[ZONE_HAND] >= playzones.max_cards[ZONE_HAND]) return; // chack if there is any space in your hand
@@ -811,7 +810,9 @@ void update_window() {
     make_button(BUTTON_BUY_STOCK, "./resources/button textures/plus.png", 175, CARD_MARGIN+195, 50, 50);
 }
 
-TTF_Font* font24;
+TTF_Font* fontBalatro;
+TTF_Font* fontTimesNewRoman;
+TTF_Font* fontDSDigital;
 
 bool load_textures() {
 
@@ -836,10 +837,9 @@ bool load_textures() {
         SDL_SetTextureScaleMode(playzones.zonetexture[i], SDL_SCALEMODE_NEAREST);
     }
 
-    font24 = TTF_OpenFont("./resources/balatro.ttf", 24);
-    if (font24 == NULL) {
-        return false;
-    }
+    fontBalatro= TTF_OpenFont("resources/fonts/balatro.ttf", 24);
+    fontTimesNewRoman = TTF_OpenFont("resources/fonts/Times New Roman.ttf", 24);
+    fontDSDigital = TTF_OpenFont("resources/fonts/DS-DIGII.ttf", 24);
     
 	return true;
 }
@@ -852,17 +852,17 @@ void setup() {
 
     // LOAD CARDS
     // ----------
-    make_card(0, "./resources/card textures/card1.png", "$100 Loan", "card of the number of one", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
-    make_card(1, "./resources/card textures/card2.png", "Flame Boy", "card of the number of two", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(2, "./resources/card textures/card3.png", "Peaked", "card of the number of three", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(3, "./resources/card textures/card4.png", "Eg", "card of the number of four", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(4, "./resources/card textures/card5.png", "Ballot Joker", "card of the number of five", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(5, "./resources/card textures/card6.png", "Pokemon Card Joker", "card of the number of six", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(6, "./resources/card textures/card7.png", "Bunanu", "card of the number of seven", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(7, "./resources/card textures/card8.png", "Caino", "card of the number of eight", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(8, "./resources/card textures/card9.png", "Purple Magic", "card of the number of nine", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(9, "./resources/card textures/card10.png", "Planet Joker", "card of the number of ten", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(10, "./resources/card textures/card11.png", "Normal Joker", "card of the number of one", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(0, "./resources/card textures/card1.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
+    make_card(1, "./resources/card textures/card2.png", "Flame Boy", "For every wooden card you have in your hand, draw an extra card", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(2, "./resources/card textures/card3.png", "Peaked", "If you are visited by the russians, you recieve $200", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(3, "./resources/card textures/card4.png", "Eg", "WTF you think it is, its an egg", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(4, "./resources/card textures/card5.png", "Ballot Joker", "At any given time, your stock price is multiplied by a random number", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(5, "./resources/card textures/card6.png", "Pokemon Card Joker", "Gotta Catch em all", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(6, "./resources/card textures/card7.png", "Bunanu", "Use as a consumable to refill 1 loan slot", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(7, "./resources/card textures/card8.png", "Caino", "He got ice running throuhg his viens", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(8, "./resources/card textures/card9.png", "Purple Magic", "Any damage you do to tech stonks if multiplied by 3", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(9, "./resources/card textures/card10.png", "Planet Joker", "You now own the entire planet", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(10, "./resources/card textures/card11.png", "Normal Joker", "Sherrel, nobody cares", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
     
     update_window();
 
@@ -906,7 +906,7 @@ void setup() {
 
 }
 
-// LOOP FUNCTIONS ====================================================================================================
+// UPDATE FUNCTIONS ====================================================================================================
 
 void inputs() {
     while (SDL_PollEvent(&event) != 0) {
@@ -1071,12 +1071,51 @@ void update() {
         }
 
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(); // LOAN BUTTON
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_BUY_STOCK) profileinfo.money[profile] += 50; // MINUS STOCK BUTTON
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_SELL_STOCK) profileinfo.handslots[profile] += 1; // PLUSS STOCK BUTTON
     }
 
     // CHARTS STOCK SIMULATION
 
 
 }
+
+void debug() {
+
+    // current lifted card
+    // -------------------
+    // if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
+    //     for (int i = 0; i < MAX_CARDS; i++) {
+    //         if (!inplay.isDragging[i]) continue;
+    //         printf("%d %s -> sell: %d, i: %d\n", inplay.ID[i], cards.name[inplay.ID[i]], inplay.isSellable[i], i);
+    //     }
+    // }
+
+    // printf("%d/%d\n", playzones.num_cards[ZONE_HAND], playzones.max_cards[ZONE_HAND]);
+
+    // if (inplay.zoneID[0] != -1) {
+    //     printf("This card is in zone ID %d\n", inplay.zoneID[0]);
+    // }
+    // printf("%d\n", inplay.num);
+    // printf("Zone 3 cards: %d Card Number: %d\n", playzones.num_cards[3], cards.zoneNum[0]);
+    // if (indeck.num > -1) printf("%d\n", indeck.ID[0]);
+    // printf("%d\n", inplay.ID[0]);
+
+    // for (int i = 0; i < MAX_CARDS; i++) {
+    //     if (inplay.zoneID[i] == ZONE_HAND) {
+    //         printf("%d\n", inplay.ID[i]);
+    //         // break;
+    //     }
+    // }
+
+    // printf("w:%d h:%d", window_width, window_height);
+
+    // printf("%d\n", profileinfo.money[profile]);
+
+    // printf("%f\n", cards.price[3]);
+}
+
+// RENDER FUNCTIONS ====================================================================================================
 
 void draw_candle(float x, float h, float o, float c, float l) {
     if (o > c) {
@@ -1116,9 +1155,9 @@ void render_charts() {
         // draw_candle(10.0f*window_scale_x, 235.0f*window_scale_y, 190.0f*window_scale_y, 212.0f*window_scale_y, 185.0f*window_scale_y);
         // draw_candle(20.0f*window_scale_x, 217.0f*window_scale_y, 212.0f*window_scale_y, 186.0f*window_scale_y, 186.0f*window_scale_y);
     }
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderLine(renderer, 0, mousey*window_scale_y, window_width, mousey*window_scale_y);
-    SDL_RenderLine(renderer, mousex*window_scale_x, 0, mousex*window_scale_x, window_height);
+    // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    // SDL_RenderLine(renderer, 0, mousey*window_scale_y, window_width, mousey*window_scale_y);
+    // SDL_RenderLine(renderer, mousex*window_scale_x, 0, mousex*window_scale_x, window_height);
 
     // STOCK CHARTS HITBOX
     // ------------------------------
@@ -1136,21 +1175,6 @@ void render_assistant() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_FRect assistanthitbox = {((600+725/2) + 15)*window_scale_x, (CARD_MARGIN+CARD_SPACING+CARD_HEIGHT+20)*window_scale_y, (WINDOW_WIDTH-CARD_MARGIN-CARD_MARGIN+CARD_SPACING-30)*window_scale_x, 250*window_scale_y};
     SDL_RenderRect(renderer, &assistanthitbox);
-
-    // IF YOU ARE HOLDING A CARD IT WILL SHOW A DESC
-    if (isDragging) {
-            for (int i = 0; i < MAX_CARDS; i++) {
-                if (!inplay.isDragging[i]) continue;
-                
-                // RENDER TEXT
-
-                SDL_Surface *textSurface = TTF_RenderText_Solid(font24, stringf("%s", cards.name[inplay.ID[i]]), strlen(stringf("%s", cards.name[inplay.ID[i]])), {0, 0, 0, 255});
-                SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-                SDL_FRect textQuad = { ((600+725/2) + 15)*window_scale_x, (CARD_MARGIN+CARD_SPACING+CARD_HEIGHT+20)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
-                SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
-                SDL_DestroySurface(textSurface);
-            }
-    }
 }
 
 void render_headline() {
@@ -1163,24 +1187,24 @@ void render_headline() {
 
     // TEXT
     // ----
-    // char headline[256];
-    // strcpy(headline, "Hello, World!");
-    // if (isDragging) {
-    //     for (int i = 0; i < MAX_CARDS; i++) {
-    //         if (!inplay.isDragging[i]) continue;
-    //         // strcpy(headline, cards.name[inplay.ID[i]]);
-    //         strcpy(headline, stringf("#%d - %s -> %s", inplay.ID[i], cards.name[inplay.ID[i]], cards.description[inplay.ID[i]]));
-    //     }
-    // }
+    char headline[256];
+    strcpy(headline, "0000000000");
+    if (isDragging) {
+        for (int i = 0; i < MAX_CARDS; i++) {
+            if (!inplay.isDragging[i]) continue;
+            // strcpy(headline, cards.name[inplay.ID[i]]);
+            strcpy(headline, stringf("#%d - %s -> %s", inplay.ID[i], cards.name[inplay.ID[i]], cards.description[inplay.ID[i]]));
+        }
+    }
 
-    // float sine = 25*sin(SDL_GetTicks()/100.0f) + 175;
-    // SDL_Color color = {(Uint8)sine, (Uint8)sine, 0, 255};
-    // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    // SDL_Surface *textSurface = TTF_RenderText_Solid(font24, headline, strlen(headline), color);
-    // SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    // SDL_FRect textQuad = { (600-textSurface->w/2)*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-15-50+12)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
-    // SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
-    // SDL_DestroySurface(textSurface);
+    float sine = 25*sin(SDL_GetTicks()/1000.0f) + 215;
+    SDL_Color color = {(Uint8)sine, (Uint8)sine, 0, 255};
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_Surface *textSurface = TTF_RenderText_Solid(fontDSDigital, headline, strlen(headline), color);
+    SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    SDL_FRect textQuad = { (600-textSurface->w/2)*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-15-50+12)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+    SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+    SDL_DestroySurface(textSurface);
 }
 
 void render() {
@@ -1251,16 +1275,22 @@ void render() {
     SDL_RenderRect(renderer, &moneyhitbox);
 
     // RENDER TEXT
-    SDL_Surface *textSurface = TTF_RenderText_Solid(font24, stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extrainflation[profile]*profileinfo.extracount[profile]), strlen(stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extraprice[profile]*profileinfo.extracount[profile])), {0, 0, 0, 255});
+    SDL_Surface *textSurface = TTF_RenderText_Solid(fontBalatro, stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extrainflation[profile]*profileinfo.extracount[profile]), strlen(stringf("$%d + $%d", profileinfo.extraprice[profile], profileinfo.extraprice[profile]*profileinfo.extracount[profile])), {0, 0, 0, 255});
     SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
 	SDL_FRect textQuad = { CARD_MARGIN*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-12)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
     SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
     SDL_DestroySurface(textSurface);
 
-    
-    textSurface = TTF_RenderText_Solid(font24, stringf("money: $%d", profileinfo.money[profile]), strlen(stringf("money: $%d", profileinfo.money[profile])), {0, 0, 0, 255});
+    textSurface = TTF_RenderText_Solid(fontBalatro, "Round #", strlen("Round #"), {0, 0, 0, 255});
     textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-	textQuad = { 15*window_scale_x, (CARD_MARGIN+15)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+	textQuad = { 15*window_scale_x, (CARD_MARGIN+65+10)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+    SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+    SDL_DestroySurface(textSurface);
+
+    
+    textSurface = TTF_RenderText_Solid(fontBalatro, stringf("money: $%d", profileinfo.money[profile]), strlen(stringf("money: $%d", profileinfo.money[profile])), {0, 0, 0, 255});
+    textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+	textQuad = { 15*window_scale_x, (CARD_MARGIN+10)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
     SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
     SDL_DestroySurface(textSurface);
 
@@ -1328,43 +1358,6 @@ void render() {
         SDL_ShowCursor();
     }
 
-}
-
-void debug() {
-
-    // current lifted card
-    // -------------------
-    if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
-        for (int i = 0; i < MAX_CARDS; i++) {
-            if (!inplay.isDragging[i]) continue;
-            printf("%d %s -> sell: %d, i: %d\n", inplay.ID[i], cards.name[inplay.ID[i]], inplay.isSellable[i], i);
-            
-            // write_text(renderer, stringf("money: $%d", profileinfo.money[profile]), mousex*window_scale_x, (mousey+100)*window_scale_y, 3, 255, false);
-        }
-    }
-
-    // printf("%d/%d\n", playzones.num_cards[ZONE_HAND], playzones.max_cards[ZONE_HAND]);
-
-    // if (inplay.zoneID[0] != -1) {
-    //     printf("This card is in zone ID %d\n", inplay.zoneID[0]);
-    // }
-    // printf("%d\n", inplay.num);
-    // printf("Zone 3 cards: %d Card Number: %d\n", playzones.num_cards[3], cards.zoneNum[0]);
-    // if (indeck.num > -1) printf("%d\n", indeck.ID[0]);
-    // printf("%d\n", inplay.ID[0]);
-
-    // for (int i = 0; i < MAX_CARDS; i++) {
-    //     if (inplay.zoneID[i] == ZONE_HAND) {
-    //         printf("%d\n", inplay.ID[i]);
-    //         // break;
-    //     }
-    // }
-
-    // printf("w:%d h:%d", window_width, window_height);
-
-    // printf("%d\n", profileinfo.money[profile]);
-
-    // printf("%f\n", cards.price[3]);
 }
 
 // MAIN FUNCTION ====================================================================================================
