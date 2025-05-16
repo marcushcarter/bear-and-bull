@@ -50,7 +50,7 @@ bool custom_cursor = false;
 #define MAX_CARDS 10
 #define MAX_ZONES 10
 #define TOTAL_CARDS 11
-#define MAX_BUTTONS 20
+#define MAX_BUTTONS 10
 #define MAX_PROFILES 1
 
 // CARDS / ZONESCLASSES ====================================================================================================
@@ -971,8 +971,8 @@ void update() {
 
     // Draws an event card once every 15 seconds
     // ------------------------------------
-    int ticks = (int)(SDL_GetTicks() / 100.0f) % 50;
-    if (ticks == 50 - 1) { event_card((rand() % TOTAL_CARDS-1) + 1); }
+    int ticks = (int)(SDL_GetTicks() / 100.0f) % 150;
+    if (ticks == 150 - 1) { event_card((rand() % TOTAL_CARDS-1) + 1); }
 
     // CARD UPDATES
     // ------------
@@ -1189,6 +1189,13 @@ void render_headline() {
     // ----
     char headline[256];
     strcpy(headline, "0000000000");
+    for (int i = 0; i < MAX_CARDS; i++) {
+        if (!inplay.isActive[i]) continue;
+        // strcpy(headline, cards.name[inplay.ID[i]]);
+        if (inplay.zoneID[i] == ZONE_EVENT) {
+            strcpy(headline, stringf("EVENT: %s", cards.description[inplay.ID[i]]));
+        }
+    }
     if (isDragging) {
         for (int i = 0; i < MAX_CARDS; i++) {
             if (!inplay.isDragging[i]) continue;
