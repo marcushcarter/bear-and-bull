@@ -27,7 +27,7 @@ int window_width, window_height;
 float window_scale_x = 1.0f;
 float window_scale_y = 1.0f;
 
-char version[256] = "version 0.2.56";
+char version[256] = "version 0.1.9";
 
 int seed;
 float game_speed = 2;
