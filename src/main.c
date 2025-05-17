@@ -27,7 +27,7 @@ int window_width, window_height;
 float window_scale_x = 1.0f;
 float window_scale_y = 1.0f;
 
-char version[256] = "version 0.1.10";
+char version[256] = "demo version 0.1.10";
 
 int seed;
 float game_speed = 2;
@@ -857,16 +857,16 @@ void update_window() {
     make_zone(&playzones, ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     make_zone(&playzones, ZONE_HAND, "", profileinfo.handslots[profile], WINDOW_WIDTH/2 - 725/2, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 725, 0);
     make_zone(&playzones, ZONE_EVENT, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
-    make_button(&gamebuttons, BUTTON_DECK, "resources/button textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
-    make_button(&gamebuttons, BUTTON_LOAN, "resources/button textures/deck.png", 15, CARD_MARGIN+130, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15), 50);
-    make_button(&gamebuttons, BUTTON_PAUSE, "resources/button textures/pause.png", 15, 15, 30, 30);
-    make_button(&gamebuttons, BUTTON_SELL_STOCK, "resources/button textures/minus.png", 15, CARD_MARGIN+195, 50, 50);
-    make_button(&gamebuttons, BUTTON_BUY_STOCK, "resources/button textures/plus.jpg", 175, CARD_MARGIN+195, 50, 50);
+    make_button(&gamebuttons, BUTTON_DECK, "resources/textures/play-button-deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    make_button(&gamebuttons, BUTTON_LOAN, "", 15, CARD_MARGIN+130, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15), 50);
+    make_button(&gamebuttons, BUTTON_PAUSE, "resources/textures/play-button-pause.png", 15, 15, 30, 30);
+    make_button(&gamebuttons, BUTTON_SELL_STOCK, "resources/textures/play-button-minus.png", 15, CARD_MARGIN+195, 50, 50);
+    make_button(&gamebuttons, BUTTON_BUY_STOCK, "resources/textures/play-button-plus.jpg", 175, CARD_MARGIN+195, 50, 50);
     // MENU
-    make_button(&menubuttons, BUTTON_NEW_GAME, "resources/button textures/newgame.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*0, 300, 50);
-    make_button(&menubuttons, BUTTON_SETTINGS, "resources/button textures/settings.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*1, 300, 50);
-    make_button(&menubuttons, BUTTON_STATS, "resources/button textures/deck.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*2, 300, 50);
-    make_button(&menubuttons, BUTTON_QUIT, "resources/button textures/quit.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*3, 300, 50);
+    make_button(&menubuttons, BUTTON_NEW_GAME, "resources/textures/menu-button-new-game.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*0, 300, 50);
+    make_button(&menubuttons, BUTTON_SETTINGS, "resources/textures/menu-button-settings.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*1, 300, 50);
+    make_button(&menubuttons, BUTTON_STATS, "", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*2, 300, 50);
+    make_button(&menubuttons, BUTTON_QUIT, "resources/textures/menu-button-quit.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*3, 300, 50);
     make_zone(&menuzone, ZONE_MENU, "", 1, (WINDOW_WIDTH/2)-((CARD_WIDTH+CARD_SPACING)/2), (WINDOW_HEIGHT/3)-((CARD_HEIGHT+CARD_SPACING)/2), 0, 0);
 
 }
@@ -875,17 +875,17 @@ void load_cards() {
     
     // LOAD CARDS
     // ----------
-    make_card(0, "resources/card textures/card1.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
-    make_card(1, "resources/card textures/card2.png", "Flame Boy", "For every wooden card you have in your hand, draw an extra card", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(2, "resources/card textures/card3.png", "Peaked", "If you are visited by the russians, you recieve $200", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(3, "resources/card textures/card4.png", "Eg", "WTF you think it is, its an egg", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(4, "resources/card textures/card5.png", "Ballot Joker", "At any given time, your stock price is multiplied by a random number", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(5, "resources/card textures/card6.png", "Pokemon Card Joker", "Gotta Catch em all", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(6, "resources/card textures/card7.png", "Bunanu", "Use as a consumable to refill 1 loan slot", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(7, "resources/card textures/card8.png", "Caino", "He got ice running throuhg his viens", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(8, "resources/card textures/card9.png", "Purple Magic", "Any damage you do to tech stonks if multiplied by 3", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(9, "resources/card textures/card10.png", "Planet Joker", "You now own the entire planet", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(10, "resources/card textures/card11.png", "Normal Joker", "Sherrel, nobody cares", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(0, "resources/textures/card1.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
+    make_card(1, "resources/textures/card2.png", "Flame Boy", "For every wooden card you have in your hand, draw an extra card", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(2, "resources/textures/card3.png", "Peaked", "If you are visited by the russians, you recieve $200", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(3, "resources/textures/card4.png", "Eg", "WTF you think it is, its an egg", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(4, "resources/textures/card5.png", "Ballot Joker", "At any given time, your stock price is multiplied by a random number", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(5, "resources/textures/card6.png", "Pokemon Card Joker", "Gotta Catch em all", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(6, "resources/textures/card7.png", "Bunanu", "Use as a consumable to refill 1 loan slot", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(7, "resources/textures/card8.png", "Caino", "He got ice running throuhg his viens", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(8, "resources/textures/card9.png", "Purple Magic", "Any damage you do to tech stonks if multiplied by 3", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(9, "resources/textures/card10.png", "Planet Joker", "You now own the entire planet", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(10, "resources/textures/card11.png", "Normal Joker", "Sherrel, nobody cares", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
 
 }
 
