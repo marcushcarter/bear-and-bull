@@ -27,7 +27,7 @@ int window_width, window_height;
 float window_scale_x = 1.0f;
 float window_scale_y = 1.0f;
 
-char version[256] = "demo version 0.1.10";
+char version[256] = "demo v0.1.10";
 
 int seed;
 float game_speed = 2;
@@ -36,7 +36,7 @@ int profile;
 // float time_passed = 0;
 float event_timer = 0;
 
-bool show_hitboxes = false;
+bool show_hitboxes = true;
 bool show_textures = true;
 bool custom_cursor = false;
 
@@ -1523,13 +1523,55 @@ void render() {
 
     // OTHER MAIN MENU TEXTURES / HITBOXES 
     // ----------------------------------
-    if (gamestate == STATE_MENU) {
+    if (gamestate == STATE_MENU && show_textures) {
         SDL_Color color = {0, 0, 0, 255};
         SDL_Surface *textSurface = TTF_RenderText_Solid(fontBalatro, version, strlen(version), color);
         SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
         SDL_FRect textQuad = { 15*window_scale_x, (WINDOW_HEIGHT-15-textSurface->h)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
         SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
         SDL_DestroySurface(textSurface);
+
+        SDL_FRect texture = {0};
+        SDL_FPoint center = {0};
+        float halflifefunc = 2000 * pow(0.25, (SDL_GetTicks()/10000.0f) / 0.05f);
+        float sineh, sinea;
+        double angle;
+
+        sineh = 5 *  sin(2 * SDL_GetTicks() / 1000.0f);
+        sinea = 2.5f * sin(SDL_GetTicks() / 1000.0f);
+        angle = sinea - 28;
+        texture = (SDL_FRect) {  
+            200*window_scale_x - (CARD_HEIGHT/2/2), 
+            (halflifefunc+500)*window_scale_y - (CARD_HEIGHT/2/2) - (sineh*window_scale_y), 
+            CARD_WIDTH/2, 
+            CARD_HEIGHT/2
+        };
+        center = (SDL_FPoint) {texture.w / 2, texture.h / 2};
+        SDL_RenderTextureRotated(renderer, cards.cardtexture[5], NULL, &texture, angle, &center, SDL_FLIP_NONE);
+
+        sineh = 5 *  sin(2 * (SDL_GetTicks() / 1000.0f) - 0.5f);
+        sinea = 2.5f * sin((SDL_GetTicks() / 1000.0f) - 0.32f);      
+        angle = sinea + 18;
+        texture = (SDL_FRect) {  
+            1000*window_scale_x - (CARD_HEIGHT/2/1.8f), 
+            (halflifefunc+200)*window_scale_y - (CARD_HEIGHT/2/1.8f) - (sineh*window_scale_y), 
+            CARD_WIDTH/1.8f, 
+            CARD_HEIGHT/1.8f
+        };
+        center = (SDL_FPoint) {texture.w / 2, texture.h / 2};
+        SDL_RenderTextureRotated(renderer, cards.cardtexture[9], NULL, &texture, angle, &center, SDL_FLIP_NONE);
+
+        // sineh = 5 *  sin(2 * (SDL_GetTicks() / 1000.0f) - 0.5f);
+        // sinea = 2.5f * sin((SDL_GetTicks() / 1000.0f) - 0.32f);      
+        // angle = sinea;
+        // texture = (SDL_FRect) {  
+        //     (WINDOW_WIDTH/2-750/2)*window_scale_x, 
+        //     (-halflifefunc+200-200/2)*window_scale_y - (sineh*window_scale_y), 
+        //     750, 
+        //     200
+        // };
+        // center = (SDL_FPoint) {texture.w / 2, texture.h / 2};
+        // SDL_RenderTextureRotated(renderer, cards.cardtexture[9], NULL, &texture, angle, &center, SDL_FLIP_NONE);
     }
 
     // CARDS TEXTURES / HITBOXES
@@ -1640,7 +1682,6 @@ void render() {
 
     // CURSOR TEXTURES / HITBOX
     // ------------------------
-    SDL_ShowCursor();
     if (custom_cursor) {
         SDL_HideCursor();
 
@@ -1649,7 +1690,7 @@ void render() {
         if (show_textures) SDL_RenderTexture(renderer, gamebuttons.buttontexture[0], NULL, &cursorbox);
         if (show_hitboxes) SDL_RenderRect(renderer, &cursorbox);
 
-    }
+    } else { SDL_ShowCursor(); }
 
 }
 
