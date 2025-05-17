@@ -27,7 +27,7 @@ int window_width, window_height;
 float window_scale_x = 1.0f;
 float window_scale_y = 1.0f;
 
-char version[256] = "version 0.1.9";
+char version[256] = "version 0.1.10";
 
 int seed;
 float game_speed = 2;
@@ -105,6 +105,7 @@ typedef struct Cards {
     bool isDragging[MAX_CARDS];
     bool isActive[MAX_CARDS];
     bool isSellable[MAX_CARDS];
+    bool isHover[MAX_CARDS];
 
     int num;
 } Cards;
@@ -1061,81 +1062,103 @@ void update() {
 
     if (pause) return;
 
-    // game
-    // ----
-    if (gamestate == STATE_PLAY) {
+    // Draws an event card once every 15 seconds
+    // ------------------------------------
+    if (gamestate == STATE_PLAY) event_timer += dt;
+    if ((int)event_timer/10 % 100 == 99) { event_card((rand() % TOTAL_CARDS-1) + 1); }
 
-        // Draws an event card once every 15 seconds
+    // CARD UPDATES
+    // ------------
+    for (int i = 0; i < MAX_CARDS; i++) {
+        if (!inplay.isActive[i] && !infeature.isActive[i]) continue;
+
+        if (gamestate == STATE_PLAY) { inplay.zoneTime[i] += dt / game_speed; }
+        if (gamestate == STATE_MENU) { infeature.zoneTime[i] += dt / game_speed; }
+
+        if (point_box_collision(mousex, mousey, inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]) && !(isDragging && !inplay.isDragging[i]) || (isDragging && inplay.isDragging[i])) { inplay.isHover[i] = true; } else { inplay.isHover[i] = false; }
+        if (point_box_collision(mousex, mousey, infeature.x[i] - (infeature.w[i] / 2), infeature.y[i] - (infeature.h[i] / 2), infeature.w[i], infeature.h[i]) && !(isDragging && !infeature.isDragging[i]) || (isDragging && infeature.isDragging[i])) { infeature.isHover[i] = true; } else { infeature.isHover[i] = false; }
+
+        // Checks if a card should be picked up
         // ------------------------------------
-        event_timer += dt;
-        if ((int)event_timer/10 % 150 == 0) { event_card((rand() % TOTAL_CARDS-1) + 1); }
+        if (!isDragging && !inplay.isDragging[i] && point_box_collision(mousex, mousey, inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && gamestate == STATE_PLAY) {
+            inplay.isDragging[i] = true;
+            isDragging = true;
+        }
 
-        // CARD UPDATES
-        // ------------
-        for (int i = 0; i < MAX_CARDS; i++) {
-            if (!inplay.isActive[i]) continue;
-            
-            inplay.zoneTime[i] += dt / game_speed;
+        if (!isDragging && !infeature.isDragging[i] && point_box_collision(mousex, mousey, infeature.x[i] - (inplay.w[i] / 2), infeature.y[i] - (infeature.h[i] / 2), infeature.w[i], infeature.h[i]) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK) && gamestate == STATE_MENU) {
+            infeature.isDragging[i] = true;
+            isDragging = true;
+        }
 
-            // Checks if a card should be picked up
-            // ------------------------------------
-            if (!isDragging && !inplay.isDragging[i] && point_box_collision(mousex, mousey, inplay.x[i] - (inplay.w[i] / 2), inplay.y[i] - (inplay.h[i] / 2), inplay.w[i], inplay.h[i]) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
-                inplay.isDragging[i] = true;
-                isDragging = true;
-            }
+        // Checks if a card should be released
+        // -----------------------------------
+        if (inplay.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
 
-            // Checks if a card should be released
-            // -----------------------------------
-            if (inplay.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
+            // checks for every active zone
+            for (int j = 0; j < MAX_ZONES; j++) {
+                if (!playzones.isActive[j]) continue;
+                if (!inplay.isSellable[i] && j == ZONE_SELL) continue;
+                if (j == ZONE_EVENT) continue;
 
-                // checks for every active zone
-                for (int j = 0; j < MAX_ZONES; j++) {
-                    if (!playzones.isActive[j]) continue;
-                    if (!inplay.isSellable[i] && j == ZONE_SELL) continue;
-                    if (j == ZONE_EVENT) continue;
-
-                    // CHecks a card is put into a zone that is not full
-                    // Also checks it is not put into a invalid zone
-                    // ---------------------------------------------
-                    if (point_box_collision(inplay.tx[i], inplay.ty[i], playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]) && playzones.num_cards[j] < playzones.max_cards[j]) {
-                        
-                        // every card in the card's original zone shifts down one space
-                        for (int l = 0; l < MAX_CARDS; l++) { 
-                            if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) 
-                                inplay.zoneNum[l] -= 1; 
-                        }
-
-                        playzones.num_cards[inplay.zoneID[i]] -= 1;
-                        playzones.num_cards[j] += 1;
-                        inplay.zoneNum[i] = playzones.num_cards[j];
-                        inplay.zoneID[i] = j;
+                // Checks a card is put into a zone that is not full
+                // Also checks it is not put into a invalid zone
+                // ---------------------------------------------
+                if (point_box_collision(inplay.tx[i], inplay.ty[i], playzones.x[j], playzones.y[j], playzones.w[j], playzones.h[j]) && playzones.num_cards[j] < playzones.max_cards[j]) {
+                    
+                    // every card in the card's original zone shifts down one space
+                    for (int l = 0; l < MAX_CARDS; l++) { 
+                        if (inplay.zoneID[l] == inplay.zoneID[i] && inplay.zoneNum[l] > inplay.zoneNum[i]) 
+                            inplay.zoneNum[l] -= 1; 
                     }
+
+                    playzones.num_cards[inplay.zoneID[i]] -= 1;
+                    playzones.num_cards[j] += 1;
+                    inplay.zoneNum[i] = playzones.num_cards[j];
+                    inplay.zoneID[i] = j;
                 }
-
-                inplay.isDragging[i] = false;
-                isDragging = false;
-                inplay.zoneTime[i] = 0;
             }
 
-            // Checks if a card should be sold
-            // -------------------------------
-            if (inplay.zoneID[i] == ZONE_SELL && inplay.zoneTime[i] > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
-                // visual
-                sell_card(i);
-            }
+            inplay.isDragging[i] = false;
+            isDragging = false;
+            inplay.zoneTime[i] = 0;
+        }
 
-            // if you are dragging a card it goes to your mouse
-            // if you are not, it goes back to its zone
-            // ------------------------------------------------
-            if (inplay.isDragging[i]) {
-                inplay.tx[i] = mousex;
-                inplay.ty[i] = mousey;
-            } else {
-                float fanning = playzones.w[inplay.zoneID[i]]/2 - ((CARD_WIDTH + CARD_SPACING) / 2.0f)*window_scale_x * playzones.num_cards[inplay.zoneID[i]] - 5*window_scale_x;
-                inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2 + CARD_SPACING + ((inplay.zoneNum[i] - 1)*(CARD_WIDTH + CARD_SPACING)))*window_scale_x + fanning;
-                inplay.ty[i] = playzones.y[inplay.zoneID[i]] + playzones.h[inplay.zoneID[i]]/2;
-            }
+        if (infeature.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
+            infeature.isDragging[i] = false;
+            isDragging = false;
+            infeature.zoneTime[i] = 0;
+        }
 
+        // Checks if a card should be sold
+        // -------------------------------
+        if (inplay.zoneID[i] == ZONE_SELL && inplay.zoneTime[i] > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
+            // visual
+            sell_card(i);
+        }
+
+        // if you are dragging a card it goes to your mouse
+        // if you are not, it goes back to its zone
+        // ------------------------------------------------
+        if (inplay.isDragging[i]) {
+            inplay.tx[i] = mousex;
+            inplay.ty[i] = mousey;
+        } else {
+            float fanning = playzones.w[inplay.zoneID[i]]/2 - ((CARD_WIDTH + CARD_SPACING) / 2.0f)*window_scale_x * playzones.num_cards[inplay.zoneID[i]] - 5*window_scale_x;
+            inplay.tx[i] = playzones.x[inplay.zoneID[i]] + (CARD_WIDTH/2 + CARD_SPACING + ((inplay.zoneNum[i] - 1)*(CARD_WIDTH + CARD_SPACING)))*window_scale_x + fanning;
+            inplay.ty[i] = playzones.y[inplay.zoneID[i]] + playzones.h[inplay.zoneID[i]]/2;
+        }
+
+        if (infeature.isDragging[i]) {
+            infeature.tx[i] = mousex;
+            infeature.ty[i] = mousey;
+        } else {
+            infeature.tx[i] = menuzone.x[infeature.zoneID[i]] + (CARD_WIDTH/2 + CARD_SPACING + ((infeature.zoneNum[i] - 1)*(CARD_WIDTH + CARD_SPACING)))*window_scale_x;
+            infeature.ty[i] = menuzone.y[infeature.zoneID[i]] + menuzone.h[infeature.zoneID[i]]/2;
+        }
+        
+        // MOVE THE CARD
+        // -------------
+        if (gamestate == STATE_PLAY) {
             inplay.w[i] = CARD_WIDTH*window_scale_x;
             inplay.h[i] = CARD_HEIGHT*window_scale_y;
 
@@ -1143,79 +1166,9 @@ void update() {
             inplay.vy[i] = (inplay.ty[i] - inplay.y[i]) / LERP_SPEED;
             inplay.y[i] += inplay.vy[i] * dt;
             inplay.x[i] += inplay.vx[i] * dt;
-
         }
 
-        // BUTTON UPDATES
-        // --------------
-        for (int i = 0; i < MAX_BUTTONS; i++) {
-            if (!gamebuttons.isActive[i]) continue;
-
-            // Checks different button states (pressed/clicked)
-            // ------------------------------------------------
-            if (gamebuttons.isPressed[i]) gamebuttons.clickTime[i] = 0;
-            gamebuttons.clickTime[i] += dt / game_speed;
-            if (point_box_collision(mousex, mousey, gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i])) {
-                if (currMouseState & SDL_BUTTON_LMASK) { gamebuttons.isPressed[i] = true; } else { gamebuttons.isPressed[i] = false; }
-                if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { gamebuttons.isClicked[i] = true; } else { gamebuttons.isClicked[i] = false; }
-                gamebuttons.isHover[i] = true;
-            } else {
-                gamebuttons.isPressed[i] = false;
-                gamebuttons.isClicked[i] = false;
-                gamebuttons.isHover[i] = false;
-            }
-
-            // DECK BUTTON
-            // -----------
-            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) {
-                deck_to_hand();
-            }
-
-            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(); // LOAN BUTTON
-            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_BUY_STOCK) profileinfo.money[profile] += 50; // MINUS STOCK BUTTON
-            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_SELL_STOCK) profileinfo.handslots[profile] += 1; // PLUSS STOCK BUTTON
-            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_PAUSE) gamestate = STATE_MENU; // PAUSE BUTTON
-        }
-
-        // CHARTS STOCK SIMULATION
-    }
-
-    // main menu
-    // ---------
-    if (gamestate == STATE_MENU) {
-
-        // CARD UPDATES
-        // ------------
-        for (int i = 0; i < MAX_CARDS; i++) {
-            if (!infeature.isActive[i]) continue;
-            infeature.zoneTime[i] += dt / game_speed;
-
-            // Checks if a card should be picked up
-            // ------------------------------------
-            if (!isDragging && !infeature.isDragging[i] && point_box_collision(mousex, mousey, infeature.x[i] - (inplay.w[i] / 2), infeature.y[i] - (infeature.h[i] / 2), infeature.w[i], infeature.h[i]) && (currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) {
-                infeature.isDragging[i] = true;
-                isDragging = true;
-            }
-
-            // Checks if a card should be released
-            // -----------------------------------
-            if (infeature.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
-                infeature.isDragging[i] = false;
-                isDragging = false;
-                infeature.zoneTime[i] = 0;
-            }
-
-            // if you are dragging a card it goes to your mouse
-            // if you are not, it goes back to its zone
-            // ------------------------------------------------
-            if (infeature.isDragging[i]) {
-                infeature.tx[i] = mousex;
-                infeature.ty[i] = mousey;
-            } else {
-                infeature.tx[i] = menuzone.x[infeature.zoneID[i]] + (CARD_WIDTH/2 + CARD_SPACING + ((infeature.zoneNum[i] - 1)*(CARD_WIDTH + CARD_SPACING)))*window_scale_x;
-                infeature.ty[i] = menuzone.y[infeature.zoneID[i]] + menuzone.h[infeature.zoneID[i]]/2;
-            }
-
+        if (gamestate == STATE_MENU) {
             infeature.w[i] = CARD_WIDTH*window_scale_x;
             infeature.h[i] = CARD_HEIGHT*window_scale_y;
 
@@ -1223,46 +1176,54 @@ void update() {
             infeature.vy[i] = (infeature.ty[i] - infeature.y[i]) / LERP_SPEED;
             infeature.y[i] += infeature.vy[i] * dt;
             infeature.x[i] += infeature.vx[i] * dt;
-
         }
 
-        // BUTTON UPDATES
-        // --------------
-        for (int i = 0; i < MAX_BUTTONS; i++) {
-            if (!menubuttons.isActive[i]) continue;
-
-            // Checks different button states (pressed/clicked)
-            // ------------------------------------------------
-            if (menubuttons.isPressed[i]) menubuttons.clickTime[i] = 0;
-            menubuttons.clickTime[i] += dt / game_speed;
-            if (point_box_collision(mousex, mousey, menubuttons.x[i], menubuttons.y[i], menubuttons.w[i], menubuttons.h[i])) {
-                if (currMouseState & SDL_BUTTON_LMASK) { menubuttons.isPressed[i] = true; } else { menubuttons.isPressed[i] = false; }
-                if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { menubuttons.isClicked[i] = true; } else { menubuttons.isClicked[i] = false; }
-                menubuttons.isHover[i] = true;
-            } else {
-                menubuttons.isPressed[i] = false;
-                menubuttons.isClicked[i] = false;
-                menubuttons.isHover[i] = false;
-            }
-
-            // DECK BUTTON
-            // -----------
-            if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_DECK) {
-                deck_to_hand();
-            }
-
-            if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_NEW_GAME) gamestate = STATE_PLAY; // NEW GAME BUTTON
-            if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_SETTINGS) ; // LOAN BUTTON
-            if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_STATS) ; // LOAN BUTTON
-            if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_QUIT) running = false; // LOAN BUTTON
-        }
     }
 
-    // pause menu
-    // ----------
+    // BUTTON UPDATES
+    // --------------
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+        if (!gamebuttons.isActive[i] && !menubuttons.isActive[i]) continue;
 
-    // draft menu
-    // ----------
+        if (gamebuttons.isPressed[i]) gamebuttons.clickTime[i] = 0;
+        if (menubuttons.isPressed[i]) menubuttons.clickTime[i] = 0;
+        gamebuttons.clickTime[i] += dt / game_speed;
+        menubuttons.clickTime[i] += dt / game_speed;
+
+        if (point_box_collision(mousex, mousey, gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i]) && gamestate == STATE_PLAY && gamebuttons.isActive[i] && !isDragging) {
+            if (currMouseState & SDL_BUTTON_LMASK) { gamebuttons.isPressed[i] = true; } else { gamebuttons.isPressed[i] = false; }
+            if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { gamebuttons.isClicked[i] = true; } else { gamebuttons.isClicked[i] = false; }
+            gamebuttons.isHover[i] = true;
+        } else {
+            gamebuttons.isPressed[i] = false;
+            gamebuttons.isClicked[i] = false;
+            gamebuttons.isHover[i] = false;
+        }
+
+        if (point_box_collision(mousex, mousey, menubuttons.x[i], menubuttons.y[i], menubuttons.w[i], menubuttons.h[i]) && gamestate == STATE_MENU && menubuttons.isActive[i] && !isDragging) {
+            if (currMouseState & SDL_BUTTON_LMASK) { menubuttons.isPressed[i] = true; } else { menubuttons.isPressed[i] = false; }
+            if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { menubuttons.isClicked[i] = true; } else { menubuttons.isClicked[i] = false; }
+            menubuttons.isHover[i] = true;
+        } else {
+            menubuttons.isPressed[i] = false;
+            menubuttons.isClicked[i] = false;
+            menubuttons.isHover[i] = false;
+        }
+
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK) deck_to_hand(); // DECK BUTTON
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(); // LOAN BUTTON
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_BUY_STOCK) profileinfo.money[profile] += 50; // MINUS STOCK BUTTON
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_SELL_STOCK) profileinfo.handslots[profile] += 1; // PLUSS STOCK BUTTON
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_PAUSE) gamestate = STATE_MENU; // PAUSE BUTTON
+
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_NEW_GAME) gamestate = STATE_PLAY; // NEW GAME BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_SETTINGS) ; // SETTINGS / OPTIONS BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_STATS) system("start https://ballisticstudios.ca/"); // STATS OR STEAM BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_QUIT) running = false; // LOAN BUTTON
+
+    }
+
+    // CHARTS STOCK SIMULATION
 
 }
 
@@ -1402,70 +1363,125 @@ void render_headline() {
 
 void render() {
 
-    // BACKGROUND
-    // ----------
+    // BACKGROUND TEXTURES / HITBOXES
+    // ------------------------------
     if (show_textures) {
         // float angle = 0;
         // SDL_FRect texture = { 0, 0, (float)window_width, (float)window_height };
         // SDL_FPoint center = {texture.w / 2, texture.h / 2};
         // SDL_RenderTextureRotated(renderer, idea_texture, NULL, &texture, angle, &center, SDL_FLIP_NONE);
     }
-    
-    // they actuall game
-    // -----------------
-    if (gamestate == STATE_PLAY) {
 
-        // ZONES TEXTURES / HITBOX
-        // -----------------------
-        for (int i = 0; i < MAX_ZONES; i++) {
-            if (!playzones.isActive[i]) continue;
+    // ZONES TEXTURES / HITBOXES
+    // -------------------------
+    for (int i = 0; i < MAX_ZONES; i++) {
+        if (!playzones.isActive[i] && !menuzone.isActive[i]) continue;
 
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+        SDL_FRect zonetexture = {0};
+        SDL_FRect zonehitbox = {0};
+        SDL_FPoint center = {0};
+        float angle = 0;
+
+        if (gamestate == STATE_PLAY) {
             if (show_textures) {
-                float angle = 0;
-                SDL_FRect zonetexture = { playzones.x[i], playzones.y[i], playzones.w[i], playzones.h[i] };
-                SDL_FPoint center = {zonetexture.w / 2, zonetexture.h / 2};
+                zonetexture = (SDL_FRect){ playzones.x[i], playzones.y[i], playzones.w[i], playzones.h[i] };
+                center = (SDL_FPoint){ zonetexture.w / 2, zonetexture.h / 2 };
                 SDL_RenderTextureRotated(renderer, playzones.zonetexture[i], NULL, &zonetexture, angle, &center, SDL_FLIP_NONE);
             }
-
             if (show_hitboxes) {
-                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                SDL_FRect zonehitbox = {playzones.x[i], playzones.y[i], playzones.w[i], playzones.h[i]};
+                zonehitbox = (SDL_FRect){playzones.x[i], playzones.y[i], playzones.w[i], playzones.h[i]};
                 SDL_RenderRect(renderer, &zonehitbox);
             }
         }
 
-        // BUTTONS
-        // -------
-        for (int i = 0; i < MAX_BUTTONS; i++) {
-            if (!gamebuttons.isActive[i]) continue;
-
+        if (gamestate == STATE_MENU) {
             if (show_textures) {
-                float sineh = 5 * sin(2.0f * (gamebuttons.clickTime[i]));
-                float sinea = 2.5 * sin(SDL_GetTicks() / 1000.0f + i*0.2);
-                float angle = sinea;
+                zonetexture = (SDL_FRect){ menuzone.x[i], menuzone.y[i], menuzone.w[i], menuzone.h[i] };
+                center = (SDL_FPoint){ zonetexture.w / 2, zonetexture.h / 2 };
+                SDL_RenderTextureRotated(renderer, menuzone.zonetexture[i], NULL, &zonetexture, angle, &center, SDL_FLIP_NONE);
+            }
+            if (show_hitboxes) {
+                zonehitbox = (SDL_FRect){menuzone.x[i], menuzone.y[i], menuzone.w[i], menuzone.h[i]};
+                SDL_RenderRect(renderer, &zonehitbox);
+            }
+        }
 
-                float button_grow_w = (gamebuttons.isHover[i]+gamebuttons.isPressed[i]) * CARD_GROW * gamebuttons.w[i];
-                float button_grow_h = (gamebuttons.isHover[i]+gamebuttons.isPressed[i]) * CARD_GROW * gamebuttons.h[i];
+    }
 
-                SDL_FRect buttontexture = {
+    // BUTTONS TEXTURES / HITBOXES
+    // ---------------------------
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+        if (!gamebuttons.isActive[i] && !menubuttons.isActive[i]) continue;
+        
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+        SDL_FRect buttontexture = {0};
+        SDL_FRect buttonhitbox = {0};
+        SDL_FPoint center = {0};
+        float sineh, sinea, angle, button_grow_w, button_grow_h;
+
+        if (gamestate == STATE_PLAY) {
+            if (show_textures) {
+                
+                sineh = 5 * sin(2.0f * (gamebuttons.clickTime[i]));
+                sinea = 2.5 * sin(SDL_GetTicks() / 1000.0f + i*0.2);
+                angle = sinea;
+
+                button_grow_w = (gamebuttons.isHover[i]+gamebuttons.isPressed[i]) * CARD_GROW * gamebuttons.w[i];
+                button_grow_h = (gamebuttons.isHover[i]+gamebuttons.isPressed[i]) * CARD_GROW * gamebuttons.h[i];
+
+                buttontexture = (SDL_FRect) {
                     gamebuttons.x[i] - (button_grow_w/2), 
                     gamebuttons.y[i] - (button_grow_h/2), 
                     gamebuttons.w[i] + (button_grow_w*window_scale_x), 
                     gamebuttons.h[i] + (button_grow_h*window_scale_y)
                 };
 
-                SDL_FPoint center = {buttontexture.w / 2, buttontexture.h / 2};
+                center = (SDL_FPoint) {buttontexture.w / 2, buttontexture.h / 2};
                 SDL_RenderTextureRotated(renderer, gamebuttons.buttontexture[i], NULL, &buttontexture, angle, &center, SDL_FLIP_NONE);
             }
+            if (show_hitboxes) {
+                if (gamebuttons.isPressed[i]) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                buttonhitbox = (SDL_FRect) {gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i]};
+                SDL_RenderRect(renderer, &buttonhitbox);
+            }
+        }
+        if (gamestate == STATE_MENU) {
+            if (show_textures) {
+                sineh = 5 * sin(2.0f * menubuttons.clickTime[i]);
+                sinea = sin(SDL_GetTicks() / 1000.0f + i*0.2);
+                // if (menubuttons.isPressed[i]) sinea = 0;
+                angle = sinea;
 
+                button_grow_w = (menubuttons.isHover[i]+menubuttons.isPressed[i]) * CARD_GROW * menubuttons.w[i];
+                button_grow_h = (menubuttons.isHover[i]+menubuttons.isPressed[i]) * CARD_GROW * menubuttons.h[i];
+
+                buttontexture = (SDL_FRect) {
+                    menubuttons.x[i] - (button_grow_w/2), 
+                    menubuttons.y[i] - (button_grow_h/2), 
+                    menubuttons.w[i] + (button_grow_w*window_scale_x), 
+                    menubuttons.h[i] + (button_grow_h*window_scale_y)
+                };
+
+                center = (SDL_FPoint) {buttontexture.w / 2, buttontexture.h / 2};
+                SDL_RenderTextureRotated(renderer, menubuttons.buttontexture[i], NULL, &buttontexture, angle, &center, SDL_FLIP_NONE);
+            }
             if (show_hitboxes) {
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                if (gamebuttons.isPressed[i]) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-                SDL_FRect buttonhitbox = {gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i]};
+                if (menubuttons.isPressed[i]) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                buttonhitbox = (SDL_FRect) {menubuttons.x[i], menubuttons.y[i], menubuttons.w[i], menubuttons.h[i]};
                 SDL_RenderRect(renderer, &buttonhitbox);
             }
         }
 
+    }
+
+    // SOME OTHER TRADE STATE TEXTURES / HITBOXES 
+    // ----------------------------------
+    if (gamestate == STATE_PLAY) {
+        
         // MONEY
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_FRect moneyhitbox = {0, CARD_MARGIN*window_scale_y, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15)*window_scale_x, 50*window_scale_y};
@@ -1503,16 +1519,102 @@ void render() {
         render_charts();
         render_assistant();
         render_headline();
+    }
 
-        // CARDS TEXTURES / HITBOX
-        // -----------------------
-        for (int i = 0; i < MAX_CARDS; i++) {
-            if (!inplay.isActive[i]) continue;
+    // OTHER MAIN MENU TEXTURES / HITBOXES 
+    // ----------------------------------
+    if (gamestate == STATE_MENU) {
+        SDL_Color color = {0, 0, 0, 255};
+        SDL_Surface *textSurface = TTF_RenderText_Solid(fontBalatro, version, strlen(version), color);
+        SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        SDL_FRect textQuad = { 15*window_scale_x, (WINDOW_HEIGHT-15-textSurface->h)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+        SDL_DestroySurface(textSurface);
+    }
 
+    // CARDS TEXTURES / HITBOXES
+    // --------------------------------
+    for (int i = 0; i < MAX_CARDS; i++) {
+        if (!inplay.isActive[i] && !infeature.isActive[i]) continue;
+
+        SDL_FRect cardtexture = {0};
+        SDL_FRect cardhitbox = {0};
+        SDL_FPoint center = {0};
+        float sineh, sinea, fanning, card_grow_w, card_grow_h;
+        double angle;
+
+        if (gamestate == STATE_PLAY) {
             if (show_textures) {
 
-                float card_grow_w = inplay.isDragging[i] * CARD_GROW * inplay.w[i];
-                float card_grow_h = inplay.isDragging[i] * CARD_GROW * inplay.h[i];
+                card_grow_w = (inplay.isDragging[i]+inplay.isHover[i]) * CARD_GROW * inplay.w[i];
+                card_grow_h = (inplay.isDragging[i]+inplay.isHover[i]) * CARD_GROW * inplay.h[i];
+
+                sineh = 0, sinea = 0, fanning = 0;
+                if (!inplay.isDragging[i]) {
+                    sineh = 5 *  sin(2 * inplay.zoneTime[i]);
+                    fanning = (inplay.zoneNum[i] - ((playzones.num_cards[inplay.zoneID[i]] + 1) / 2.0f)) * 2.5f;
+                    sinea = 2.5f * sin(inplay.zoneTime[i]);
+                }
+                angle = inplay.vx[i]/60 + sinea + fanning;
+
+                cardtexture = (SDL_FRect) {  
+                    inplay.x[i] - (inplay.w[i]/2) - (card_grow_w/2), 
+                    inplay.y[i] - (inplay.h[i]/2) - (card_grow_h/2) - (sineh*window_scale_y), 
+                    inplay.w[i] + (card_grow_w*window_scale_x), 
+                    inplay.h[i] + (card_grow_h*window_scale_y)
+                };
+
+                center = (SDL_FPoint) {cardtexture.w / 2, cardtexture.h / 2};
+                SDL_RenderTextureRotated(renderer, cards.cardtexture[inplay.ID[i]], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
+            }
+            if (show_hitboxes) {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                cardhitbox = (SDL_FRect) {inplay.x[i] - inplay.w[i]/2, inplay.y[i] - inplay.h[i]/2 , inplay.w[i], inplay.h[i]};
+                SDL_RenderRect(renderer, &cardhitbox);
+            }
+        }
+
+        if (gamestate == STATE_MENU) {
+            if (show_textures) {
+
+                card_grow_w = (infeature.isDragging[i]+infeature.isHover[i]) * CARD_GROW * infeature.w[i];
+                card_grow_h = (infeature.isDragging[i]+infeature.isHover[i]) * CARD_GROW * infeature.h[i];
+
+                sineh = 0, sinea = 0, fanning = 0;
+                if (!infeature.isDragging[i]) {
+                    sineh = 5 *  sin(2 * infeature.zoneTime[i]);
+                    fanning = (infeature.zoneNum[i] - ((menuzone.num_cards[infeature.zoneID[i]] + 1) / 2.0f)) * 2.5f;
+                    sinea = 2.5f * sin(infeature.zoneTime[i]);
+                }
+                angle = infeature.vx[i]/60 + sinea + fanning;
+
+                cardtexture = (SDL_FRect) {  
+                    infeature.x[i] - (infeature.w[i]/2) - (card_grow_w/2), 
+                    infeature.y[i] - (infeature.h[i]/2) - (card_grow_h/2) - (sineh*window_scale_y), 
+                    infeature.w[i] + (card_grow_w*window_scale_x), 
+                    infeature.h[i] + (card_grow_h*window_scale_y)
+                };
+
+                center = (SDL_FPoint) {cardtexture.w / 2, cardtexture.h / 2};
+                SDL_RenderTextureRotated(renderer, cards.cardtexture[infeature.ID[i]], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
+            }
+            if (show_hitboxes) {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                cardhitbox = (SDL_FRect) {infeature.x[i] - infeature.w[i]/2, infeature.y[i] - infeature.h[i]/2 , infeature.w[i], infeature.h[i]};
+                SDL_RenderRect(renderer, &cardhitbox);
+            }
+        }
+    }
+    // TOP CARD TEXTURE
+    // --------------
+    for (int i = 0; i < MAX_CARDS; i++) {
+        if (!inplay.isDragging[i] && !infeature.isDragging[i] && abs(inplay.vx[i]) < 1 && abs(inplay.vy[i]) < 1) continue;
+
+        if (gamestate == STATE_PLAY) {
+            if (show_textures) {
+
+                float card_grow_w = (inplay.isDragging[i]+inplay.isHover[i]) * CARD_GROW * inplay.w[i];
+                float card_grow_h = (inplay.isDragging[i]+inplay.isHover[i]) * CARD_GROW * inplay.h[i];
 
                 float sineh = 0, sinea = 0, fanning = 0;
                 if (!inplay.isDragging[i]) {
@@ -1532,134 +1634,21 @@ void render() {
                 SDL_FPoint center = {cardtexture.w / 2, cardtexture.h / 2};
                 SDL_RenderTextureRotated(renderer, cards.cardtexture[inplay.ID[i]], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
             }
-
-            if (show_hitboxes) {
-                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                SDL_FRect cardhitbox = {inplay.x[i] - inplay.w[i]/2, inplay.y[i] - inplay.h[i]/2 , inplay.w[i], inplay.h[i]};
-                SDL_RenderRect(renderer, &cardhitbox);
-            }
         }
     }
 
-    if (gamestate == STATE_MENU) {   
-
-        // BUTTONS
-        // -------
-        for (int i = 0; i < MAX_BUTTONS; i++) {
-            if (!menubuttons.isActive[i]) continue;
-
-            if (show_textures) {
-                float sineh = 5 * sin(2.0f * menubuttons.clickTime[i]);
-                float sinea = sin(SDL_GetTicks() / 1000.0f + i*0.2);
-                // if (menubuttons.isPressed[i]) sinea = 0;
-                float angle = sinea;
-
-                float button_grow_w = (menubuttons.isHover[i]+menubuttons.isPressed[i]) * CARD_GROW * menubuttons.w[i];
-                float button_grow_h = (menubuttons.isHover[i]+menubuttons.isPressed[i]) * CARD_GROW * menubuttons.h[i];
-
-                SDL_FRect buttontexture = {
-                    menubuttons.x[i] - (button_grow_w/2), 
-                    menubuttons.y[i] - (button_grow_h/2), 
-                    menubuttons.w[i] + (button_grow_w*window_scale_x), 
-                    menubuttons.h[i] + (button_grow_h*window_scale_y)
-                };
-
-                SDL_FPoint center = {buttontexture.w / 2, buttontexture.h / 2};
-                SDL_RenderTextureRotated(renderer, menubuttons.buttontexture[i], NULL, &buttontexture, angle, &center, SDL_FLIP_NONE);
-            }
-
-            if (show_hitboxes) {
-                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                if (menubuttons.isPressed[i]) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-                SDL_FRect buttonhitbox = {menubuttons.x[i], menubuttons.y[i], menubuttons.w[i], menubuttons.h[i]};
-                SDL_RenderRect(renderer, &buttonhitbox);
-            }
-        }
-
-        // ZONES TEXTURES / HITBOX
-        // -----------------------
-        for (int i = 0; i < MAX_ZONES; i++) {
-            if (!menuzone.isActive[i]) continue;
-
-            if (show_textures) {
-                float angle = 0;
-                SDL_FRect zonetexture = { menuzone.x[i], menuzone.y[i], menuzone.w[i], menuzone.h[i] };
-                SDL_FPoint center = {zonetexture.w / 2, zonetexture.h / 2};
-                SDL_RenderTextureRotated(renderer, menuzone.zonetexture[i], NULL, &zonetexture, angle, &center, SDL_FLIP_NONE);
-            }
-
-            if (show_hitboxes) {
-                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                SDL_FRect zonehitbox = {menuzone.x[i], menuzone.y[i], menuzone.w[i], menuzone.h[i]};
-                SDL_RenderRect(renderer, &zonehitbox);
-            }
-        }
-
-        // CARDS TEXTURES / HITBOX
-        // -----------------------
-        for (int i = 0; i < MAX_CARDS; i++) {
-            if (!infeature.isActive[i]) continue;
-
-            if (show_textures) {
-
-                float card_grow_w = infeature.isDragging[i] * CARD_GROW * infeature.w[i];
-                float card_grow_h = infeature.isDragging[i] * CARD_GROW * infeature.h[i];
-
-                float sineh = 0, sinea = 0, fanning = 0;
-                if (!infeature.isDragging[i]) {
-                    sineh = 5 *  sin(2 * infeature.zoneTime[i]);
-                    fanning = (infeature.zoneNum[i] - ((menuzone.num_cards[infeature.zoneID[i]] + 1) / 2.0f)) * 2.5f;
-                    sinea = 2.5f * sin(infeature.zoneTime[i]);
-                }
-                double angle = infeature.vx[i]/60 + sinea + fanning;
-
-                SDL_FRect cardtexture = {  
-                    infeature.x[i] - (infeature.w[i]/2) - (card_grow_w/2), 
-                    infeature.y[i] - (infeature.h[i]/2) - (card_grow_h/2) - (sineh*window_scale_y), 
-                    infeature.w[i] + (card_grow_w*window_scale_x), 
-                    infeature.h[i] + (card_grow_h*window_scale_y)
-                };
-
-                SDL_FPoint center = {cardtexture.w / 2, cardtexture.h / 2};
-                SDL_RenderTextureRotated(renderer, cards.cardtexture[infeature.ID[i]], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
-            }
-
-            if (show_hitboxes) {
-                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                SDL_FRect cardhitbox = {infeature.x[i] - infeature.w[i]/2, infeature.y[i] - infeature.h[i]/2 , infeature.w[i], infeature.h[i]};
-                SDL_RenderRect(renderer, &cardhitbox);
-            }
-        }
-
-        
-        SDL_Color color = {0, 0, 0, 255};
-        SDL_Surface *textSurface = TTF_RenderText_Solid(fontBalatro, version, strlen(version), color);
-        SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-        SDL_FRect textQuad = { 15*window_scale_x, (WINDOW_HEIGHT-15-textSurface->h)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
-        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
-        SDL_DestroySurface(textSurface);
-
-    }
 
     // CURSOR TEXTURES / HITBOX
     // ------------------------
+    SDL_ShowCursor();
     if (custom_cursor) {
         SDL_HideCursor();
 
-        if (show_textures) {
-            SDL_FRect cursorhitbox = {mousex, mousey, 30.0f * window_scale_x, 30.0f * window_scale_y};
-            SDL_RenderRect(renderer, &cursorhitbox);
-            SDL_RenderTexture(renderer, gamebuttons.buttontexture[0], NULL, &cursorhitbox);
-        }
+        SDL_FRect cursorbox = {mousex, mousey, 30.0f * window_scale_x, 30.0f * window_scale_y};
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        if (show_textures) SDL_RenderTexture(renderer, gamebuttons.buttontexture[0], NULL, &cursorbox);
+        if (show_hitboxes) SDL_RenderRect(renderer, &cursorbox);
 
-        if (show_hitboxes) {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_FRect cursorhitbox = {mousex, mousey, 30.0f * window_scale_x, 30.0f * window_scale_y};
-            SDL_RenderRect(renderer, &cursorhitbox);
-        }
-
-    } else {
-        SDL_ShowCursor();
     }
 
 }
