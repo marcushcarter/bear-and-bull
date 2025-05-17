@@ -30,7 +30,7 @@ float window_scale_y = 1.0f;
 char version[256] = "version 0.2.6";
 
 int seed;
-float game_speed = 1;
+float game_speed = 2;
 int profile;
 
 // float time_passed = 0;
@@ -192,6 +192,7 @@ typedef struct Buttons {
     bool isPressed[MAX_BUTTONS];
     bool isClicked[MAX_BUTTONS];
     bool isActive[MAX_BUTTONS];
+    bool isHover[MAX_BUTTONS];
 } Buttons;
 
 Buttons gamebuttons;
@@ -863,10 +864,10 @@ void update_window() {
     make_button(&gamebuttons, BUTTON_SELL_STOCK, "resources/button textures/minus.png", 15, CARD_MARGIN+195, 50, 50);
     make_button(&gamebuttons, BUTTON_BUY_STOCK, "resources/button textures/plus.png", 175, CARD_MARGIN+195, 50, 50);
     // MENU
-    make_button(&menubuttons, BUTTON_NEW_GAME, "resources/button textures/deck.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*0, 300, 50);
-    make_button(&menubuttons, BUTTON_SETTINGS, "resources/button textures/deck.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*1, 300, 50);
+    make_button(&menubuttons, BUTTON_NEW_GAME, "resources/button textures/newgame.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*0, 300, 50);
+    make_button(&menubuttons, BUTTON_SETTINGS, "resources/button textures/settings.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*1, 300, 50);
     make_button(&menubuttons, BUTTON_STATS, "resources/button textures/deck.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*2, 300, 50);
-    make_button(&menubuttons, BUTTON_QUIT, "resources/button textures/deck.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*3, 300, 50);
+    make_button(&menubuttons, BUTTON_QUIT, "resources/button textures/quit.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*3, 300, 50);
     make_zone(&menuzone, ZONE_MENU, "", 1, (WINDOW_WIDTH/2)-((CARD_WIDTH+CARD_SPACING)/2), (WINDOW_HEIGHT/3)-((CARD_HEIGHT+CARD_SPACING)/2), 0, 0);
 
 }
@@ -888,6 +889,8 @@ void load_cards() {
     make_card(10, "resources/card textures/card11.png", "Normal Joker", "Sherrel, nobody cares", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
 
 }
+
+SDL_Texture* idea_texture;
 
 TTF_Font* fontBalatro;
 TTF_Font* fontTimesNewRoman;
@@ -919,6 +922,10 @@ bool load_textures() {
         menuzone.zonetexture[i] = IMG_LoadTexture(renderer, menuzone.zonepath[i]);
         SDL_SetTextureScaleMode(menuzone.zonetexture[i], SDL_SCALEMODE_NEAREST);
     }
+
+    
+    idea_texture = IMG_LoadTexture(renderer, "resources/idea.png");
+    SDL_SetTextureScaleMode(idea_texture, SDL_SCALEMODE_NEAREST);
 
     fontBalatro= TTF_OpenFont("resources/fonts/balatro.ttf", 24);
     fontTimesNewRoman = TTF_OpenFont("resources/fonts/Times New Roman.ttf", 24);
@@ -1153,9 +1160,11 @@ void update() {
             if (point_box_collision(mousex, mousey, gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i])) {
                 if (currMouseState & SDL_BUTTON_LMASK) { gamebuttons.isPressed[i] = true; } else { gamebuttons.isPressed[i] = false; }
                 if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { gamebuttons.isClicked[i] = true; } else { gamebuttons.isClicked[i] = false; }
+                gamebuttons.isHover[i] = true;
             } else {
                 gamebuttons.isPressed[i] = false;
                 gamebuttons.isClicked[i] = false;
+                gamebuttons.isHover[i] = false;
             }
 
             // DECK BUTTON
@@ -1231,9 +1240,11 @@ void update() {
             if (point_box_collision(mousex, mousey, menubuttons.x[i], menubuttons.y[i], menubuttons.w[i], menubuttons.h[i])) {
                 if (currMouseState & SDL_BUTTON_LMASK) { menubuttons.isPressed[i] = true; } else { menubuttons.isPressed[i] = false; }
                 if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { menubuttons.isClicked[i] = true; } else { menubuttons.isClicked[i] = false; }
+                menubuttons.isHover[i] = true;
             } else {
                 menubuttons.isPressed[i] = false;
                 menubuttons.isClicked[i] = false;
+                menubuttons.isHover[i] = false;
             }
 
             // DECK BUTTON
@@ -1399,9 +1410,8 @@ void render() {
         // float angle = 0;
         // SDL_FRect texture = { 0, 0, (float)window_width, (float)window_height };
         // SDL_FPoint center = {texture.w / 2, texture.h / 2};
-        // SDL_RenderTextureRotated(renderer, temp, NULL, &texture, angle, &center, SDL_FLIP_NONE);
+        // SDL_RenderTextureRotated(renderer, idea_texture, NULL, &texture, angle, &center, SDL_FLIP_NONE);
     }
-
     
     // they actuall game
     // -----------------
@@ -1436,8 +1446,8 @@ void render() {
                 float sinea = 2.5 * sin(SDL_GetTicks() / 1000.0f + i*0.2);
                 float angle = sinea;
 
-                float button_grow_w = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.w[i];
-                float button_grow_h = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.h[i];
+                float button_grow_w = gamebuttons.isHover[i] * CARD_GROW * gamebuttons.w[i];
+                float button_grow_h = gamebuttons.isHover[i] * CARD_GROW * gamebuttons.h[i];
 
                 SDL_FRect buttontexture = {
                     gamebuttons.x[i] - (button_grow_w/2), 
@@ -1546,8 +1556,8 @@ void render() {
                 // if (menubuttons.isPressed[i]) sinea = 0;
                 float angle = sinea;
 
-                float button_grow_w = menubuttons.isPressed[i] * CARD_GROW * menubuttons.w[i];
-                float button_grow_h = menubuttons.isPressed[i] * CARD_GROW * menubuttons.h[i];
+                float button_grow_w = menubuttons.isHover[i] * CARD_GROW * menubuttons.w[i];
+                float button_grow_h = menubuttons.isHover[i] * CARD_GROW * menubuttons.h[i];
 
                 SDL_FRect buttontexture = {
                     menubuttons.x[i] - (button_grow_w/2), 
