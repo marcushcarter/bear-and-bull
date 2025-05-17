@@ -27,10 +27,10 @@ int window_width, window_height;
 float window_scale_x = 1.0f;
 float window_scale_y = 1.0f;
 
-char version = 'version 0.2.6';
+char version[256] = "version 0.2.6";
 
 int seed;
-float game_speed = 2;
+float game_speed = 1;
 int profile;
 
 // float time_passed = 0;
@@ -50,10 +50,10 @@ bool custom_cursor = false;
 #define CARD_GROW 0.05
 #define CARD_MARGIN 55
 
-#define MAX_CARDS 10
-#define MAX_ZONES 10
+#define MAX_CARDS 20
+#define MAX_ZONES 20
 #define TOTAL_CARDS 11
-#define MAX_BUTTONS 10
+#define MAX_BUTTONS 20
 #define MAX_PROFILES 1
 
 // CARDS / ZONESCLASSES ====================================================================================================
@@ -181,7 +181,6 @@ typedef struct Buttons {
     int ID[MAX_BUTTONS];
     SDL_Texture* buttontexture[MAX_BUTTONS];
     char buttonpath[MAX_BUTTONS][256];
-
 
     float x[MAX_BUTTONS];
     float y[MAX_BUTTONS];
@@ -858,17 +857,35 @@ void update_window() {
     make_zone(&playzones, ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     make_zone(&playzones, ZONE_HAND, "", profileinfo.handslots[profile], WINDOW_WIDTH/2 - 725/2, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 725, 0);
     make_zone(&playzones, ZONE_EVENT, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
-    make_button(&gamebuttons, BUTTON_DECK, "./resources/button textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    make_button(&gamebuttons, BUTTON_DECK, "resources/button textures/deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
     make_button(&gamebuttons, BUTTON_LOAN, "resources/button textures/loan2.png", 15, CARD_MARGIN+130, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15), 50);
-    make_button(&gamebuttons, BUTTON_PAUSE, "./resources/button textures/pause.png", 15, 15, 30, 30);
-    make_button(&gamebuttons, BUTTON_SELL_STOCK, "./resources/button textures/minus.png", 15, CARD_MARGIN+195, 50, 50);
+    make_button(&gamebuttons, BUTTON_PAUSE, "resources/button textures/pause.png", 15, 15, 30, 30);
+    make_button(&gamebuttons, BUTTON_SELL_STOCK, "resources/button textures/minus.png", 15, CARD_MARGIN+195, 50, 50);
     make_button(&gamebuttons, BUTTON_BUY_STOCK, "resources/button textures/plus.png", 175, CARD_MARGIN+195, 50, 50);
     // MENU
-    make_button(&menubuttons, BUTTON_NEW_GAME, "", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*0, 300, 50);
-    make_button(&menubuttons, BUTTON_SETTINGS, "", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*1, 300, 50);
-    make_button(&menubuttons, BUTTON_STATS, "", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*2, 300, 50);
-    make_button(&menubuttons, BUTTON_QUIT, "", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*3, 300, 50);
+    make_button(&menubuttons, BUTTON_NEW_GAME, "resources/button textures/deck.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*0, 300, 50);
+    make_button(&menubuttons, BUTTON_SETTINGS, "resources/button textures/deck.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*1, 300, 50);
+    make_button(&menubuttons, BUTTON_STATS, "resources/button textures/deck.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*2, 300, 50);
+    make_button(&menubuttons, BUTTON_QUIT, "resources/button textures/deck.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*3, 300, 50);
     make_zone(&menuzone, ZONE_MENU, "", 1, (WINDOW_WIDTH/2)-((CARD_WIDTH+CARD_SPACING)/2), (WINDOW_HEIGHT/3)-((CARD_HEIGHT+CARD_SPACING)/2), 0, 0);
+
+}
+
+void load_cards() {
+    
+    // LOAD CARDS
+    // ----------
+    make_card(0, "resources/card textures/card1.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
+    make_card(1, "resources/card textures/card2.png", "Flame Boy", "For every wooden card you have in your hand, draw an extra card", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(2, "resources/card textures/card3.png", "Peaked", "If you are visited by the russians, you recieve $200", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(3, "resources/card textures/card4.png", "Eg", "WTF you think it is, its an egg", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(4, "resources/card textures/card5.png", "Ballot Joker", "At any given time, your stock price is multiplied by a random number", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(5, "resources/card textures/card6.png", "Pokemon Card Joker", "Gotta Catch em all", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(6, "resources/card textures/card7.png", "Bunanu", "Use as a consumable to refill 1 loan slot", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(7, "resources/card textures/card8.png", "Caino", "He got ice running throuhg his viens", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(8, "resources/card textures/card9.png", "Purple Magic", "Any damage you do to tech stonks if multiplied by 3", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(9, "resources/card textures/card10.png", "Planet Joker", "You now own the entire planet", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    make_card(10, "resources/card textures/card11.png", "Normal Joker", "Sherrel, nobody cares", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
 
 }
 
@@ -890,6 +907,8 @@ bool load_textures() {
     for (int i = 0; i < MAX_BUTTONS; i++) {
         gamebuttons.buttontexture[i] = IMG_LoadTexture(renderer, gamebuttons.buttonpath[i]);
         SDL_SetTextureScaleMode(gamebuttons.buttontexture[i], SDL_SCALEMODE_NEAREST);
+        menubuttons.buttontexture[i] = IMG_LoadTexture(renderer, menubuttons.buttonpath[i]);
+        SDL_SetTextureScaleMode(menubuttons.buttontexture[i], SDL_SCALEMODE_NEAREST);
     }
 
     // LOAD TEXTURES FOR ZONES
@@ -897,6 +916,8 @@ bool load_textures() {
     for (int i = 0; i < MAX_ZONES; i++) {
         playzones.zonetexture[i] = IMG_LoadTexture(renderer, playzones.zonepath[i]);
         SDL_SetTextureScaleMode(playzones.zonetexture[i], SDL_SCALEMODE_NEAREST);
+        menuzone.zonetexture[i] = IMG_LoadTexture(renderer, menuzone.zonepath[i]);
+        SDL_SetTextureScaleMode(menuzone.zonetexture[i], SDL_SCALEMODE_NEAREST);
     }
 
     fontBalatro= TTF_OpenFont("resources/fonts/balatro.ttf", 24);
@@ -912,19 +933,7 @@ void setup() {
     // seed = 0;
     srand(seed);
 
-    // LOAD CARDS
-    // ----------
-    make_card(0, "./resources/card textures/card1.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
-    make_card(1, "./resources/card textures/card2.png", "Flame Boy", "For every wooden card you have in your hand, draw an extra card", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(2, "./resources/card textures/card3.png", "Peaked", "If you are visited by the russians, you recieve $200", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(3, "./resources/card textures/card4.png", "Eg", "WTF you think it is, its an egg", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(4, "./resources/card textures/card5.png", "Ballot Joker", "At any given time, your stock price is multiplied by a random number", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(5, "./resources/card textures/card6.png", "Pokemon Card Joker", "Gotta Catch em all", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(6, "./resources/card textures/card7.png", "Bunanu", "Use as a consumable to refill 1 loan slot", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(7, "./resources/card textures/card8.png", "Caino", "He got ice running throuhg his viens", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(8, "./resources/card textures/card9.png", "Purple Magic", "Any damage you do to tech stonks if multiplied by 3", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(9, "./resources/card textures/card10.png", "Planet Joker", "You now own the entire planet", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
-    make_card(10, "./resources/card textures/card11.png", "Normal Joker", "Sherrel, nobody cares", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
+    load_cards();
     
     update_window();
 
@@ -1033,6 +1042,12 @@ void dev_tools() {
         pause = !pause;
     }
 
+    // 8 - change game speed
+    // --------------------------
+    if (currKeyState[SDL_SCANCODE_8] && !prevKeyState[SDL_SCANCODE_8]) {
+        game_speed += 1;
+    }
+
 }
 
 void update() {
@@ -1048,13 +1063,14 @@ void update() {
         // Draws an event card once every 15 seconds
         // ------------------------------------
         event_timer += dt;
-        event_timer = (int)(SDL_GetTicks() / 100.0f) % 50;
-        if (event_timer == 50 - 1) { event_card((rand() % TOTAL_CARDS-1) + 1); }
+        if ((int)event_timer/10 % 150 == 0) { event_card((rand() % TOTAL_CARDS-1) + 1); }
 
         // CARD UPDATES
         // ------------
         for (int i = 0; i < MAX_CARDS; i++) {
             if (!inplay.isActive[i]) continue;
+            
+            inplay.zoneTime[i] += dt / game_speed;
 
             // Checks if a card should be picked up
             // ------------------------------------
@@ -1093,12 +1109,12 @@ void update() {
 
                 inplay.isDragging[i] = false;
                 isDragging = false;
-                inplay.zoneTime[i] += (SDL_GetTicks() / 1000.0f);
+                inplay.zoneTime[i] = 0;
             }
 
             // Checks if a card should be sold
             // -------------------------------
-            if (inplay.zoneID[i] == ZONE_SELL && ((SDL_GetTicks()/1000.0f)-inplay.zoneTime[i]) > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
+            if (inplay.zoneID[i] == ZONE_SELL && inplay.zoneTime[i] > 1.5 && inplay.isSellable[i] && !inplay.isDragging[i]) {
                 // visual
                 sell_card(i);
             }
@@ -1132,7 +1148,8 @@ void update() {
 
             // Checks different button states (pressed/clicked)
             // ------------------------------------------------
-            if (gamebuttons.isPressed[i]) gamebuttons.clickTime[i] = (SDL_GetTicks() / 1000.0f);
+            if (gamebuttons.isPressed[i]) gamebuttons.clickTime[i] = 0;
+            gamebuttons.clickTime[i] += dt / game_speed;
             if (point_box_collision(mousex, mousey, gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i])) {
                 if (currMouseState & SDL_BUTTON_LMASK) { gamebuttons.isPressed[i] = true; } else { gamebuttons.isPressed[i] = false; }
                 if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { gamebuttons.isClicked[i] = true; } else { gamebuttons.isClicked[i] = false; }
@@ -1150,7 +1167,7 @@ void update() {
             if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(); // LOAN BUTTON
             if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_BUY_STOCK) profileinfo.money[profile] += 50; // MINUS STOCK BUTTON
             if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_SELL_STOCK) profileinfo.handslots[profile] += 1; // PLUSS STOCK BUTTON
-            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_SELL_STOCK) gamestate = STATE_MENU; // PAUSE BUTTON
+            if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_PAUSE) gamestate = STATE_MENU; // PAUSE BUTTON
         }
 
         // CHARTS STOCK SIMULATION
@@ -1164,6 +1181,7 @@ void update() {
         // ------------
         for (int i = 0; i < MAX_CARDS; i++) {
             if (!infeature.isActive[i]) continue;
+            infeature.zoneTime[i] += dt / game_speed;
 
             // Checks if a card should be picked up
             // ------------------------------------
@@ -1177,7 +1195,7 @@ void update() {
             if (infeature.isDragging[i] && !(currMouseState & SDL_BUTTON_LMASK)) {
                 infeature.isDragging[i] = false;
                 isDragging = false;
-                infeature.zoneTime[i] += (SDL_GetTicks() / 1000.0f);
+                infeature.zoneTime[i] = 0;
             }
 
             // if you are dragging a card it goes to your mouse
@@ -1208,7 +1226,8 @@ void update() {
 
             // Checks different button states (pressed/clicked)
             // ------------------------------------------------
-            if (menubuttons.isPressed[i]) menubuttons.clickTime[i] = (SDL_GetTicks() / 1000.0f);
+            if (menubuttons.isPressed[i]) menubuttons.clickTime[i] = 0;
+            menubuttons.clickTime[i] += dt / game_speed;
             if (point_box_collision(mousex, mousey, menubuttons.x[i], menubuttons.y[i], menubuttons.w[i], menubuttons.h[i])) {
                 if (currMouseState & SDL_BUTTON_LMASK) { menubuttons.isPressed[i] = true; } else { menubuttons.isPressed[i] = false; }
                 if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { menubuttons.isClicked[i] = true; } else { menubuttons.isClicked[i] = false; }
@@ -1224,8 +1243,8 @@ void update() {
             }
 
             if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_NEW_GAME) gamestate = STATE_PLAY; // NEW GAME BUTTON
-            if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_SETTINGS) loan_card(); // LOAN BUTTON
-            if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_STATS) loan_card(); // LOAN BUTTON
+            if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_SETTINGS) ; // LOAN BUTTON
+            if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_STATS) ; // LOAN BUTTON
             if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_QUIT) running = false; // LOAN BUTTON
         }
     }
@@ -1413,8 +1432,8 @@ void render() {
             if (!gamebuttons.isActive[i]) continue;
 
             if (show_textures) {
-                float sineh = 5 * sin(2.0f * (gamebuttons.clickTime[i] - SDL_GetTicks() / 1000.0f));
-                float sinea = 2.5 * sin(gamebuttons.clickTime[i] - SDL_GetTicks() / 1000.0f);
+                float sineh = 5 * sin(2.0f * (gamebuttons.clickTime[i]));
+                float sinea = 2.5 * sin(SDL_GetTicks() / 1000.0f + i*0.2);
                 float angle = sinea;
 
                 float button_grow_w = gamebuttons.isPressed[i] * CARD_GROW * gamebuttons.w[i];
@@ -1489,9 +1508,9 @@ void render() {
 
                 float sineh = 0, sinea = 0, fanning = 0;
                 if (!inplay.isDragging[i]) {
-                    sineh = 5 *  sin(2 * (inplay.zoneTime[i] - SDL_GetTicks() / 1000.0f));
+                    sineh = 5 *  sin(2 * inplay.zoneTime[i]);
                     fanning = (inplay.zoneNum[i] - ((playzones.num_cards[inplay.zoneID[i]] + 1) / 2.0f)) * 2.5f;
-                    sinea = 2.5f * sin(inplay.zoneTime[i] - SDL_GetTicks() / 1000.0f);
+                    sinea = 2.5f * sin(inplay.zoneTime[i]);
                 }
                 double angle = inplay.vx[i]/60 + sinea + fanning;
 
@@ -1522,8 +1541,9 @@ void render() {
             if (!menubuttons.isActive[i]) continue;
 
             if (show_textures) {
-                float sineh = 5 * sin(2.0f * (menubuttons.clickTime[i] - SDL_GetTicks() / 1000.0f));
-                float sinea = 2.5 * sin(menubuttons.clickTime[i] - SDL_GetTicks() / 1000.0f);
+                float sineh = 5 * sin(2.0f * menubuttons.clickTime[i]);
+                float sinea = sin(SDL_GetTicks() / 1000.0f + i*0.2);
+                // if (menubuttons.isPressed[i]) sinea = 0;
                 float angle = sinea;
 
                 float button_grow_w = menubuttons.isPressed[i] * CARD_GROW * menubuttons.w[i];
@@ -1579,9 +1599,9 @@ void render() {
 
                 float sineh = 0, sinea = 0, fanning = 0;
                 if (!infeature.isDragging[i]) {
-                    sineh = 5 *  sin(2 * (infeature.zoneTime[i] - SDL_GetTicks() / 1000.0f));
+                    sineh = 5 *  sin(2 * infeature.zoneTime[i]);
                     fanning = (infeature.zoneNum[i] - ((menuzone.num_cards[infeature.zoneID[i]] + 1) / 2.0f)) * 2.5f;
-                    sinea = 2.5f * sin(infeature.zoneTime[i] - SDL_GetTicks() / 1000.0f);
+                    sinea = 2.5f * sin(infeature.zoneTime[i]);
                 }
                 double angle = infeature.vx[i]/60 + sinea + fanning;
 
@@ -1605,7 +1625,7 @@ void render() {
 
         
         SDL_Color color = {0, 0, 0, 255};
-        SDL_Surface *textSurface = TTF_RenderText_Solid(fontBalatro, "version 0.2.?", strlen("version 0.2.?"), color);
+        SDL_Surface *textSurface = TTF_RenderText_Solid(fontBalatro, version, strlen(version), color);
         SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
         SDL_FRect textQuad = { 15*window_scale_x, (WINDOW_HEIGHT-15-textSurface->h)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
         SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
