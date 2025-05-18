@@ -56,8 +56,6 @@ bool custom_cursor = false;
 #define MAX_BUTTONS 20
 #define MAX_PROFILES 1
 
-#define DEG_TO_RAD(x) ((x) * (M_PI / 180.0f))
-
 // CARDS / ZONES CLASSES ====================================================================================================
 
 typedef struct ProfileInfo {
@@ -1306,7 +1304,7 @@ void update() {
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_NEW_GAME) start_animation(ANIM_TRANSITION_1, callback_change_to_play_screen, NULL, -1, 0, 0, 0, 2 * M_PI); // NEW GAME BUTTON
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_SETTINGS) ; // SETTINGS / OPTIONS BUTTON
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_STATS) system("start https://ballisticstudios.ca/"); // STATS OR STEAM BUTTON
-        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_QUIT) start_animation(ANIM_TRANSITION_3, callback_quit_game, NULL, -1, 0, 0, 0, 2 * M_PI);; // LOAN BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_QUIT) start_animation(ANIM_TRANSITION_1, callback_quit_game, NULL, -1, 0, 0, 0, 2 * M_PI);; // LOAN BUTTON
 
     }
 
