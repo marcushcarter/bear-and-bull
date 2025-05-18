@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 
-char version[256] = "demo v0.1.11";
+char version[256] = "demo v0.1.12";
 
 SDL_Window* window;
 SDL_Renderer* renderer;
@@ -36,13 +36,14 @@ bool isFullscreen = false;
 int aspect_ratio;
 float TARGET_FPS = 120.0f;
 
-bool show_hitboxes = true;
+bool show_hitboxes = false;
 bool show_textures = true;
 bool custom_cursor = false;
 
 int seed;
 float game_speed = 2;
 float event_timer = 0;
+float state_timer = 0;
 int profile;
 
 #define LERP_SPEED 0.25
@@ -246,7 +247,7 @@ typedef enum GameState {
     STATE_SETTINGS,
 } GameState;
 
-int gamestate = STATE_SETTINGS;
+int gamestate = STATE_MENU;
 bool pause = false;
 
 typedef enum AnimTypes {
@@ -878,9 +879,9 @@ void end_animation(int index) {
     anim.isActive[index] = false;
 }
 
-void callback_change_to_play_screen() { gamestate = STATE_PLAY; }
-void callback_change_to_menu_screen() { gamestate = STATE_MENU; }
-void callback_change_to_settings_screen() { gamestate = STATE_SETTINGS; }
+void callback_change_to_play_screen() { gamestate = STATE_PLAY; state_timer = 0; }
+void callback_change_to_menu_screen() { gamestate = STATE_MENU; state_timer = 0; }
+void callback_change_to_settings_screen() { gamestate = STATE_SETTINGS; state_timer = 0; }
 void callback_quit_game() { running = false; }
 
 // STOCK FUNCTIONS ====================================================================================================
@@ -1010,19 +1011,19 @@ void load_zones() {
     make_button(&menubuttons, BUTTON_SETTINGS, "resources/textures/menu-button-settings.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*1, 300, 50);
     make_button(&menubuttons, BUTTON_STATS, "", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*2, 300, 50);
     make_button(&menubuttons, BUTTON_QUIT, "resources/textures/menu-button-quit.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*3, 300, 50);
-    make_zone(&menuzone, ZONE_MENU, "", 1, (WINDOW_WIDTH/2)-((CARD_WIDTH+CARD_SPACING)/2), (WINDOW_HEIGHT/3)-((CARD_HEIGHT+CARD_SPACING)/2), 0, 0);
+    make_zone(&menuzone, ZONE_MENU, "", 1, (WINDOW_WIDTH/2)-((CARD_WIDTH+CARD_SPACING)/2), (WINDOW_HEIGHT/4)-((CARD_HEIGHT+CARD_SPACING)/2), 0, 0);
     // SETTINGS
     make_button(&settingbuttons, BUTTON_SETTINGS_EXIT, "resources/textures/play-button-deck.png", 15, 15, 30, 30);
     make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_RATIO, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(250/2), CARD_SPACING+(40+CARD_SPACING)*2, 250, 40);
-    make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_PREV, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(250/2)-CARD_SPACING-20, CARD_SPACING+(40+CARD_SPACING)*2, 20, 40);
-    make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_NEXT, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)+(250/2)+CARD_SPACING, CARD_SPACING+(40+CARD_SPACING)*2, 20, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_PREV, "resources/textures/general-left.png", (WINDOW_WIDTH/2)-(250/2)-CARD_SPACING-20, CARD_SPACING+(40+CARD_SPACING)*2, 20, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_NEXT, "resources/textures/general-right.png", (WINDOW_WIDTH/2)+(250/2)+CARD_SPACING, CARD_SPACING+(40+CARD_SPACING)*2, 20, 40);
     make_button(&settingbuttons, BUTTON_SETTINGS_FULLSCREEN, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(250/2), CARD_SPACING+(40+CARD_SPACING)*4, 250, 40);
-    make_button(&settingbuttons, BUTTON_SETTINGS_SPEED_PREV, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-((40)/2)-CARD_SPACING-20, CARD_SPACING+(40+CARD_SPACING)*6, 20, 40);
-    make_button(&settingbuttons, BUTTON_SETTINGS_SPEED_NEXT, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)+(40/2)+CARD_SPACING, CARD_SPACING+(40+CARD_SPACING)*6, 20, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_SPEED_PREV, "resources/textures/general-left.png", (WINDOW_WIDTH/2)-((40)/2)-CARD_SPACING-20, CARD_SPACING+(40+CARD_SPACING)*6, 20, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_SPEED_NEXT, "resources/textures/general-right.png", (WINDOW_WIDTH/2)+(40/2)+CARD_SPACING, CARD_SPACING+(40+CARD_SPACING)*6, 20, 40);
     make_button(&settingbuttons, BUTTON_SETTINGS_HITBOXES, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(250/2), CARD_SPACING+(40+CARD_SPACING)*7, 250, 40);
     make_button(&settingbuttons, BUTTON_SETTINGS_CURSOR, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(250/2), CARD_SPACING+(40+CARD_SPACING)*8, 250, 40);
-    make_button(&settingbuttons, BUTTON_SETTINGS_FPS_PREV, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-((100)/2)-CARD_SPACING-20, CARD_SPACING+(40+CARD_SPACING)*10, 20, 40);
-    make_button(&settingbuttons, BUTTON_SETTINGS_FPS_NEXT, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)+(100/2)+CARD_SPACING, CARD_SPACING+(40+CARD_SPACING)*10, 20, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_FPS_PREV, "resources/textures/general-left.png", (WINDOW_WIDTH/2)-((100)/2)-CARD_SPACING-20, CARD_SPACING+(40+CARD_SPACING)*10, 20, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_FPS_NEXT, "resources/textures/general-right.png", (WINDOW_WIDTH/2)+(100/2)+CARD_SPACING, CARD_SPACING+(40+CARD_SPACING)*10, 20, 40);
     
 }
 
@@ -1201,6 +1202,7 @@ void dev_tools() {
 void update() {
     
     load_zones();
+    state_timer += dt; 
 
     // Draws an event card once every 10 seconds
     if (gamestate == STATE_PLAY && !pause) 
@@ -1695,6 +1697,11 @@ void render() {
 
     }
 
+
+
+
+
+
     // SOME OTHER TRADE STATE TEXTURES / HITBOXES 
     // ----------------------------------
     if (gamestate == STATE_PLAY) {
@@ -1758,41 +1765,61 @@ void render() {
         float sineh, sinea;
         double angle;
 
+        // card left
+        // ---------
         sineh = 5 *  sin(2 * SDL_GetTicks() / 1000.0f);
         sinea = 2.5f * sin(SDL_GetTicks() / 1000.0f);
         angle = sinea - 28;
         texture = (SDL_FRect) {  
             200*window_scale_x - (CARD_HEIGHT/2/2), 
-            (halflifefunc+500)*window_scale_y - (CARD_HEIGHT/2/2) - (sineh*window_scale_y), 
-            CARD_WIDTH/2, 
-            CARD_HEIGHT/2
+            (halflifefunc+600)*window_scale_y - (CARD_HEIGHT/2/2) - (sineh*window_scale_y), 
+            CARD_WIDTH/2*window_scale_x, 
+            CARD_HEIGHT/2*window_scale_y
         };
         center = (SDL_FPoint) {texture.w / 2, texture.h / 2};
         SDL_RenderTextureRotated(renderer, cards.cardtexture[5], NULL, &texture, angle, &center, SDL_FLIP_NONE);
 
+        // card right
+        // ----------
         sineh = 5 *  sin(2 * (SDL_GetTicks() / 1000.0f) - 0.5f);
         sinea = 2.5f * sin((SDL_GetTicks() / 1000.0f) - 0.32f);      
         angle = sinea + 18;
         texture = (SDL_FRect) {  
             1000*window_scale_x - (CARD_HEIGHT/2/1.8f), 
-            (halflifefunc+200)*window_scale_y - (CARD_HEIGHT/2/1.8f) - (sineh*window_scale_y), 
-            CARD_WIDTH/1.8f, 
-            CARD_HEIGHT/1.8f
+            (halflifefunc+450)*window_scale_y - (CARD_HEIGHT/2/1.8f) - (sineh*window_scale_y), 
+            CARD_WIDTH/1.8f*window_scale_x, 
+            CARD_HEIGHT/1.8f*window_scale_y
         };
         center = (SDL_FPoint) {texture.w / 2, texture.h / 2};
         SDL_RenderTextureRotated(renderer, cards.cardtexture[9], NULL, &texture, angle, &center, SDL_FLIP_NONE);
 
-        // sineh = 5 *  sin(2 * (SDL_GetTicks() / 1000.0f) - 0.5f);
-        // sinea = 2.5f * sin((SDL_GetTicks() / 1000.0f) - 0.32f);      
-        // angle = sinea;
+        // title logo
+        // ----------
+        sineh = sin(SDL_GetTicks() / 1000.0f);
+        texture = (SDL_FRect) {  
+            (window_width/2) - (1000/2)*window_scale_x, 
+            (-halflifefunc+200)*window_scale_y - (200/2)*window_scale_x - (sineh*window_scale_y), 
+            1000*window_scale_x, 
+            200*window_scale_y,
+        };
+        center = (SDL_FPoint) {texture.w / 2, texture.h / 2};
+        SDL_RenderTextureRotated(renderer, cards.cardtexture[5], NULL, &texture, 0, &center, SDL_FLIP_NONE);
+
+        
+        // SDL_FRect texture = {0};
+        // SDL_FPoint center = {0};
+        // float halflifefunc = 2000 * pow(0.65, (state_timer/10.0f) / 0.05f);
+        // float sineh; double angle;
+
+        // sineh = sin(2 * state_timer);
         // texture = (SDL_FRect) {  
-        //     (WINDOW_WIDTH/2-750/2)*window_scale_x, 
-        //     (-halflifefunc+200-200/2)*window_scale_y - (sineh*window_scale_y), 
-        //     750, 
-        //     200
+        //     window_width/2 - 500/2*window_scale_x,
+        //     halflifefunc*window_scale_y + window_height - 125*window_scale_y - (150/2)*window_scale_y - (sineh*window_scale_y), 
+        //     500*window_scale_x, 
+        //     150*window_scale_y,
         // };
         // center = (SDL_FPoint) {texture.w / 2, texture.h / 2};
-        // SDL_RenderTextureRotated(renderer, cards.cardtexture[9], NULL, &texture, angle, &center, SDL_FLIP_NONE);
+        // SDL_RenderTextureRotated(renderer, cards.cardtexture[5], NULL, &texture, 0, &center, SDL_FLIP_NONE);
     }
 
     // OTHER SETTINGS TEXTURES / HITBOXES
@@ -1852,7 +1879,7 @@ void render() {
         SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
         SDL_DestroyTexture(textTexture);
         SDL_DestroySurface(textSurface);
-
+        
         // SDL_Color color = {0, 0, 0, 255};
         // SDL_Surface *textSurface = TTF_RenderText_Solid(fontBalatro, version, strlen(version), color);
         // SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
@@ -1861,7 +1888,25 @@ void render() {
         // SDL_DestroyTexture(textTexture);
         // SDL_DestroySurface(textSurface);
 
+        SDL_FRect texture = {0};
+        SDL_FPoint center = {0};
+        float halflifefunc = 2000 * pow(0.65, (state_timer/10.0f) / 0.05f);
+        float sineh; double angle;
+
+        sineh = sin(state_timer);
+        texture = (SDL_FRect) {  
+            window_width/2 - 500/2*window_scale_x,
+            halflifefunc*window_scale_y + window_height - 125*window_scale_y - (150/2)*window_scale_y - (sineh*window_scale_y), 
+            500*window_scale_x, 
+            150*window_scale_y,
+        };
+        center = (SDL_FPoint) {texture.w / 2, texture.h / 2};
+        SDL_RenderTextureRotated(renderer, cards.cardtexture[5], NULL, &texture, 0, &center, SDL_FLIP_NONE);
+
     }
+
+
+
 
 
     // CARDS TEXTURES / HITBOXES
