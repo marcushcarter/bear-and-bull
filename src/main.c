@@ -34,6 +34,7 @@ float window_scale_x = 1.0f;
 float window_scale_y = 1.0f;
 bool isFullscreen = false;
 int aspect_ratio;
+float TARGET_FPS = 120.0f;
 
 bool show_hitboxes = true;
 bool show_textures = true;
@@ -54,7 +55,7 @@ int profile;
 #define MAX_CARDS 20
 #define MAX_ZONES 20
 #define TOTAL_CARDS 11
-#define MAX_BUTTONS 20
+#define MAX_BUTTONS 50
 #define MAX_PROFILES 1
 
 // CARDS / ZONES CLASSES ====================================================================================================
@@ -177,14 +178,27 @@ typedef enum ButtonType {
     BUTTON_SETTINGS,
     BUTTON_QUIT,
 
+    // BUTTON_SETTINGS_EXIT,
+    // BUTTON_SETTINGS_FULLSCREEN,
+    // BUTTON_SETTINGS_ASPECT_RATIO,
+    // BUTTON_SETTINGS_ASPECT_PREV,
+    // BUTTON_SETTINGS_ASPECT_NEXT,
+    // BUTTON_SETTINGS_HITBOXES,
+    // BUTTON_SETTINGS_CURSOR,
+
     BUTTON_SETTINGS_EXIT,
     BUTTON_SETTINGS_FULLSCREEN,
-    BUTTON_SETTINGS_ASPECT_RATIO,
     BUTTON_SETTINGS_ASPECT_PREV,
     BUTTON_SETTINGS_ASPECT_NEXT,
+    BUTTON_SETTINGS_ASPECT_RATIO,
+    BUTTON_SETTINGS_SPEED_PREV,
+    BUTTON_SETTINGS_SPEED_NEXT,
     BUTTON_SETTINGS_HITBOXES,
     BUTTON_SETTINGS_CURSOR,
-
+    BUTTON_SETTINGS_FPS_PREV,
+    BUTTON_SETTINGS_FPS_NEXT,
+    BUTTON_SETTINGS_SPEEDRUN,
+    BUTTON_SETTINGS_PARTICLES,
 
 } ButtonType;
 
@@ -232,7 +246,7 @@ typedef enum GameState {
     STATE_SETTINGS,
 } GameState;
 
-int gamestate = STATE_MENU;
+int gamestate = STATE_SETTINGS;
 bool pause = false;
 
 typedef enum AnimTypes {
@@ -999,30 +1013,17 @@ void load_zones() {
     make_zone(&menuzone, ZONE_MENU, "", 1, (WINDOW_WIDTH/2)-((CARD_WIDTH+CARD_SPACING)/2), (WINDOW_HEIGHT/3)-((CARD_HEIGHT+CARD_SPACING)/2), 0, 0);
     // SETTINGS
     make_button(&settingbuttons, BUTTON_SETTINGS_EXIT, "resources/textures/play-button-deck.png", 15, 15, 30, 30);
+    make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_RATIO, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(250/2), CARD_SPACING+(40+CARD_SPACING)*2, 250, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_PREV, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(250/2)-CARD_SPACING-20, CARD_SPACING+(40+CARD_SPACING)*2, 20, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_NEXT, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)+(250/2)+CARD_SPACING, CARD_SPACING+(40+CARD_SPACING)*2, 20, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_FULLSCREEN, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(250/2), CARD_SPACING+(40+CARD_SPACING)*4, 250, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_SPEED_PREV, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-((40)/2)-CARD_SPACING-20, CARD_SPACING+(40+CARD_SPACING)*6, 20, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_SPEED_NEXT, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)+(40/2)+CARD_SPACING, CARD_SPACING+(40+CARD_SPACING)*6, 20, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_HITBOXES, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(250/2), CARD_SPACING+(40+CARD_SPACING)*7, 250, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_CURSOR, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(250/2), CARD_SPACING+(40+CARD_SPACING)*8, 250, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_FPS_PREV, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-((100)/2)-CARD_SPACING-20, CARD_SPACING+(40+CARD_SPACING)*10, 20, 40);
+    make_button(&settingbuttons, BUTTON_SETTINGS_FPS_NEXT, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)+(100/2)+CARD_SPACING, CARD_SPACING+(40+CARD_SPACING)*10, 20, 40);
     
-    // BUTTON_SETTINGS_ASPECT_RATIO,
-    // BUTTON_SETTINGS_ASPECT_PREV,
-    // BUTTON_SETTINGS_ASPECT_NEXT,
-    make_button(&settingbuttons, BUTTON_SETTINGS_FULLSCREEN, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-((300+50+15+50+15)/2), 20+(50+20)*1, (300+25+15+25+15), 50);
-
-    make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_RATIO, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(300/2), 20+(50+20)*2, 300, 50);
-    make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_PREV, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(300/2)+300+15, 20+(50+20)*2, 25, 50);
-    make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_NEXT, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(300/2)-15-50, 20+(50+20)*2, 25, 50);
-
-    make_button(&settingbuttons, BUTTON_SETTINGS_HITBOXES, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-((300+50+15+50+15)/2), 20+(50+20)*3, (300+25+15+25+15), 50);
-    make_button(&settingbuttons, BUTTON_SETTINGS_CURSOR, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-((300+50+15+50+15)/2), 20+(50+20)*4, (300+25+15+25+15), 50);
-    // make_button(&settingbuttons, BUTTON_SETTINGS_HITBOXES, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-((300+50+15+50+15)/2), 20+(50+20)*3, (300+25+15+25+15), 50);
-    // make_button(&settingbuttons, BUTTON_SETTINGS_HITBOXES, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-((300+50+15+50+15)/2), 20+(50+20)*3, (300+25+15+25+15), 50);
-    // make_button(&settingbuttons, BUTTON_SETTINGS_HITBOXES, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-((300+50+15+50+15)/2), 20+(50+20)*3, (300+25+15+25+15), 50);
-
-    // make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_PREV, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(300/2), 20+(50+20)*2, 300, 50);
-    // make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_NEXT, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(300/2), 20+(50+20)*3, 300, 50);
-    // make_button(&settingbuttons, BUTTON_SETTINGS_ASPECT_RATIO, "resources/textures/play-button-minus.png", (WINDOW_WIDTH/2)-(300/2), 20+(50+20)*4, 300, 50);
-    // make_button(&settingbuttons, BUTTON_SETTINGS_FULLSCREEN, "resources/textures/menu-button-new-game.png", (WINDOW_WIDTH/2)-(300/2), 20+(50+20)*0, 300, 50);
-    // make_button(&settingbuttons, BUTTON_SETTINGS_FULLSCREEN, "resources/textures/menu-button-new-game.png", (WINDOW_WIDTH/2)-(300/2), 20+(50+20)*0, 300, 50);
-    // make_button(&settingbuttons, BUTTON_SETTINGS_FULLSCREEN, "resources/textures/menu-button-new-game.png", (WINDOW_WIDTH/2)-(300/2), 20+(50+20)*0, 300, 50);
-    // make_button(&settingbuttons, BUTTON_EXIT_SETTINGS, "resources/textures/play-button-pause.png", 15, 15, 30, 30);
-
 }
 
 void load_cards() {
@@ -1171,18 +1172,6 @@ void dev_tools() {
         custom_cursor = !custom_cursor;
     }
 
-    // 2 - toggle custom cursor
-    // ------------------------
-    if (currKeyState[SDL_SCANCODE_2] && !prevKeyState[SDL_SCANCODE_2]) {
-        // custom_cursor = !custom_cursor;
-    }
-
-    // 3 - increase hand slots
-    // -----------------------
-    if (currKeyState[SDL_SCANCODE_3] && !prevKeyState[SDL_SCANCODE_3]) {
-        // aspect_ratio+=1;
-    }
-
     // 4 - shuffle hand into deck
     // --------------------------
     if (currKeyState[SDL_SCANCODE_4] && !prevKeyState[SDL_SCANCODE_4]) {
@@ -1205,12 +1194,6 @@ void dev_tools() {
     // --------------------------
     if (currKeyState[SDL_SCANCODE_SPACE] && !prevKeyState[SDL_SCANCODE_SPACE]) {
         pause = !pause;
-    }
-
-    // 8 - change game speed
-    // --------------------------
-    if (currKeyState[SDL_SCANCODE_8] && !prevKeyState[SDL_SCANCODE_8]) {
-        aspect_ratio+=1;
     }
 
 }
@@ -1278,13 +1261,17 @@ void update() {
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_STATS) system("start https://ballisticstudios.ca/"); // STATS OR STEAM BUTTON
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_QUIT) start_animation(ANIM_TRANSITION_1, callback_quit_game, NULL, -1, 0, 0, 0, 2 * M_PI); // LOAN BUTTON
 
-        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_EXIT) start_animation(ANIM_TRANSITION_3, callback_change_to_menu_screen, NULL, -1, 0, 0, 0, 2 * M_PI); // PAUSE BUTTON
-        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_FULLSCREEN) { if (!isFullscreen) { SDL_SetWindowFullscreen(window, 1); } else { SDL_SetWindowFullscreen(window, 0); } } // PAUSE BUTTON
-        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_ASPECT_PREV) aspect_ratio -= 1; // PREV ASPECT BUTTON
-        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_ASPECT_NEXT) aspect_ratio += 1; // NEXT ASPECT BUTTON
-        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_ASPECT_RATIO) set_aspect_ratio(); // PAUSE BUTTON
-        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_HITBOXES) show_hitboxes = !show_hitboxes; // HITBOXES BUTTON
-        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_CURSOR) custom_cursor = !custom_cursor; // CURSOR BUTTON
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_EXIT) start_animation(ANIM_TRANSITION_3, callback_change_to_menu_screen, NULL, -1, 0, 0, 0, 2 * M_PI); // EXIT SETTINGS
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_FULLSCREEN) { if (!isFullscreen) { SDL_SetWindowFullscreen(window, 1); } else { SDL_SetWindowFullscreen(window, 0); } } // TOGGLE FULLSCREEN
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_ASPECT_PREV) { if (aspect_ratio > 0) aspect_ratio -= 1; } // PREVIOUS ASPECT RATIO CHOICE
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_ASPECT_NEXT)  { if (aspect_ratio < TOTAL_ASPECTS) aspect_ratio += 1; } // NEXT ASPECT RATIO CHOICE
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_ASPECT_RATIO) set_aspect_ratio(); // APPLY ASPECT RATIO
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_SPEED_PREV) { if (game_speed > 1) game_speed -= 1; } // LOWER THE GAME SPEED
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_SPEED_NEXT) { if (game_speed < 4) game_speed += 1; } // RAISE THE GAME SPEED
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_FPS_PREV) { if (TARGET_FPS > 30) TARGET_FPS -= 30.0f; }
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_FPS_NEXT) { if (TARGET_FPS < 120) TARGET_FPS += 30.0f; }
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_HITBOXES) show_hitboxes = !show_hitboxes; // SHOW HITBOXES 
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_CURSOR) custom_cursor = !custom_cursor; // CUSTOM CURSOR
 
     }
 
@@ -1808,6 +1795,75 @@ void render() {
         // SDL_RenderTextureRotated(renderer, cards.cardtexture[9], NULL, &texture, angle, &center, SDL_FLIP_NONE);
     }
 
+    // OTHER SETTINGS TEXTURES / HITBOXES
+    // ----------------------------------
+    if (gamestate == STATE_SETTINGS && show_textures) {
+        SDL_Color color = {0};
+        SDL_Surface *textSurface = NULL;
+        SDL_Texture *textTexture = {0};
+        SDL_FRect textQuad = {0};
+
+        color = {0, 0, 0, 255};
+
+        // ASPECT RATIO TITLE
+        textSurface = TTF_RenderText_Solid(fontBalatro, "ASPECT RATIO", strlen("ASPECT RATIO"), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textQuad = (SDL_FRect) { ((WINDOW_WIDTH/2)-(textSurface->w/2))*window_scale_x, (CARD_SPACING+5+(40+CARD_SPACING)*1)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+        SDL_DestroyTexture(textTexture);
+        SDL_DestroySurface(textSurface);
+
+        // CURRENT ASPECT RATIO
+        textSurface = TTF_RenderText_Solid(fontBalatro, stringf("currently %d:%d", WIDTH_RATIO, HEIGHT_RATIO), strlen(stringf("currently %d:%d", WIDTH_RATIO, HEIGHT_RATIO)), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textQuad = (SDL_FRect) { ((WINDOW_WIDTH/2)-(textSurface->w/2))*window_scale_x, (CARD_SPACING+5+(40+CARD_SPACING)*3)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+        SDL_DestroyTexture(textTexture);
+        SDL_DestroySurface(textSurface);
+
+        // GAME SPEED TITLE
+        textSurface = TTF_RenderText_Solid(fontBalatro, "GAME SPEED", strlen("GAME SPEED"), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textQuad = (SDL_FRect) { ((WINDOW_WIDTH/2)-(textSurface->w/2))*window_scale_x, (CARD_SPACING+5+(40+CARD_SPACING)*5)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+        SDL_DestroyTexture(textTexture);
+        SDL_DestroySurface(textSurface);
+
+        // GAME SPEED SELECTION
+        textSurface = TTF_RenderText_Solid(fontBalatro, stringf("%d", (int)game_speed), strlen(stringf("%d", (int)game_speed)), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textQuad = (SDL_FRect) { ((WINDOW_WIDTH/2)-(textSurface->w/2))*window_scale_x, (CARD_SPACING+5+(40+CARD_SPACING)*6)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+        SDL_DestroyTexture(textTexture);
+        SDL_DestroySurface(textSurface);
+
+        // FRAMERATE TITLE
+        textSurface = TTF_RenderText_Solid(fontBalatro, "FRAMERATE", strlen("FRAMERATE"), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textQuad = (SDL_FRect) { ((WINDOW_WIDTH/2)-(textSurface->w/2))*window_scale_x, (CARD_SPACING+5+(40+CARD_SPACING)*9)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+        SDL_DestroyTexture(textTexture);
+        SDL_DestroySurface(textSurface);
+
+        // CURRENT FRAMERATE
+        textSurface = TTF_RenderText_Solid(fontBalatro, stringf("%.0f FPS", TARGET_FPS), strlen(stringf("%.0f FPS", TARGET_FPS)), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textQuad = (SDL_FRect) { ((WINDOW_WIDTH/2)-(textSurface->w/2))*window_scale_x, (CARD_SPACING+5+(40+CARD_SPACING)*10)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+        SDL_DestroyTexture(textTexture);
+        SDL_DestroySurface(textSurface);
+
+        // SDL_Color color = {0, 0, 0, 255};
+        // SDL_Surface *textSurface = TTF_RenderText_Solid(fontBalatro, version, strlen(version), color);
+        // SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        // SDL_FRect textQuad = { 15*window_scale_x, (WINDOW_HEIGHT-15-textSurface->h)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+        // SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+        // SDL_DestroyTexture(textTexture);
+        // SDL_DestroySurface(textSurface);
+
+    }
+
+
     // CARDS TEXTURES / HITBOXES
     // --------------------------------
     for (int i = 0; i < MAX_CARDS; i++) {
@@ -1965,7 +2021,7 @@ int main() {
 
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();
-    window = SDL_CreateWindow("Bear & Bull", (int)(WINDOW_WIDTH/1.5), (int)(WINDOW_HEIGHT/1.5), SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+    window = SDL_CreateWindow("Bear & Bull", (int)(WINDOW_WIDTH), (int)(WINDOW_HEIGHT), SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -1991,7 +2047,7 @@ int main() {
         debug();
 
         SDL_memcpy(prevKeyState, currKeyState, NUM_KEYS);
-        control_fps(120.0f);
+        control_fps(TARGET_FPS);
     }
 
     sleep(0.5);
