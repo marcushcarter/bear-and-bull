@@ -1838,7 +1838,7 @@ int main() {
 
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();
-    window = SDL_CreateWindow("Stockmarket Deckbuilder Roguelike", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("Bear & Bull", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);

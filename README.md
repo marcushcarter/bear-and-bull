@@ -1,3 +1,5 @@
+# Bear & Bull (v0.1.11)
+
 ## Update Log
 
 - *2025-05-04* started brainstorming, worked on moving cards around
@@ -10,7 +12,7 @@
 - *2025-05-11* switched game idea, seperated window scale to x/y, changed make_zone function, gave up on opengl, draw_card_id func, delete delay, render func rewrite, thunk up the new game idea, brainstorm gameloop
 - *2025-05-12* money to draw cards, sell cards for money (and then took it out), redid all of the drawing / moving card func, set limits on where certainc ards can be put, changed some cards' data
 - *2025-05-16* added gamestates, pauses, main menu and some other stuff
-- *2025-05-17* button hover, new textures, cleaned up, redid render and update funcs again for gamestates, nimations classes with callbacks
+- *2025-05-17* button hover, new textures, cleaned up, redid render and update funcs again for gamestates, nimations classes with callbacks, decided on a name
 
 ### NEW idea
 
