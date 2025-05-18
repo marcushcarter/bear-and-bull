@@ -1465,6 +1465,7 @@ void render_headline() {
     SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
     SDL_FRect textQuad = { (600-textSurface->w/2)*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-15-50+12)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
     SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+    SDL_DestroyTexture(textTexture);
     SDL_DestroySurface(textSurface);
 }
 
@@ -1601,12 +1602,14 @@ void render() {
         SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
         SDL_FRect textQuad = { CARD_MARGIN*window_scale_x, (WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN-12)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
         SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+        SDL_DestroyTexture(textTexture);
         SDL_DestroySurface(textSurface);
 
         textSurface = TTF_RenderText_Solid(fontBalatro, "Round #", strlen("Round #"), color);
         textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
         SDL_FRect textQuad2 = { 15*window_scale_x, (CARD_MARGIN+65+10)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
         SDL_RenderTexture(renderer, textTexture, NULL, &textQuad2);
+        SDL_DestroyTexture(textTexture);
         SDL_DestroySurface(textSurface);
 
         
@@ -1614,6 +1617,7 @@ void render() {
         textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
         SDL_FRect textQuad3 = { 15*window_scale_x, (CARD_MARGIN+10)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
         SDL_RenderTexture(renderer, textTexture, NULL, &textQuad3);
+        SDL_DestroyTexture(textTexture);
         SDL_DestroySurface(textSurface);
 
 
@@ -1636,6 +1640,7 @@ void render() {
         SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
         SDL_FRect textQuad = { 15*window_scale_x, (WINDOW_HEIGHT-15-textSurface->h)*window_scale_y, (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
         SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+        SDL_DestroyTexture(textTexture);
         SDL_DestroySurface(textSurface);
 
         SDL_FRect texture = {0};
