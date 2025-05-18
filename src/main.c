@@ -27,7 +27,7 @@ int window_width, window_height;
 float window_scale_x = 1.0f;
 float window_scale_y = 1.0f;
 
-char version[256] = "demo v0.1.10";
+char version[256] = "demo v0.1.11";
 
 int seed;
 float game_speed = 2;
@@ -56,7 +56,9 @@ bool custom_cursor = false;
 #define MAX_BUTTONS 20
 #define MAX_PROFILES 1
 
-// CARDS / ZONESCLASSES ====================================================================================================
+#define DEG_TO_RAD(x) ((x) * (M_PI / 180.0f))
+
+// CARDS / ZONES CLASSES ====================================================================================================
 
 typedef struct ProfileInfo {
     int ID[MAX_PROFILES]; // profile number
@@ -213,6 +215,8 @@ typedef struct StonkData {
 
 // SCREEN CLASSES ====================================================================================================
 
+#define MAX_ANIMATIONS 20
+
 typedef enum GameState {
     STATE_PLAY,
     STATE_MENU,
@@ -221,9 +225,32 @@ typedef enum GameState {
 int gamestate = STATE_MENU;
 bool pause = false;
 
+typedef enum AnimTypes {
+    ANIM_TRANSITION_1,
+    ANIM_TRANSITION_2,
+    ANIM_TRANSITION_3
+} AnimTypes;
+
+typedef struct Animation {
+    int ID[MAX_ANIMATIONS];
+    int targetState[MAX_ANIMATIONS];
+
+    void (*atMidpoint[MAX_ANIMATIONS])(void); // callback
+    void (*onComplete[MAX_ANIMATIONS])(void); // callback
+
+    float x[MAX_ANIMATIONS];
+    float y[MAX_ANIMATIONS];
+    float value[MAX_ANIMATIONS];
+
+    float runtime[MAX_ANIMATIONS];
+    float maxtime[MAX_ANIMATIONS];
+
+    bool isActive[MAX_ANIMATIONS];
+} Animation; Animation anim;
+
 // COMMON FUNCTIONS ====================================================================================================
 
-bool point_box_collision(float px, float py, float bx, float by, float bw, float bh) { return (px >= bx && px <= bx + bw && py >= by && py <= by + bh); }
+#define point_box_collision(px, py, bx, by, bw, bh) (px >= bx && px <= bx + bw && py >= by && py <= by + bh)
 
 float* floatarr(int num, ...) {
 	va_list args;
@@ -736,6 +763,64 @@ void sell_card(int inplayIndex) {
     return;
 }
 
+// ANIMATION FUNCTIONS ====================================================================================================
+
+void start_animation(int id, void (*at_midpoint)(void), void (*on_complete)(void), int targetstate, float x, float y, float value, float seconds) {
+
+    for (int i = 0; i < MAX_ANIMATIONS; i++) { // duplicate transitions
+        if (anim.ID[i] == ANIM_TRANSITION_1 && anim.isActive[i] && id == ANIM_TRANSITION_1) return;
+        if (anim.ID[i] == ANIM_TRANSITION_2 && anim.isActive[i] && id == ANIM_TRANSITION_2) return;
+        if (anim.ID[i] == ANIM_TRANSITION_3 && anim.isActive[i] && id == ANIM_TRANSITION_3) return;
+    }
+
+    int index = -1;
+    for (int i = 0; i < MAX_ANIMATIONS; i++) {
+        if (!anim.isActive[i]) {
+            index = i;
+            break;
+        }
+    }
+    if (index == -1) return;
+
+    anim.ID[index] = id;
+    anim.targetState[index] = targetstate;
+
+    anim.atMidpoint[index] = at_midpoint;
+    anim.onComplete[index] = on_complete;
+    
+    anim.x[index] = x;
+    anim.y[index] = y;
+    anim.value[index] = value;
+
+    anim.runtime[index] = 0;
+    anim.maxtime[index] = seconds;
+
+    anim.isActive[index] = true;
+
+    return;
+}
+
+void end_animation(int index) {
+
+    anim.ID[index] = -1;
+    anim.targetState[index] = -1;
+
+    anim.onComplete[index] = NULL;
+    anim.atMidpoint[index] = NULL;
+    
+    anim.x[index] = 0;
+    anim.y[index] = 0;
+    anim.value[index] = 0;
+
+    anim.runtime[index] = 0;
+    anim.maxtime[index] = 0;
+
+    anim.isActive[index] = false;
+}
+
+void callback_change_to_play_screen() { gamestate = STATE_PLAY; }
+void callback_change_to_menu_screen() { gamestate = STATE_MENU; }
+
 // STOCK FUNCTIONS ====================================================================================================
 
 void reset_stock() {
@@ -1020,8 +1105,7 @@ void dev_tools() {
     // 3 - increase hand slots
     // -----------------------
     if (currKeyState[SDL_SCANCODE_3] && !prevKeyState[SDL_SCANCODE_3]) {
-        profileinfo.handslots[profile] += 1;
-        if (profileinfo.handslots[profile] > 7) profileinfo.handslots[profile] = 7;
+        // start_animation(ANIM_TRANSITION, -1, 0, 0, 2 * M_PI);
     }
 
     // 4 - shuffle hand into deck
@@ -1064,8 +1148,10 @@ void update() {
 
     // Draws an event card once every 15 seconds
     // ------------------------------------
-    if (gamestate == STATE_PLAY) event_timer += dt;
-    if ((int)event_timer/10 % 100 == 99) { event_card((rand() % TOTAL_CARDS-1) + 1); }
+    if (gamestate == STATE_PLAY) {
+        event_timer += dt;
+        if ((int)event_timer/10 % 100 == 99) { event_card((rand() % TOTAL_CARDS-1) + 1); }
+    }
 
     // CARD UPDATES
     // ------------
@@ -1214,13 +1300,35 @@ void update() {
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN) loan_card(); // LOAN BUTTON
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_BUY_STOCK) profileinfo.money[profile] += 50; // MINUS STOCK BUTTON
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_SELL_STOCK) profileinfo.handslots[profile] += 1; // PLUSS STOCK BUTTON
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_PAUSE) gamestate = STATE_MENU; // PAUSE BUTTON
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_PAUSE) start_animation(ANIM_TRANSITION_2, callback_change_to_menu_screen, NULL, -1, 0, 0, 0, 2 * M_PI);; // PAUSE BUTTON
 
-        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_NEW_GAME) gamestate = STATE_PLAY; // NEW GAME BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_NEW_GAME) start_animation(ANIM_TRANSITION_1, callback_change_to_play_screen, NULL, -1, 0, 0, 0, 2 * M_PI); // NEW GAME BUTTON
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_SETTINGS) ; // SETTINGS / OPTIONS BUTTON
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_STATS) system("start https://ballisticstudios.ca/"); // STATS OR STEAM BUTTON
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_QUIT) running = false; // LOAN BUTTON
 
+    }
+
+    // ANIMATIONS
+    // ----------
+    for (int i = 0; i < MAX_ANIMATIONS; i++) {
+        if (!anim.isActive[i]) continue;
+
+        if (anim.runtime[i] > anim.maxtime[i]) { 
+            if (anim.onComplete[i]) anim.onComplete[i]();
+            anim.onComplete[i] = NULL;
+            end_animation(i);
+            if (anim.targetState[i] != -1) gamestate = anim.targetState[i];
+        }
+
+        if (anim.runtime[i] > anim.maxtime[i]/2) {
+            if (anim.atMidpoint[i]) anim.atMidpoint[i]();
+            anim.atMidpoint[i] = NULL;
+        }
+
+        anim.runtime[i] += dt;
+
+        // if (anim.ID[i] == ANIM_TRANSITION &&)
     }
 
     // CHARTS STOCK SIMULATION
@@ -1679,6 +1787,30 @@ void render() {
         }
     }
 
+    // ANIMATIONS
+    // ----------
+    for (int i = 0; i < MAX_ANIMATIONS; i++ ) {
+        if (!anim.isActive[i] || !show_textures) continue;
+
+        if (anim.ID[i] == ANIM_TRANSITION_1) {
+            float cosine = (WINDOW_WIDTH+40)/4 * -cosf(anim.runtime[i]) + (WINDOW_WIDTH+40)/4;
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_FRect rect1 = { cosine*window_scale_x, 0, (WINDOW_WIDTH+40)/-2*window_scale_x, WINDOW_HEIGHT*window_scale_y};
+            SDL_FRect rect2 = { (WINDOW_WIDTH-cosine)*window_scale_x, 0, (WINDOW_WIDTH+40)/2*window_scale_x, WINDOW_HEIGHT*window_scale_y};
+            SDL_RenderFillRect(renderer, &rect1);
+            SDL_RenderFillRect(renderer, &rect2);
+        }
+
+        if (anim.ID[i] == ANIM_TRANSITION_2) {
+            float cosine = (WINDOW_WIDTH+40)/2 * -cosf(anim.runtime[i]) + (WINDOW_WIDTH+40)/2;
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_FRect rect = { cosine*window_scale_x, 0, -(WINDOW_WIDTH+40)*window_scale_x, WINDOW_HEIGHT*window_scale_y};
+            SDL_RenderFillRect(renderer, &rect);
+        }
+
+        if (anim.ID[i] == ANIM_TRANSITION_3) {}
+
+    }
 
     // CURSOR TEXTURES / HITBOX
     // ------------------------
