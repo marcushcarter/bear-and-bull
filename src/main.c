@@ -40,8 +40,8 @@ bool show_hitboxes = true;
 bool show_textures = true;
 bool custom_cursor = false;
 
-#define WINDOW_WIDTH 1200
-#define WINDOW_HEIGHT 800
+float WINDOW_WIDTH = 1440.0f;
+float WINDOW_HEIGHT = 800.0f;
 
 #define LERP_SPEED 0.25
 #define CARD_HEIGHT 160
@@ -245,6 +245,34 @@ typedef struct Animation {
 
     bool isActive[MAX_ANIMATIONS];
 } Animation; Animation anim;
+
+typedef enum AspectRatio {
+    AR_1920x1280,
+    AR_1920x1080,
+    AR_1920x1440,
+    AR_1920x1200,
+    AR_4x4,
+    AR_5x5,
+    AR_6x6,
+    AR_7x7,
+
+    AR_3_2,
+    AR_16_9,
+    AR_4_3,
+    AR_16_10,
+
+} AspectRatio;
+
+int aspect_ratio = AR_1920x1280;
+
+void adjust_aspect_ratio() {
+    // scaled down by 10/16 and then subrtract 75 from the height
+
+    if (aspect_ratio == AR_1920x1280 || aspect_ratio == AR_3_2) { WINDOW_WIDTH = 1325.0f; WINDOW_HEIGHT = 800.0f; } // PERFECT
+    if (aspect_ratio == AR_1920x1080 || aspect_ratio == AR_16_9) { WINDOW_WIDTH = 1600.0f; WINDOW_HEIGHT = 800.0f; } // PERFECT
+    if (aspect_ratio == AR_1920x1440 || aspect_ratio == AR_4_3) { WINDOW_WIDTH = 1163.0f; WINDOW_HEIGHT = 800.0f; } // PERFECT
+    if (aspect_ratio == AR_1920x1200 || aspect_ratio == AR_16_10) { WINDOW_WIDTH = 1422.0f; WINDOW_HEIGHT = 800.0f; } // PERFECT
+}
 
 // COMMON FUNCTIONS ====================================================================================================
 
@@ -905,10 +933,13 @@ void make_button(Buttons *button, ButtonType type, const char* buttonpath, int x
 }
 
 void update_window() {
+
+    adjust_aspect_ratio();
+
     // get window sizes and set window scaling x/y coefficients
     SDL_GetWindowSize(window, &window_width, &window_height);
-    window_scale_x = window_width / 1200.0f;  
-    window_scale_y = window_height / 800.0f;
+    window_scale_x = window_width / WINDOW_WIDTH;  
+    window_scale_y = window_height / WINDOW_HEIGHT;
 
     // original prototype
     // make_zone(ZONE_SELL, "", 1, (WINDOW_WIDTH-CARD_MARGIN-CARD_WIDTH-CARD_SPACING), CARD_MARGIN, 0, 0);
@@ -1104,7 +1135,7 @@ void dev_tools() {
     // 3 - increase hand slots
     // -----------------------
     if (currKeyState[SDL_SCANCODE_3] && !prevKeyState[SDL_SCANCODE_3]) {
-        // start_animation(ANIM_TRANSITION, -1, 0, 0, 2 * M_PI);
+        aspect_ratio+=1;
     }
 
     // 4 - shuffle hand into deck
@@ -1838,10 +1869,11 @@ void render() {
 // MAIN FUNCTION ====================================================================================================
 
 int main() {
+    adjust_aspect_ratio();
 
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();
-    window = SDL_CreateWindow("Bear & Bull", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("Bear & Bull", (int)(WINDOW_WIDTH/1.5), (int)(WINDOW_HEIGHT/1.5), SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
