@@ -161,6 +161,7 @@ typedef enum ZoneType {
 } ZoneType;
 
 bool cardsunlocked[TOTAL_CARDS] = {0};
+void reset_unlocked_cards() { for (int i = 0; i < TOTAL_CARDS; i++) cardsunlocked[i] = 0; }
 
 typedef struct CardID{
     SDL_Texture* cardtexture[TOTAL_CARDS];
@@ -503,6 +504,9 @@ void add_to_deck(int id, int rarity) {
     // ACTIVATE NEW CARD WITH ID AT THAT INDEX
     // ---------------------------------------
     
+    cardsunlocked[id] = true;
+    // animation
+    
     indeck.ID[index] = id;
 
     indeck.x[index] = 0;
@@ -668,6 +672,9 @@ void hand_to_deck(int inplayIndex) {
 
     // COPY CARD AT ID FROM HAND TO DECK
     // ---------------------------------
+    
+    cardsunlocked[inplay.ID[inplayIndex]] = true;
+    // animation
 
     indeck.ID[indeckIndex] = inplay.ID[inplayIndex];
 
@@ -1294,16 +1301,17 @@ void setup() {
     // seed = 0;
     srand(seed);
 
-    load_cards();
-    load_zones();
-    make_rarity_table(67, 20, 9, 3, 1);
-
     const Uint8* sdlKeys = (Uint8*)SDL_GetKeyboardState(NULL);
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
 
+    make_rarity_table(67, 20, 9, 3, 1);
+    reset_unlocked_cards();
+
     // SETUP CARDS, BUTTONS AND ZONES
     // ---------------------
+    load_cards();
+    load_zones();
     for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&inplay); }
     for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&indeck); }
     for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&indraft); }
@@ -1316,8 +1324,8 @@ void setup() {
 
     // ADD CARDS TO DECK
     // ---------------------
-    for (int i = 0; i < 54; i++) { add_to_deck(rand() % TOTAL_CARDS, random_rarity()); }
     menu_card(rand() % TOTAL_CARDS, random_rarity());
+    // for (int i = 0; i < 54; i++) { add_to_deck(rand() % TOTAL_CARDS, random_rarity()); }
 
     // INITIALIZE PROFILE INFO
     // -----------------------
@@ -1330,10 +1338,6 @@ void setup() {
     profileinfo.extraprice[profile] = 7;
     profileinfo.extrainflation[profile] = 2;
     profileinfo.extracount[profile] = 0;
-
-    for (int i = 0; i < TOTAL_CARDS; i++) {
-        cardsunlocked[i] = rand() % 2;
-    }
 
 }
 
