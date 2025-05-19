@@ -60,7 +60,10 @@ int profile;
 #define MAX_BUTTONS 50
 #define MAX_PROFILES 1
 
-// CARDS / ZONES CLASSES ====================================================================================================
+// STAT CLASSES ====================================================================================================
+
+typedef struct GameStats {} GameStats; GameStats gamestats;
+typedef struct RoundStats {} RoundStats; RoundStats roundstats;
 
 typedef struct ProfileInfo {
     int ID[MAX_PROFILES]; // profile number
@@ -89,6 +92,8 @@ typedef struct ProfileInfo {
 } ProfileInfo;
 
 ProfileInfo profileinfo;
+
+// CARDS / ZONES CLASSES ====================================================================================================
 
 typedef struct Cards {
     int ID[MAX_CARDS];
@@ -931,13 +936,14 @@ void end_animation(int index) {
 void callback_change_to_play_screen() { gamestate = STATE_PLAY; state_timer = 0; }
 void callback_change_to_menu_screen() { gamestate = STATE_MENU; state_timer = 0; }
 void callback_change_to_settings_screen() { gamestate = STATE_SETTINGS; state_timer = 0; }
-void callback_change_to_deck_screen() { gamestate = STATE_DECK; state_timer = 0; shuffle_hand(); }
+void callback_change_to_deck_screen() { shuffle_hand(); gamestate = STATE_DECK; state_timer = 0; }
 void callback_change_to_collection_screen() { gamestate = STATE_COLLECTION; state_timer = 0; }
 
 void callback_change_to_draft_screen() { gamestate = STATE_DRAFT; state_timer = 0; clear_draft(); }
 void callback_random_draft_cards() { for (int i = 0; i < 3; i++) { draft_card(rand() % TOTAL_CARDS); } }
 void callback_select_draft_card() { 
-    gamestate = STATE_PLAY; 
+    shuffle_hand();
+    gamestate = STATE_DECK; 
     state_timer = 0; 
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!indraft.isActive[i]) continue;
@@ -952,6 +958,10 @@ void callback_quit_game() { running = false; }
 void callback_start_new_run() {}
 
 // ROUND FUNCTIONS ====================================================================================================
+
+void new_run() {
+    // 
+}
 
 void new_round() {
     // inc round num
@@ -1243,15 +1253,17 @@ void dev_tools() {
 
     // 4 - shuffle hand into deck
     // --------------------------
-    if (currKeyState[SDL_SCANCODE_4] && !prevKeyState[SDL_SCANCODE_4]) {}
+    if (currKeyState[SDL_SCANCODE_4] && !prevKeyState[SDL_SCANCODE_4]) {
+        shuffle_hand();
+    }
 
     // 5 - spawn event card
     // --------------------
-    if (currKeyState[SDL_SCANCODE_5] && !prevKeyState[SDL_SCANCODE_5]) { gamestate = STATE_SETTINGS; }
+    if (currKeyState[SDL_SCANCODE_5] && !prevKeyState[SDL_SCANCODE_5]) { gamestate = STATE_DECK; }
 
     // 6 - draw card id to hand
     // --------------------------
-    if (currKeyState[SDL_SCANCODE_6] && !prevKeyState[SDL_SCANCODE_6]) {}
+    if (currKeyState[SDL_SCANCODE_6] && !prevKeyState[SDL_SCANCODE_6]) { gamestate = STATE_PLAY; }
 
     // 7 - menu / unmenu
     // --------------------------
@@ -1265,11 +1277,15 @@ void update() {
     
     load_zones();
     if (!(gamestate == STATE_DECK && pause)) state_timer += dt; 
+    // if (gamestate == STATE_DECK && pause || !tic)
 
-    if (gamestate == STATE_DECK && state_timer*5 > (CARD_SPACING + (floor((indeck.num/9)) - 0.25 - 4) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
+    if (gamestate == STATE_DECK && state_timer*5 > (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
         // start_animation(ANIM_TRANSITION_1, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, 2 * M_PI);
-        start_animation(ANIM_TRANSITION_1, callback_change_to_play_screen, NULL, -1, 0, 0, 0, 2 * M_PI);
+        // start_animation(ANIM_TRANSITION_1, callback_change_to_play_screen, NULL, -1, 0, 0, 0, 2 * M_PI);
+        state_timer = (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))/5;
 
+    if (gamestate == STATE_DECK && currKeyState[SDL_SCANCODE_W] && state_timer > 0) {state_timer -= 50*dt; } 
+    if (gamestate == STATE_DECK && currKeyState[SDL_SCANCODE_S] && state_timer*5 < (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))) {state_timer += 50*dt; }
     
     if (gamestate == STATE_COLLECTION && state_timer*5 > (CARD_SPACING + (floor((TOTAL_CARDS/9)) - 0.25 - 4) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
         // start_animation(ANIM_TRANSITION_1, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, 2 * M_PI);
@@ -1351,7 +1367,7 @@ void update() {
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN && !pause) loan_card(); // LOAN BUTTON
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_BUY_STOCK && !pause) profileinfo.money[profile] += 50; // MINUS STOCK BUTTON
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_SELL_STOCK && !pause) profileinfo.handslots[profile] += 1; // PLUSS STOCK BUTTON
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_PAUSE) start_animation(ANIM_TRANSITION_3, callback_change_to_draft_screen, NULL, -1, 0, 0, 0, 2 * M_PI); // PAUSE BUTTON
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_PAUSE) start_animation(ANIM_TRANSITION_3, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, 2 * M_PI); // PAUSE BUTTON
 
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_NEW_GAME) start_animation(ANIM_TRANSITION_1, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, 2 * M_PI); // NEW GAME BUTTON
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_SETTINGS) start_animation(ANIM_TRANSITION_1, callback_change_to_settings_screen, NULL, -1, 0, 0, 0, 2 * M_PI); // SETTINGS / OPTIONS BUTTON
