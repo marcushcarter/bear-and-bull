@@ -1,4 +1,4 @@
-# Bear & Bull (v0.1.14)
+# Bear & Bull (v0.1.15)
 
 ## Update Log
 
@@ -14,6 +14,7 @@
 - *2025-05-16* added gamestates, pauses, main menu and some other stuff
 - *2025-05-17* button hover, new textures, cleaned up, redid render and update funcs again for gamestates, nimations classes with callbacks, decided on a name
 - *2025-05-18* some formatting, settings page, asspect ratio fixing, added card present anim, added draft state, added deck state, collection state,
+- *2025-05-29* rarities, issellable and rarity overlays, random rarity level table
 
 ### NEW idea
 
