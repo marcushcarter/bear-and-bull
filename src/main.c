@@ -254,7 +254,6 @@ typedef enum CardRarity {
     RARITY_TOTAL,
 } CardRarity;
 
-
 // #define MAX_RARITY_ENTRIES 1000
 
 int card_rarity_table[1000];
@@ -303,7 +302,7 @@ typedef enum GameState {
     STATE_COLLECTION,
 } GameState;
 
-int gamestate = STATE_PLAY;
+int gamestate = STATE_MENU;
 bool pause = false;
 
 typedef enum AnimTypes {
@@ -1235,7 +1234,7 @@ bool load_textures() {
     }
     texture_cardlock = IMG_LoadTexture(renderer, "resources/textures/card-lock.png");
     SDL_SetTextureScaleMode(texture_cardlock, SDL_SCALEMODE_NEAREST);
-    texture_event = IMG_LoadTexture(renderer, "resources/textures/card-lock.png");
+    texture_event = IMG_LoadTexture(renderer, "resources/textures/card-event.png");
     SDL_SetTextureScaleMode(texture_event, SDL_SCALEMODE_NEAREST);
     
     // DIM OVERLAYS
@@ -1292,7 +1291,7 @@ bool load_textures() {
 void setup() {
     
     seed = time(NULL);
-    seed = 0;
+    // seed = 0;
     srand(seed);
 
     load_cards();
@@ -1318,7 +1317,6 @@ void setup() {
     // ADD CARDS TO DECK
     // ---------------------
     for (int i = 0; i < 54; i++) { add_to_deck(rand() % TOTAL_CARDS, random_rarity()); }
-
     menu_card(rand() % TOTAL_CARDS, random_rarity());
 
     // INITIALIZE PROFILE INFO
@@ -1859,7 +1857,7 @@ void render() {
 
                 sineh = 5 *  sin(2 * state_timer);
                 angle = 2.5f * sin(state_timer);
-                if (!cardsunlocked[i]) { sineh /= 2.0f; angle *= 8.0f; }
+                if (!cardsunlocked[i]) { sineh /= 2.0f; angle /= 2.0f; }
 
                 float xpos = CARD_SPACING*2 + (CARD_WIDTH+CARD_SPACING) * (i % 9);
                 float ypos = CARD_SPACING + (floor((i/9)) + 0.1) * (CARD_HEIGHT+CARD_SPACING) - state_timer*5;
@@ -1878,7 +1876,6 @@ void render() {
                     SDL_RenderTextureRotated(renderer, texture_dim1, NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
 
                     int width = 100, height = 100;
-
                     cardtexture = (SDL_FRect) {
                         (window_width/2) + (xpos - 1190/2 + CARD_WIDTH/2 - width/2) * window_scale_x,
                         (ypos + CARD_HEIGHT/2 - height/2) * window_scale_y,
@@ -1886,7 +1883,6 @@ void render() {
                         height*window_scale_y
                     };
                     center = (SDL_FPoint) {cardtexture.w / 2, cardtexture.h / 2};
-
                     SDL_RenderTextureRotated(renderer, texture_cardlock, NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
 
                 }
