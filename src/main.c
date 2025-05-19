@@ -10,6 +10,7 @@
 #include <string.h>
 #include <math.h>
 
+char title[256] = "bear and bull";
 char version[256] = "demo v0.1.14";
 
 SDL_Window* window;
@@ -254,17 +255,20 @@ typedef enum GameState {
     STATE_SETTINGS,
     STATE_DRAFT,
     STATE_DECK,
+    STATE_COLLECTION,
 } GameState;
 
 int gamestate = STATE_MENU;
 bool pause = false;
 
 typedef enum AnimTypes {
+    ANIM_BLANK,
+
     ANIM_TRANSITION_1, // slide from both sides
     ANIM_TRANSITION_2, // slide from left
     ANIM_TRANSITION_3, // slide from top
 
-    ANIM_PRESENT_CARD,
+    ANIM_PRESENT_CARD, // card spins up from bottom
 
     ANIM_DRAFT_PHASE,
     ANIM_TRADE_PHASE,
@@ -928,11 +932,12 @@ void callback_change_to_play_screen() { gamestate = STATE_PLAY; state_timer = 0;
 void callback_change_to_menu_screen() { gamestate = STATE_MENU; state_timer = 0; }
 void callback_change_to_settings_screen() { gamestate = STATE_SETTINGS; state_timer = 0; }
 void callback_change_to_deck_screen() { gamestate = STATE_DECK; state_timer = 0; shuffle_hand(); }
+void callback_change_to_collection_screen() { gamestate = STATE_COLLECTION; state_timer = 0; }
 
 void callback_change_to_draft_screen() { gamestate = STATE_DRAFT; state_timer = 0; clear_draft(); }
 void callback_random_draft_cards() { for (int i = 0; i < 3; i++) { draft_card(rand() % TOTAL_CARDS); } }
 void callback_select_draft_card() { 
-    gamestate = STATE_DECK; 
+    gamestate = STATE_PLAY; 
     state_timer = 0; 
     for (int i = 0; i < MAX_CARDS; i++) {
         if (!indraft.isActive[i]) continue;
@@ -946,7 +951,14 @@ void callback_select_draft_card() {
 void callback_quit_game() { running = false; }
 void callback_start_new_run() {}
 
-// STOCK FUNCTIONS ====================================================================================================
+// ROUND FUNCTIONS ====================================================================================================
+
+void new_round() {
+    // inc round num
+    // reset stock
+    // shuffle deck
+    // 
+}
 
 void reset_stock() {
     
@@ -1184,11 +1196,7 @@ void setup() {
     for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&inplay); }
     for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&indeck); }
     for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&indraft); }
-    for (int i = 0; i < MAX_ZONES; i++) {
-        playzones.isActive[i] = false;
-        playzones.num_cards[i] = 0;
-        playzones.max_cards[i] = 0;
-    }
+    for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&infeature); }
     for (int i = 0; i < MAX_BUTTONS; i++) {
         gamebuttons.isActive[i] = false;
         gamebuttons.isPressed[i] = false;
@@ -1198,6 +1206,8 @@ void setup() {
     // ADD CARDS TO DECK
     // ---------------------
     for (int i = 0; i < 54; i++) { add_to_deck(rand() % TOTAL_CARDS); }
+
+    menu_card(rand() % TOTAL_CARDS);
 
     // INITIALIZE PROFILE INFO
     // -----------------------
@@ -1210,11 +1220,6 @@ void setup() {
     profileinfo.extraprice[profile] = 7;
     profileinfo.extrainflation[profile] = 2;
     profileinfo.extracount[profile] = 0;
-
-    reset_stock();
-    update_stonk();
-
-    menu_card(rand() % TOTAL_CARDS);
 
 }
 
@@ -1264,6 +1269,11 @@ void update() {
     if (gamestate == STATE_DECK && state_timer*5 > (CARD_SPACING + (floor((indeck.num/9)) - 0.25 - 4) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
         // start_animation(ANIM_TRANSITION_1, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, 2 * M_PI);
         start_animation(ANIM_TRANSITION_1, callback_change_to_play_screen, NULL, -1, 0, 0, 0, 2 * M_PI);
+
+    
+    if (gamestate == STATE_COLLECTION && state_timer*5 > (CARD_SPACING + (floor((TOTAL_CARDS/9)) - 0.25 - 4) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
+        // start_animation(ANIM_TRANSITION_1, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, 2 * M_PI);
+        start_animation(ANIM_TRANSITION_1, callback_change_to_menu_screen, NULL, -1, 0, 0, 0, 2 * M_PI);
 
     // Draws an event card once every 10 seconds
     if (gamestate == STATE_PLAY && !pause) 
@@ -1341,11 +1351,11 @@ void update() {
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN && !pause) loan_card(); // LOAN BUTTON
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_BUY_STOCK && !pause) profileinfo.money[profile] += 50; // MINUS STOCK BUTTON
         if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_SELL_STOCK && !pause) profileinfo.handslots[profile] += 1; // PLUSS STOCK BUTTON
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_PAUSE) start_animation(ANIM_TRANSITION_3, callback_change_to_deck_screen, NULL, -1, 0, 0, 0, 2 * M_PI); // PAUSE BUTTON
+        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_PAUSE) start_animation(ANIM_TRANSITION_3, callback_change_to_draft_screen, NULL, -1, 0, 0, 0, 2 * M_PI); // PAUSE BUTTON
 
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_NEW_GAME) start_animation(ANIM_TRANSITION_1, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, 2 * M_PI); // NEW GAME BUTTON
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_SETTINGS) start_animation(ANIM_TRANSITION_1, callback_change_to_settings_screen, NULL, -1, 0, 0, 0, 2 * M_PI); // SETTINGS / OPTIONS BUTTON
-        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_STATS) system("start https://ballisticstudios.ca/"); // STATS OR STEAM BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_STATS) start_animation(ANIM_TRANSITION_1, callback_change_to_collection_screen, NULL, -1, 0, 0, 0, 2 * M_PI); // STATS OR STEAM BUTTON
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_QUIT) start_animation(ANIM_TRANSITION_1, callback_quit_game, NULL, -1, 0, 0, 0, 2 * M_PI); // QUIT BUTTON
 
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_EXIT) start_animation(ANIM_TRANSITION_3, callback_change_to_menu_screen, NULL, -1, 0, 0, 0, 2 * M_PI); // EXIT SETTINGS
@@ -1726,8 +1736,11 @@ void render() {
 
             if (show_textures) {
 
+                float distx = (CARD_SPACING*2 + (CARD_WIDTH+CARD_SPACING) * (num % 9)) - mousex;
+                float disty = (CARD_SPACING + (floor((num/9)) + 0.1) * (CARD_HEIGHT+CARD_SPACING) - state_timer*5) - mousey;
+
                 sineh = 5 *  sin(2 * indeck.zoneTime[i]);
-                angle = 2.5f * sin(indeck.zoneTime[i]);
+                angle = 2.5f * sin(indeck.zoneTime[i]) + distx/250;
 
                 cardtexture = (SDL_FRect) {  
                     (CARD_SPACING*2 + (CARD_WIDTH+CARD_SPACING) * (num % 9)) * window_scale_x, 
@@ -1738,6 +1751,38 @@ void render() {
 
                 center = (SDL_FPoint) {cardtexture.w / 2, cardtexture.h / 2};
                 SDL_RenderTextureRotated(renderer, cards.cardtexture[indeck.ID[i]], NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
+            }
+        }
+    }
+
+    // ALL CARDS GAME STATE
+    // ---------------
+    if (gamestate == STATE_COLLECTION && show_textures) {
+
+        SDL_FRect cardtexture = {0};
+        SDL_FRect cardhitbox = {0};
+        SDL_FPoint center = {0};
+        float sineh, angle;
+
+        for (int i = 0; i < TOTAL_CARDS; i++) {
+
+            if (show_textures) {
+
+                float distx = (CARD_SPACING*2 + (CARD_WIDTH+CARD_SPACING) * (i % 9)) - mousex;
+                float disty = (CARD_SPACING + (floor((i/9)) + 0.1) * (CARD_HEIGHT+CARD_SPACING) - state_timer*5) - mousey;
+
+                sineh = 5 *  sin(2 * state_timer);
+                angle = 2.5f * sin(state_timer) + distx/250;
+
+                cardtexture = (SDL_FRect) {  
+                    (CARD_SPACING*2 + (CARD_WIDTH+CARD_SPACING) * (i % 9)) * window_scale_x, 
+                    (float)(CARD_SPACING + (floor((i/9)) + 0.1) * (CARD_HEIGHT+CARD_SPACING) - state_timer*5) * window_scale_y,
+                    CARD_WIDTH*window_scale_x, 
+                    CARD_HEIGHT*window_scale_y
+                };
+
+                center = (SDL_FPoint) {cardtexture.w / 2, cardtexture.h / 2};
+                SDL_RenderTextureRotated(renderer, cards.cardtexture[i], NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
             }
         }
     }
@@ -2360,7 +2405,7 @@ void render() {
         SDL_FRect rect = {0, 0, (float)window_width, (float)window_height};
         SDL_RenderFillRect(renderer, &rect);
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 175);
-        SDL_FRect rect2 = {(window_width/2 - 50/2), (window_height/2 - 50/2), 50.0f, 50.0f};
+        SDL_FRect rect2 = {(float)(window_width/2 - 50/2), (float)(window_height/2 - 50/2), 50.0f, 50.0f};
         SDL_RenderFillRect(renderer, &rect2);
     }
 
@@ -2386,7 +2431,7 @@ int main() {
 
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();
-    window = SDL_CreateWindow("Bear & Bull", (int)(WINDOW_WIDTH), (int)(WINDOW_HEIGHT), SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+    window = SDL_CreateWindow(stringf("%s %s", title, version), (int)(WINDOW_WIDTH), (int)(WINDOW_HEIGHT), SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     renderer = SDL_CreateRenderer(window, NULL);
 	SDL_SetRenderScale(renderer, 1, 1);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
