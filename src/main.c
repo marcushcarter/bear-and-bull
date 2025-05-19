@@ -37,7 +37,7 @@ bool isFullscreen = false;
 int aspect_ratio;
 float TARGET_FPS = 120.0f;
 
-bool show_hitboxes = true;
+bool show_hitboxes = false;
 bool show_textures = true;
 bool custom_cursor = false;
 
@@ -255,24 +255,29 @@ typedef enum CardRarity {
     RARITY_LEVEL1,
     RARITY_LEVEL2,
     RARITY_LEVEL3,
-    RARITY_LEVEL4,
 
     RARITY_TOTAL,
 } CardRarity;
+
+SDL_Color rarity_colors[5] = {
+    {0, 0, 0, 0},
+    {55, 59, 123, 100}, // BLUE RARITY PERFECT
+    {255, 25, 25, 160}, // RED RARITY
+    {255, 120, 0, 100}, // GOLD RARITY
+};
 
 // #define MAX_RARITY_ENTRIES 1000
 
 int card_rarity_table[1000];
 int rarity_table_num = 0;
 
-void make_rarity_table(int r0, int r1, int r2, int r3, int r4) {
+void make_rarity_table(int r0, int r1, int r2, int r3) {
     rarity_table_num = 0;
 
     for (int i = 0; i < r0; i++) card_rarity_table[rarity_table_num++] = 0;
     for (int i = 0; i < r1; i++) card_rarity_table[rarity_table_num++] = 1;
     for (int i = 0; i < r2; i++) card_rarity_table[rarity_table_num++] = 2;
     for (int i = 0; i < r3; i++) card_rarity_table[rarity_table_num++] = 3;
-    for (int i = 0; i < r4; i++) card_rarity_table[rarity_table_num++] = 4;
 }
 
 int random_rarity() {
@@ -308,7 +313,7 @@ typedef enum GameState {
     STATE_COLLECTION,
 } GameState;
 
-int gamestate = STATE_MENU;
+int gamestate = STATE_DECK;
 bool pause = false;
 
 typedef enum AnimTypes {
@@ -1228,7 +1233,7 @@ void load_cards() {
     // TEMPORARY
     // ----------
     for (int i = 11; i < TOTAL_CARDS; i++ ) {
-        make_card(i, "resources/textures/card1.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
+        make_card(i, "resources/textures/card8.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
     }
 
 }
@@ -1320,7 +1325,7 @@ void setup() {
     SDL_memcpy(currKeyState, sdlKeys, NUM_KEYS);
     SDL_memcpy(prevKeyState, sdlKeys, NUM_KEYS);
 
-    make_rarity_table(67, 20, 9, 3, 1);
+    make_rarity_table(82, 13, 4, 1);
     reset_unlocked_cards();
 
     // SETUP CARDS, BUTTONS AND ZONES
@@ -1340,7 +1345,7 @@ void setup() {
     // ADD CARDS TO DECK
     // ---------------------
     menu_card(rand() % TOTAL_CARDS, random_rarity());
-    // for (int i = 0; i < 54; i++) { add_to_deck(rand() % TOTAL_CARDS, random_rarity()); }
+    for (int i = 0; i < 50; i++) { add_to_deck(rand() % TOTAL_CARDS, random_rarity()); }
 
     // INITIALIZE PROFILE INFO
     // -----------------------
@@ -1399,52 +1404,23 @@ void update() {
     
     load_zones();
 
+    if (!(gamestate == STATE_DECK || gamestate == STATE_COLLECTION)) state_timer += dt;
+
     if (gamestate == STATE_DECK) {
         if (!pause) state_timer += dt;
-
-        if (gamestate == STATE_DECK && state_timer*5 > (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
-            state_timer = (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))/5;
-
-        if (currKeyState[SDL_SCANCODE_W] && state_timer > 0) {state_timer -= 50*dt; } 
-        if (currKeyState[SDL_SCANCODE_S] && state_timer*5 < (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))) {state_timer += 50*dt; }
-
+        if (state_timer*5 > (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
+            start_animation(ANIM_TRANSITION_1, callback_change_to_play_screen, NULL, -1, 0, 0, 0, 2 * M_PI);
     }
 
     if (gamestate == STATE_COLLECTION) {
-        // if (!pause) state_timer += dt;
+        if (!pause) state_timer += dt;
 
-        if (gamestate == STATE_DECK && state_timer*5 > (CARD_SPACING + (ceil((TOTAL_CARDS/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
-            state_timer = (CARD_SPACING + (ceil((TOTAL_CARDS/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))/5;
-
-        if (currKeyState[SDL_SCANCODE_W] && state_timer > 0) {state_timer -= 50*dt; } 
-        if (currKeyState[SDL_SCANCODE_S] && state_timer*5 < (CARD_SPACING + (ceil((TOTAL_CARDS/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))) {state_timer += 50*dt; }
-
+        if (state_timer*5 > (CARD_SPACING + (ceil((TOTAL_CARDS/9)) - 2.5) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
+            start_animation(ANIM_TRANSITION_1, callback_change_to_play_screen, NULL, -1, 0, 0, 0, 2 * M_PI);
+            
+        if ((currKeyState[SDL_SCANCODE_W] || currKeyState[SDL_SCANCODE_UP]) && state_timer > 0) {state_timer -= 50*dt; } 
+        if (currKeyState[SDL_SCANCODE_S] || currKeyState[SDL_SCANCODE_DOWN]) {state_timer += 50*dt; }
     }
-
-    if (gamestate == STATE_DECK || gamestate == STATE_COLLECTION) {
-        // if (!pause) state_timer += dt;
-
-        // if (state_timer*5 > (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
-        // // start_animation(ANIM_TRANSITION_1, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, 2 * M_PI);
-        // // start_animation(ANIM_TRANSITION_1, callback_change_to_play_screen, NULL, -1, 0, 0, 0, 2 * M_PI);
-        // state_timer = (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))/5;
-
-        
-        // if (currKeyState[SDL_SCANCODE_W] && state_timer > 0) {state_timer -= 50*dt; } 
-        // if (currKeyState[SDL_SCANCODE_S] && state_timer*5 < (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))) {state_timer += 50*dt; }
-
-
-
-
-
-
-    } else {
-        state_timer += dt;
-    }
-
-
-
-
     
     // Draws an event card once every 10 seconds
     if (gamestate == STATE_PLAY && !pause) 
@@ -1906,10 +1882,10 @@ void render() {
     // BACKGROUND TEXTURES
     // ------------------------------
     if (show_textures) {
-        // float angle = 0;
-        // SDL_FRect texture = { 0, 0, (float)window_width, (float)window_height };
-        // SDL_FPoint center = {texture.w / 2, texture.h / 2};
-        // SDL_RenderTextureRotated(renderer, texture_idea, NULL, &texture, angle, &center, SDL_FLIP_NONE);
+        float angle = 0;
+        SDL_FRect texture = { 0, 0, (float)window_width, (float)window_height };
+        SDL_FPoint center = {texture.w / 2, texture.h / 2};
+        SDL_RenderTextureRotated(renderer, texture_idea, NULL, &texture, angle, &center, SDL_FLIP_NONE);
     }
     
 
@@ -1953,17 +1929,17 @@ void render() {
                     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 200);
                     SDL_RenderFillRect(renderer, &cardtexture);
 
-                    SDL_RenderTextureRotated(renderer, texture_dim1, NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
+                    // SDL_RenderTextureRotated(renderer, texture_dim1, NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
 
-                    int width = 50, height = 50;
-                    cardtexture = (SDL_FRect) {
-                        (window_width/2) + (xpos - 1190/2 + CARD_WIDTH/2 - width/2) * window_scale_x,
-                        (ypos + CARD_HEIGHT/2 - height/2) * window_scale_y,
-                        width*window_scale_x, 
-                        height*window_scale_y
-                    };
-                    center = (SDL_FPoint) {cardtexture.w / 2, cardtexture.h / 2};
-                    SDL_RenderTextureRotated(renderer, texture_cardlock, NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
+                    // int width = 50, height = 50;
+                    // cardtexture = (SDL_FRect) {
+                    //     (window_width/2) + (xpos - 1190/2 + CARD_WIDTH/2 - width/2) * window_scale_x,
+                    //     (ypos + CARD_HEIGHT/2 - height/2) * window_scale_y,
+                    //     width*window_scale_x, 
+                    //     height*window_scale_y
+                    // };
+                    // center = (SDL_FPoint) {cardtexture.w / 2, cardtexture.h / 2};
+                    // SDL_RenderTextureRotated(renderer, texture_cardlock, NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
 
                 }
             }
@@ -2010,7 +1986,7 @@ void render() {
             if (show_textures) {
 
                 sineh = 5 *  sin(2 * indeck.zoneTime[i]);
-                angle = 2.5f * sin(indeck.zoneTime[i]);
+                angle = 2.5f * sin(indeck.zoneTime[i]) / 2;
 
                 float xpos = CARD_SPACING*2 + (CARD_WIDTH+CARD_SPACING) * (num % 9);
                 float ypos = CARD_SPACING + (floor((num/9)) + 0.1) * (CARD_HEIGHT+CARD_SPACING) - state_timer*5;
@@ -2024,7 +2000,7 @@ void render() {
 
                 center = (SDL_FPoint) {cardtexture.w / 2, cardtexture.h / 2};
                 SDL_RenderTextureRotated(renderer, cards.cardtexture[indeck.ID[i]], NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
-                if (indeck.rarity[i] > 0) SDL_RenderTextureRotated(renderer, texture_rarity[indeck.rarity[i]], NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
+                if (indeck.rarity[i] > 0) SDL_RenderTextureRotated(renderer, texture_rarity[indeck.rarity[i]], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
 
                 if (!indeck.isSellable[i]) {
                     int width = 50, height = 50;

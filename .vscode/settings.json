@@ -15,7 +15,8 @@
         "type_traits": "c",
         "utility": "c",
         "variant": "c",
-        "text_encoding": "c"
+        "text_encoding": "c",
+        "random": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
