@@ -1,4 +1,4 @@
-# Bear & Bull (v0.1.13)
+# Bear & Bull (v0.1.14)
 
 ## Update Log
 
@@ -13,7 +13,7 @@
 - *2025-05-12* money to draw cards, sell cards for money (and then took it out), redid all of the drawing / moving card func, set limits on where certainc ards can be put, changed some cards' data
 - *2025-05-16* added gamestates, pauses, main menu and some other stuff
 - *2025-05-17* button hover, new textures, cleaned up, redid render and update funcs again for gamestates, nimations classes with callbacks, decided on a name
-- *2025-05-18* some formatting, settings page, asspect ratio fixing, added card present anim, added draft state
+- *2025-05-18* some formatting, settings page, asspect ratio fixing, added card present anim, added draft state, added deck state
 
 ### NEW idea
 
