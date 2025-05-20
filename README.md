@@ -61,6 +61,25 @@ Low (L) - the lowest price in that time interval
    └┬┘        ← Close (bottom of red candle)
     |         ← Low
 
+## Trade Round
+
+- trade
+- collect
+- draft
+
+- you must hit a target amount of money that goes up every round
+- if you dont hit the number, you will lose a life and the next round will be the same one as before
+- once you lose all your lives, your run ends
+- 
+
+## TUTORIAL TEXT
+
+### DRAFT PHASE
+
+- this is the draft phase
+- here you will 'draft' a card from a selection to your deck
+- there are three types of draft cards: normal cards, health cards, money cards and PERMA CHIPS
+
 ### Other Ideas:
 
  Guentlets

@@ -56,8 +56,8 @@ int profile;
 
 #define MAX_CARDS 100
 #define MAX_ZONES 20
-// #define TOTAL_CARDS 50
-#define TOTAL_CARDS 11
+#define TOTAL_CARDS 50
+// #define TOTAL_CARDS 11
 #define MAX_BUTTONS 50
 #define MAX_PROFILES 1
 
@@ -1235,9 +1235,9 @@ void load_cards() {
 
     // TEMPORARY
     // ----------
-    // for (int i = 11; i < TOTAL_CARDS; i++ ) {
-    //     make_card(i, "resources/textures/card8.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
-    // }
+    for (int i = 11; i < TOTAL_CARDS; i++ ) {
+        make_card(i, "resources/textures/card8.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
+    }
 
 }
 
@@ -1348,7 +1348,7 @@ void setup() {
     // ADD CARDS TO DECK
     // ---------------------
     menu_card(rand() % TOTAL_CARDS, random_rarity());
-    // for (int i = 0; i < 50; i++) { add_to_deck(rand() % TOTAL_CARDS, random_rarity()); }
+    for (int i = 0; i < 50; i++) { add_to_deck(rand() % TOTAL_CARDS, random_rarity()); }
 
     // INITIALIZE PROFILE INFO
     // -----------------------
@@ -1413,20 +1413,26 @@ void update() {
 
     if (!(gamestate == STATE_DECK || gamestate == STATE_COLLECTION)) state_timer += dt;
 
+    bool up = false, down = false;
+    if (currKeyState[SDL_SCANCODE_W] || currKeyState[SDL_SCANCODE_UP]) up = true;
+    if (currKeyState[SDL_SCANCODE_S] || currKeyState[SDL_SCANCODE_DOWN]) down = true;
+
+    // DECK SCROLLING
     if (gamestate == STATE_DECK) {
-        if (!pause) state_timer += dt;
-        if (state_timer*5 > (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
-            start_animation(ANIM_TRANSITION_1, callback_change_to_play_screen, NULL, -1, 0, 0, 0, 2 * M_PI);
+        float idunno = (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))/5;
+        if (ceil(indeck.num/9) > 4 && !(up || down)  && state_timer < idunno) state_timer += dt; 
+        
+        if (up && state_timer > 0) {state_timer -= 50*dt; } 
+        if (down && state_timer < idunno) {state_timer += 50*dt; }
     }
 
+    // COLLECTION SCROLLING
     if (gamestate == STATE_COLLECTION) {
-        if (!pause) state_timer += dt;
+        float idunno = (CARD_SPACING + (ceil((TOTAL_CARDS/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))/5;
+        if (ceil(TOTAL_CARDS/9) > 4 && !(up || down)  && state_timer < idunno) state_timer += dt; 
 
-        if (state_timer*5 > (CARD_SPACING + (ceil((TOTAL_CARDS/9)) - 2.5) * (CARD_HEIGHT+CARD_SPACING)) && state_timer > 10)
-            start_animation(ANIM_TRANSITION_1, callback_change_to_play_screen, NULL, -1, 0, 0, 0, 2 * M_PI);
-            
-        if ((currKeyState[SDL_SCANCODE_W] || currKeyState[SDL_SCANCODE_UP]) && state_timer > 0) {state_timer -= 50*dt; } 
-        if (currKeyState[SDL_SCANCODE_S] || currKeyState[SDL_SCANCODE_DOWN]) {state_timer += 50*dt; }
+        if (up && state_timer > 0) {state_timer -= 50*dt; } 
+        if (down && state_timer < idunno) {state_timer += 50*dt; }
     }
     
     // Draws an event card once every 10 seconds
@@ -1953,30 +1959,6 @@ void render() {
         }
     }
 
-    // DRAFT GAMESTATE OTHER THINGS
-    // ----------------------------
-    if (gamestate == STATE_DRAFT && show_textures) {
-        // SDL_FRect texture = {0};
-        // SDL_FPoint center = {0};
-        // float halflifefunc = 2000 * pow(0.65, (state_timer/10.0f) / 0.05f);
-        // float sineh; double angle;
-
-        // sineh = sin(state_timer);
-        // texture = (SDL_FRect) {  
-        //     window_width/2 - 500/2*window_scale_x,
-        //     halflifefunc*window_scale_y + window_height - 500*window_scale_y - (500/2)*window_scale_y - (sineh*window_scale_y), 
-        //     500*window_scale_x, 
-        //     500*window_scale_y,
-        // };
-        // center = (SDL_FPoint) {texture.w / 2, texture.h / 2};
-        // SDL_RenderTextureRotated(renderer, cards.cardtexture[5], NULL, &texture, 0, &center, SDL_FLIP_NONE);
-
-    }
-
-
-
-
-
     // DECK GAME STATE
     // ---------------
     if (gamestate == STATE_DECK && show_textures) {
@@ -1992,8 +1974,8 @@ void render() {
 
             if (show_textures) {
 
-                sineh = 5 *  sin(2 * indeck.zoneTime[i]);
-                angle = 2.5f * sin(indeck.zoneTime[i]) / 2;
+                sineh = 5 *  sin(2 * indeck.zoneTime[i] + num*0.1);
+                angle = 2.5f * sin(indeck.zoneTime[i] + num*0.1);
 
                 float xpos = CARD_SPACING*2 + (CARD_WIDTH+CARD_SPACING) * (num % 9);
                 float ypos = CARD_SPACING + (floor((num/9)) + 0.1) * (CARD_HEIGHT+CARD_SPACING) - state_timer*5;
@@ -2023,6 +2005,30 @@ void render() {
             }
         }
     }
+
+    // DRAFT GAMESTATE OTHER THINGS
+    // ----------------------------
+    if (gamestate == STATE_DRAFT && show_textures) {
+        // SDL_FRect texture = {0};
+        // SDL_FPoint center = {0};
+        // float halflifefunc = 2000 * pow(0.65, (state_timer/10.0f) / 0.05f);
+        // float sineh; double angle;
+
+        // sineh = sin(state_timer);
+        // texture = (SDL_FRect) {  
+        //     window_width/2 - 500/2*window_scale_x,
+        //     halflifefunc*window_scale_y + window_height - 500*window_scale_y - (500/2)*window_scale_y - (sineh*window_scale_y), 
+        //     500*window_scale_x, 
+        //     500*window_scale_y,
+        // };
+        // center = (SDL_FPoint) {texture.w / 2, texture.h / 2};
+        // SDL_RenderTextureRotated(renderer, cards.cardtexture[5], NULL, &texture, 0, &center, SDL_FLIP_NONE);
+
+    }
+
+
+
+
 
     // ZONES TEXTURES / HITBOXES
     // -------------------------
