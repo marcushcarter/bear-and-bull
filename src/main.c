@@ -11,7 +11,7 @@
 #include <math.h>
 
 char title[256] = "bear and bull";
-char version[256] = "demo v0.1.15";
+char version[256] = "demo v0.1.16";
 
 SDL_Window* window;
 SDL_Renderer* renderer;
@@ -56,8 +56,8 @@ int profile;
 
 #define MAX_CARDS 100
 #define MAX_ZONES 20
-#define TOTAL_CARDS 50
-// #define TOTAL_CARDS 11
+// #define TOTAL_CARDS 50
+#define TOTAL_CARDS 11
 #define MAX_BUTTONS 50
 #define MAX_PROFILES 1
 
@@ -313,7 +313,7 @@ typedef enum GameState {
     STATE_COLLECTION,
 } GameState;
 
-int gamestate = STATE_DECK;
+int gamestate = STATE_MENU;
 bool pause = false;
 
 typedef enum AnimTypes {
@@ -327,6 +327,9 @@ typedef enum AnimTypes {
 
     ANIM_DRAFT_PHASE,
     ANIM_TRADE_PHASE,
+    ANIM_DECK_PHASE,
+    ANIM_COLLECTION_PHASE,
+
 } AnimTypes;
 
 typedef struct Animation {
@@ -1232,9 +1235,9 @@ void load_cards() {
 
     // TEMPORARY
     // ----------
-    for (int i = 11; i < TOTAL_CARDS; i++ ) {
-        make_card(i, "resources/textures/card8.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
-    }
+    // for (int i = 11; i < TOTAL_CARDS; i++ ) {
+    //     make_card(i, "resources/textures/card8.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
+    // }
 
 }
 
@@ -1345,7 +1348,7 @@ void setup() {
     // ADD CARDS TO DECK
     // ---------------------
     menu_card(rand() % TOTAL_CARDS, random_rarity());
-    for (int i = 0; i < 50; i++) { add_to_deck(rand() % TOTAL_CARDS, random_rarity()); }
+    // for (int i = 0; i < 50; i++) { add_to_deck(rand() % TOTAL_CARDS, random_rarity()); }
 
     // INITIALIZE PROFILE INFO
     // -----------------------
@@ -1382,11 +1385,15 @@ void dev_tools() {
 
     // 4 - shuffle hand into deck
     // --------------------------
-    if (currKeyState[SDL_SCANCODE_4] && !prevKeyState[SDL_SCANCODE_4]) {}
+    if (currKeyState[SDL_SCANCODE_4] && !prevKeyState[SDL_SCANCODE_4]) {
+        start_animation(ANIM_DRAFT_PHASE, callback_change_to_play_screen, NULL, -1, 0, 0, 0, 2 * M_PI);
+    }
 
     // 5 - spawn event card
     // --------------------
-    if (currKeyState[SDL_SCANCODE_5] && !prevKeyState[SDL_SCANCODE_5]) {}
+    if (currKeyState[SDL_SCANCODE_5] && !prevKeyState[SDL_SCANCODE_5]) {
+        start_animation(ANIM_PRESENT_CARD, NULL, NULL, -1, 0, 0, 0, 2 * M_PI);
+    }
 
     // 6 - draw card id to hand
     // --------------------------
@@ -1882,10 +1889,10 @@ void render() {
     // BACKGROUND TEXTURES
     // ------------------------------
     if (show_textures) {
-        float angle = 0;
-        SDL_FRect texture = { 0, 0, (float)window_width, (float)window_height };
-        SDL_FPoint center = {texture.w / 2, texture.h / 2};
-        SDL_RenderTextureRotated(renderer, texture_idea, NULL, &texture, angle, &center, SDL_FLIP_NONE);
+        // float angle = 0;
+        // SDL_FRect texture = { 0, 0, (float)window_width, (float)window_height };
+        // SDL_FPoint center = {texture.w / 2, texture.h / 2};
+        // SDL_RenderTextureRotated(renderer, texture_idea, NULL, &texture, angle, &center, SDL_FLIP_NONE);
     }
     
 
@@ -2743,7 +2750,7 @@ void render() {
                 window_width/2 - (float)(spin/2), 
                 (WINDOW_HEIGHT-cosine-CARD_HEIGHT-100)*window_scale_y, 
                 (float)(spin), 
-                (float)(CARD_HEIGHT*1.25*window_scale_x)
+                (float)(CARD_HEIGHT*1.25*window_scale_y)
             };
 
             SDL_FPoint center = {cardtexture.w / 2, cardtexture.h / 2};
@@ -2752,6 +2759,30 @@ void render() {
             } else {
                 SDL_RenderTextureRotated(renderer, gamebuttons.buttontexture[BUTTON_DECK], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
             }
+        }
+
+        if (anim.ID[i] == ANIM_DRAFT_PHASE || anim.ID[i] == ANIM_TRADE_PHASE || anim.ID[i] == ANIM_DECK_PHASE || anim.ID[i] == ANIM_COLLECTION_PHASE) {
+            float parabola = 0.2 * pow((anim.runtime[i] - anim.maxtime[i]/2), 2) * 150;
+            float cosine = WINDOW_HEIGHT/2 * -cosf(anim.runtime[i]);
+            // double spin = (CARD_WIDTH*1.25*window_scale_x) * sinf(anim.runtime[i] - 1);
+            double angle = 0;
+
+            SDL_FRect cardtexture = {  
+                (float)(window_width/2) - (500/2)*window_scale_x, 
+                (-parabola+CARD_HEIGHT-50)*window_scale_y, 
+                (float)(500*window_scale_x), 
+                (float)(150*window_scale_y)
+            };
+
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 150-(parabola/2));
+            SDL_FRect fullscreen = {0, 0, (float)window_width, (float)window_height};
+            SDL_RenderFillRect(renderer, &fullscreen);
+
+            SDL_FPoint center = {cardtexture.w / 2, cardtexture.h / 2};
+            if (anim.ID[i] == ANIM_DRAFT_PHASE) SDL_RenderTextureRotated(renderer, cards.cardtexture[1], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
+            if (anim.ID[i] == ANIM_TRADE_PHASE) SDL_RenderTextureRotated(renderer, cards.cardtexture[2], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
+            if (anim.ID[i] == ANIM_DECK_PHASE) SDL_RenderTextureRotated(renderer, cards.cardtexture[3], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
+            if (anim.ID[i] == ANIM_COLLECTION_PHASE) SDL_RenderTextureRotated(renderer, cards.cardtexture[4], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
         }
 
     }

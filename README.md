@@ -1,4 +1,4 @@
-# Bear & Bull (v0.1.15)
+# Bear & Bull (v0.1.16)
 
 ## Update Log
 
