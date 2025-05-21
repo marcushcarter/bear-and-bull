@@ -315,6 +315,7 @@ typedef enum GameState {
 
 int gamestate = STATE_MENU;
 bool pause = false;
+bool scroll = true;
 
 typedef enum AnimTypes {
     ANIM_BLANK,
@@ -1025,8 +1026,8 @@ void callback_change_to_play_screen() { gamestate = STATE_PLAY; state_timer = 0;
 }
 void callback_change_to_menu_screen() { gamestate = STATE_MENU; state_timer = 0; }
 void callback_change_to_settings_screen() { gamestate = STATE_SETTINGS; state_timer = 0; }
-void callback_change_to_deck_screen() { shuffle_hand(); gamestate = STATE_DECK; state_timer = 0; }
-void callback_change_to_collection_screen() { gamestate = STATE_COLLECTION; state_timer = 0; }
+void callback_change_to_deck_screen() { shuffle_hand(); gamestate = STATE_DECK; state_timer = 0; scroll = true; }
+void callback_change_to_collection_screen() { gamestate = STATE_COLLECTION; state_timer = 0; scroll = true; }
 
 void callback_change_to_draft_screen() { gamestate = STATE_DRAFT; state_timer = 0; clear_draft(); }
 void callback_random_draft_cards() { for (int i = 0; i < 3; i++) { draft_card(rand() % TOTAL_CARDS, random_rarity()); } }
@@ -1444,13 +1445,13 @@ void update() {
     if (!(gamestate == STATE_DECK || gamestate == STATE_COLLECTION)) state_timer += dt;
 
     bool up = false, down = false;
-    if (currKeyState[SDL_SCANCODE_W] || currKeyState[SDL_SCANCODE_UP]) up = true;
-    if (currKeyState[SDL_SCANCODE_S] || currKeyState[SDL_SCANCODE_DOWN]) down = true;
+    if (currKeyState[SDL_SCANCODE_W] || currKeyState[SDL_SCANCODE_UP]) { up = true; scroll = false; }
+    if (currKeyState[SDL_SCANCODE_S] || currKeyState[SDL_SCANCODE_DOWN]) { down = true; scroll = false; }
 
     // DECK SCROLLING
     if (gamestate == STATE_DECK) {
         float idunno = (CARD_SPACING + (ceil((indeck.num/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))/5;
-        if (ceil(indeck.num/9) > 4 && !(up || down)  && state_timer < idunno) state_timer += dt; 
+        if (ceil(indeck.num/9) > 4 && !(up || down)  && state_timer < idunno && scroll) state_timer += dt; 
         
         if (up && state_timer > 0) {state_timer -= 50*dt; } 
         if (down && state_timer < idunno) {state_timer += 50*dt; }
@@ -1459,7 +1460,7 @@ void update() {
     // COLLECTION SCROLLING
     if (gamestate == STATE_COLLECTION) {
         float idunno = (CARD_SPACING + (ceil((TOTAL_CARDS/9)) - 3.5) * (CARD_HEIGHT+CARD_SPACING))/5;
-        if (ceil(TOTAL_CARDS/9) > 4 && !(up || down)  && state_timer < idunno) state_timer += dt; 
+        if (ceil(TOTAL_CARDS/9) > 4 && !(up || down)  && state_timer < idunno && scroll) state_timer += dt; 
 
         if (up && state_timer > 0) {state_timer -= 50*dt; } 
         if (down && state_timer < idunno) {state_timer += 50*dt; }
