@@ -14,7 +14,8 @@
 - *2025-05-16* added gamestates, pauses, main menu and some other stuff
 - *2025-05-17* button hover, new textures, cleaned up, redid render and update funcs again for gamestates, nimations classes with callbacks, decided on a name
 - *2025-05-18* some formatting, settings page, asspect ratio fixing, added card present anim, added draft state, added deck state, collection state,
-- *2025-05-29* rarities, issellable and rarity overlays, random rarity level table
+- *2025-05-19* rarities, issellable and rarity overlays, random rarity level table
+- *2025-05-20* deck and collection states show text for names
 
 ### NEW idea
 
@@ -73,6 +74,18 @@ Low (L) - the lowest price in that time interval
 - 
 
 ## TUTORIAL TEXT
+
+### Run Stats
+
+- lives
+- round number
+- 
+
+### Round Stats
+
+- trade timer
+- money made
+- 
 
 ### DRAFT PHASE
 
