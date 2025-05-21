@@ -16,7 +16,15 @@
         "utility": "c",
         "variant": "c",
         "text_encoding": "c",
-        "random": "c"
+        "random": "c",
+        "numeric": "c",
+        "format": "c",
+        "fstream": "c",
+        "iostream": "c",
+        "istream": "c",
+        "ostream": "c",
+        "system_error": "c",
+        "typeinfo": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

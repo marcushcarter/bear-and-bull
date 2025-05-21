@@ -16,6 +16,7 @@
 - *2025-05-18* some formatting, settings page, asspect ratio fixing, added card present anim, added draft state, added deck state, collection state,
 - *2025-05-19* rarities, issellable and rarity overlays, random rarity level table
 - *2025-05-20* deck and collection states show text for names
+- *2025-05-21* deck/collection scrolling when kp, 
 
 ### NEW idea
 
@@ -61,6 +62,13 @@ Low (L) - the lowest price in that time interval
    │ │        ← Body (Open to Close)
    └┬┘        ← Close (bottom of red candle)
     |         ← Low
+
+## Draft and Event Rarity Odds
+- 82% chance for normal cards
+- 13% chance for uncommon cards
+- 4% chance for rare cards
+- 1% chance for legendary cards
+- 10% chance to be unsellable tag on uncommon, rare and legendary cards
 
 ## Trade Round
 
