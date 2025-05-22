@@ -58,52 +58,25 @@ float state_timer = 0;
 // #define TOTAL_CARDS 50
 #define TOTAL_CARDS 11
 #define MAX_BUTTONS 50
-#define MAX_PROFILES 1
+#define MAX_ANIMATIONS 20
 
-// STAT CLASSES ====================================================================================================
-
-typedef struct DeviceStats {
-
-} DeviceStats; DeviceStats devicestats;
-
-void reset_device() {}
-
-typedef struct RunStats {
-    int round;
-    float money;
-
-    int loans_left;
-    int hand_slots;
-    int draw_num;
-} RunStats; RunStats runstats;
-//nhealth
-//money
-
-void reset_run() {
-    runstats.round = 0;
-    runstats.money = 10;
-
-    runstats.loans_left = 3;
-    runstats.hand_slots = 3;
-    runstats.draw_num = 3;
-}
-
-typedef struct RoundStats {
-    float timer;
-    // 
-} RoundStats; RoundStats roundstats;
-
-void reset_round() {
-    roundstats.timer = 60.0f + M_PI/game_speed*2;
-}
+#define LOAN_VALUE 20
 
 // CARDS / ZONES CLASSES ====================================================================================================
 
-typedef enum SpecialCards {
-    CARD_LOAN,
-} SpecialCards;
+typedef struct CardID{
+    SDL_Texture* cardtexture[TOTAL_CARDS];
+    char cardpath[TOTAL_CARDS][256];
+    char name[TOTAL_CARDS][256];
+    char description[TOTAL_CARDS][256];
 
-#define LOAN_VALUE 100
+    // added when sold
+    float sell_price[TOTAL_CARDS]; // price of the card
+    float sell_tickets[TOTAL_CARDS];
+    // float sell_
+
+
+} CardID;
 
 typedef struct Cards {
     int ID[MAX_CARDS];
@@ -131,11 +104,6 @@ typedef struct Cards {
     int num;
 } Cards;
 
-Cards inplay;
-Cards indeck;
-Cards infeature;
-Cards indraft;
-
 typedef struct Zones {
     int ID[MAX_ZONES];
     SDL_Texture* zonetexture[MAX_ZONES];
@@ -152,9 +120,70 @@ typedef struct Zones {
     float isActive[MAX_ZONES];
 } Zones; 
 
-Zones playzones;
-Zones menuzone;
-Zones draftzones;
+typedef struct Buttons {
+    int ID[MAX_BUTTONS];
+    SDL_Texture* buttontexture[MAX_BUTTONS];
+    char buttonpath[MAX_BUTTONS][256];
+
+    float x[MAX_BUTTONS];
+    float y[MAX_BUTTONS];
+    float w[MAX_BUTTONS];
+    float h[MAX_BUTTONS];
+    
+    float clickTime[MAX_BUTTONS];
+
+    bool isPressed[MAX_BUTTONS];
+    bool isClicked[MAX_BUTTONS];
+    bool isActive[MAX_BUTTONS];
+    bool isHover[MAX_BUTTONS];
+} Buttons;
+
+typedef struct Animation {
+    int ID[MAX_ANIMATIONS];
+    int targetState[MAX_ANIMATIONS];
+
+    void (*atMidpoint[MAX_ANIMATIONS])(void); // callback
+    void (*onComplete[MAX_ANIMATIONS])(void); // callback
+
+    float x[MAX_ANIMATIONS];
+    float y[MAX_ANIMATIONS];
+    float value[MAX_ANIMATIONS];
+
+    float runtime[MAX_ANIMATIONS];
+    float maxtime[MAX_ANIMATIONS];
+
+    bool isActive[MAX_ANIMATIONS];
+} Animation;
+
+typedef struct DeviceStats {} DeviceStats;
+
+typedef struct RunStats {
+    int round;
+    float money;
+
+    int loans_left;
+    int hand_slots;
+    int draw_num;
+} RunStats;
+
+typedef struct RoundStats {
+    float timer;
+} RoundStats;
+
+// ENUMS ====================================================================================================
+
+typedef enum SpecialCards {
+    CARD_LOAN,
+} SpecialCards;
+
+typedef enum CardRarity {
+    RARITY_NONE,
+    RARITY_LEVEL1,
+    RARITY_LEVEL2,
+    RARITY_LEVEL3,
+
+    RARITY_TOTAL,
+} CardRarity;
 
 typedef enum ZoneType {
     ZONE_HAND,
@@ -170,25 +199,6 @@ typedef enum ZoneType {
     ZONE_DRAFT_SELECT,
 } ZoneType;
 
-bool cardsunlocked[TOTAL_CARDS] = {0};
-void reset_unlocked_cards() { for (int i = 0; i < TOTAL_CARDS; i++) cardsunlocked[i] = 0; }
-
-typedef struct CardID{
-    SDL_Texture* cardtexture[TOTAL_CARDS];
-    char cardpath[TOTAL_CARDS][256];
-    char name[TOTAL_CARDS][256];
-    char description[TOTAL_CARDS][256];
-
-    // added when sold
-    float sell_price[TOTAL_CARDS]; // price of the card
-    float sell_tickets[TOTAL_CARDS];
-    // float sell_
-
-
-} CardID;
-
-CardID cards;
-
 typedef enum ButtonType {
     // PLAY
     BUTTON_DECK,
@@ -198,10 +208,10 @@ typedef enum ButtonType {
     BUTTON_PAUSE,
 
     // MAIN MENU
-    BUTTON_NEW_GAME,
-    BUTTON_STATS,
-    BUTTON_SETTINGS,
-    BUTTON_QUIT,
+    BUTTON_MENU_PLAY,
+    BUTTON_MENU_STATS,
+    BUTTON_MENU_SETTINGS,
+    BUTTON_MENU_QUIT,
 
     // SETTINGS
     BUTTON_SETTINGS_EXIT,
@@ -230,100 +240,6 @@ typedef enum ButtonType {
 
 } ButtonType;
 
-typedef struct Buttons {
-    int ID[MAX_BUTTONS];
-    SDL_Texture* buttontexture[MAX_BUTTONS];
-    char buttonpath[MAX_BUTTONS][256];
-
-    float x[MAX_BUTTONS];
-    float y[MAX_BUTTONS];
-    float w[MAX_BUTTONS];
-    float h[MAX_BUTTONS];
-    
-    float clickTime[MAX_BUTTONS];
-
-    bool isPressed[MAX_BUTTONS];
-    bool isClicked[MAX_BUTTONS];
-    bool isActive[MAX_BUTTONS];
-    bool isHover[MAX_BUTTONS];
-} Buttons;
-
-Buttons gamebuttons;
-Buttons menubuttons;
-Buttons settingbuttons;
-Buttons draftbuttons;
-Buttons deckbuttons;
-Buttons collectionbuttons;
-
-// RARITY FUNCTIONS / ENUMS ====================================================================================================
-
-typedef enum CardRarity {
-    RARITY_NONE,
-    RARITY_LEVEL1,
-    RARITY_LEVEL2,
-    RARITY_LEVEL3,
-
-    RARITY_TOTAL,
-} CardRarity;
-
-SDL_Color rarity_colors[5] = {
-    {0, 0, 0, 0},
-    {55, 59, 123, 100}, // BLUE RARITY PERFECT
-    {255, 25, 25, 160}, // RED RARITY
-    {255, 120, 0, 100}, // GOLD RARITY
-};
-
-// #define MAX_RARITY_ENTRIES 1000
-
-int card_rarity_table[1000];
-int rarity_table_num = 0;
-
-void make_rarity_table(int r0, int r1, int r2, int r3) {
-    rarity_table_num = 0;
-
-    for (int i = 0; i < r0; i++) card_rarity_table[rarity_table_num++] = 0;
-    for (int i = 0; i < r1; i++) card_rarity_table[rarity_table_num++] = 1;
-    for (int i = 0; i < r2; i++) card_rarity_table[rarity_table_num++] = 2;
-    for (int i = 0; i < r3; i++) card_rarity_table[rarity_table_num++] = 3;
-}
-
-int random_rarity() {
-    if (rarity_table_num == 0) { printf("Rarity table not initialized!\n"); return 0; }
-    int index = rand() % rarity_table_num;
-    return card_rarity_table[index];
-}
-
-// STONK CLASSES ====================================================================================================
-
-typedef struct StonkData {
-    char name[256];
-
-    float time_started;
-    float price[61];
-    float h[61];
-    float o[61];
-    float c[61];
-    float l[61];
-    float integrity;
-} StonkData; StonkData stonk;
-
-// SCREEN CLASSES ====================================================================================================
-
-#define MAX_ANIMATIONS 20
-
-typedef enum GameState {
-    STATE_PLAY,
-    STATE_MENU,
-    STATE_SETTINGS,
-    STATE_DRAFT,
-    STATE_DECK,
-    STATE_COLLECTION,
-} GameState;
-
-int gamestate = STATE_MENU;
-bool pause = false;
-bool scroll = true;
-
 typedef enum AnimTypes {
     ANIM_BLANK,
 
@@ -338,24 +254,18 @@ typedef enum AnimTypes {
     ANIM_DECK_PHASE,
     ANIM_COLLECTION_PHASE,
 
+    ANIM_TRANSACTION,
+
 } AnimTypes;
 
-typedef struct Animation {
-    int ID[MAX_ANIMATIONS];
-    int targetState[MAX_ANIMATIONS];
-
-    void (*atMidpoint[MAX_ANIMATIONS])(void); // callback
-    void (*onComplete[MAX_ANIMATIONS])(void); // callback
-
-    float x[MAX_ANIMATIONS];
-    float y[MAX_ANIMATIONS];
-    float value[MAX_ANIMATIONS];
-
-    float runtime[MAX_ANIMATIONS];
-    float maxtime[MAX_ANIMATIONS];
-
-    bool isActive[MAX_ANIMATIONS];
-} Animation; Animation anim;
+typedef enum GameState {
+    STATE_PLAY,
+    STATE_MENU,
+    STATE_SETTINGS,
+    STATE_DRAFT,
+    STATE_DECK,
+    STATE_COLLECTION,
+} GameState;
 
 typedef enum AspectRatio {
     AR_1920x1280,
@@ -372,26 +282,43 @@ typedef enum AspectRatio {
 
 } AspectRatio;
 
-void set_aspect_ratio() {
-    if (aspect_ratio == AR_1920x1280 || aspect_ratio == AR_3_2) { WIDTH_RATIO = 3; HEIGHT_RATIO = 2; }
-    if (aspect_ratio == AR_1920x1080 || aspect_ratio == AR_16_9) { WIDTH_RATIO = 16; HEIGHT_RATIO = 9; }
-    if (aspect_ratio == AR_1920x1440 || aspect_ratio == AR_4_3) { WIDTH_RATIO = 4; HEIGHT_RATIO = 3; }
-    if (aspect_ratio == AR_1920x1200 || aspect_ratio == AR_16_10) { WIDTH_RATIO = 16; HEIGHT_RATIO = 10; }
-}
+// STAT CLASSES ====================================================================================================
 
-void adjust_window_size() {
-    // scaled down by 10/16 and then subrtract 75 from the height
+void deck_to_hand();
+void clear_cards(Cards* cards, Zones* zones);
+void add_to_deck(int id, int rarity);
 
-    WINDOW_WIDTH = 800.0f / HEIGHT_RATIO * WIDTH_RATIO;
-    WINDOW_HEIGHT = 800.0f;
+bool cardsunlocked[TOTAL_CARDS] = {0};
+CardID cards;
 
-    // get window sizes and set window scaling x/y coefficients
-    SDL_GetWindowSize(window, &window_width, &window_height);
-    window_scale_x = window_width / WINDOW_WIDTH;  
-    window_scale_y = window_height / WINDOW_HEIGHT;
+Cards inplay;
+Cards indeck;
+Cards infeature;
+Cards indraft;
 
-    isFullscreen = (SDL_GetWindowFlags(window) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS)) != 0;
-}
+Zones playzones;
+Zones menuzone;
+Zones draftzones;
+
+Buttons playbuttons;
+Buttons menubuttons;
+Buttons settingbuttons;
+Buttons draftbuttons;
+Buttons deckbuttons;
+Buttons collectionbuttons;
+
+int gamestate = STATE_MENU;
+bool pause = false;
+bool scroll = true;
+
+Animation anim;
+
+int card_rarity_table[1000];
+int rarity_table_num = 0;
+
+DeviceStats devicestats;
+RunStats runstats;
+RoundStats roundstats;
 
 // COMMON FUNCTIONS ====================================================================================================
 
@@ -415,6 +342,78 @@ char* stringf(const char* format, ...) { //converts a data type to a string ("%d
     vsprintf(output, format, args);
     va_end(args);
     return output;
+}
+
+// OTHER FUNTIONS ====================================================================================================
+
+void reset_unlocked_cards() { for (int i = 0; i < TOTAL_CARDS; i++) cardsunlocked[i] = 0; }
+
+void make_rarity_table(int r0, int r1, int r2, int r3) {
+    rarity_table_num = 0;
+
+    for (int i = 0; i < r0; i++) card_rarity_table[rarity_table_num++] = 0;
+    for (int i = 0; i < r1; i++) card_rarity_table[rarity_table_num++] = 1;
+    for (int i = 0; i < r2; i++) card_rarity_table[rarity_table_num++] = 2;
+    for (int i = 0; i < r3; i++) card_rarity_table[rarity_table_num++] = 3;
+}
+
+int random_rarity() {
+    if (rarity_table_num == 0) { printf("Rarity table not initialized!\n"); return 0; }
+    int index = rand() % rarity_table_num;
+    return card_rarity_table[index];
+}
+
+void set_aspect_ratio() {
+    if (aspect_ratio == AR_1920x1280 || aspect_ratio == AR_3_2) { WIDTH_RATIO = 3; HEIGHT_RATIO = 2; }
+    if (aspect_ratio == AR_1920x1080 || aspect_ratio == AR_16_9) { WIDTH_RATIO = 16; HEIGHT_RATIO = 9; }
+    if (aspect_ratio == AR_1920x1440 || aspect_ratio == AR_4_3) { WIDTH_RATIO = 4; HEIGHT_RATIO = 3; }
+    if (aspect_ratio == AR_1920x1200 || aspect_ratio == AR_16_10) { WIDTH_RATIO = 16; HEIGHT_RATIO = 10; }
+}
+
+void adjust_window_size() {
+    // scaled down by 10/16 and then subrtract 75 from the height
+
+    WINDOW_WIDTH = 800.0f / HEIGHT_RATIO * WIDTH_RATIO;
+    WINDOW_HEIGHT = 800.0f;
+
+    // get window sizes and set window scaling x/y coefficients
+    SDL_GetWindowSize(window, &window_width, &window_height);
+    window_scale_x = window_width / WINDOW_WIDTH;  
+    window_scale_y = window_height / WINDOW_HEIGHT;
+
+    isFullscreen = (SDL_GetWindowFlags(window) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_BORDERLESS)) != 0;
+}
+
+// STAT CLASSES ====================================================================================================
+
+void reset_device() {}
+
+void reset_run() {
+
+    for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&inplay, NULL); }
+    for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&indeck, NULL); }
+    for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&indraft, NULL); }
+    for (int i = 0; i < MAX_BUTTONS; i++) {
+        playbuttons.isActive[i] = false;
+        playbuttons.isPressed[i] = false;
+        playbuttons.ID[i] = -1;
+    }
+    
+    seed = time(NULL);
+
+    for (int i = 0; i < 5; i++) { add_to_deck(rand() % TOTAL_CARDS, random_rarity()); }
+
+    runstats.round = 0;
+    runstats.money = 10;
+
+    runstats.loans_left = 3;
+    runstats.hand_slots = 3;
+    runstats.draw_num = 3;
+}
+
+void reset_round() {
+
+    roundstats.timer = 60.0f + M_PI/game_speed*2;
 }
 
 // DELTA TIME (dt) FUNCTIONS ====================================================================================================
@@ -687,8 +686,8 @@ void deck_to_hand() {
 
     inplay.ID[inplayIndex] = indeck.ID[indeckIndex];
 
-    inplay.x[inplayIndex] = (gamebuttons.x[BUTTON_DECK]+gamebuttons.w[BUTTON_DECK]/2);
-    inplay.y[inplayIndex] = (gamebuttons.y[BUTTON_DECK]+gamebuttons.h[BUTTON_DECK]/2);
+    inplay.x[inplayIndex] = (playbuttons.x[BUTTON_DECK]+playbuttons.w[BUTTON_DECK]/2);
+    inplay.y[inplayIndex] = (playbuttons.y[BUTTON_DECK]+playbuttons.h[BUTTON_DECK]/2);
     inplay.w[inplayIndex] = CARD_WIDTH;
     inplay.h[inplayIndex] = CARD_HEIGHT;
 
@@ -697,8 +696,13 @@ void deck_to_hand() {
     inplay.zoneNum[inplayIndex] = playzones.num_cards[ZONE_HAND];
     inplay.zoneTime[inplayIndex] = 0;
 
-    isDragging = true;
-    inplay.isDragging[inplayIndex] = true;
+    if (!isDragging) {
+        isDragging = true;
+        inplay.isDragging[inplayIndex] = true;
+    } else {
+        inplay.isDragging[inplayIndex] = false;
+
+    }
     inplay.isActive[inplayIndex] = true;
     inplay.isSellable[inplayIndex] = indeck.isSellable[indeckIndex];
 
@@ -866,7 +870,9 @@ void loan_card() {
     // ACTIVATE NEW CARD WITH ID AT THAT INDEX
     // ---------------------------------------
     
-    // increase money
+    runstats.money += LOAN_VALUE;
+    start_animation(ANIM_TRANSACTION, NULL, NULL, -1, playbuttons.x[BUTTON_LOAN]+playbuttons.w[BUTTON_LOAN]/2*window_scale_x, playbuttons.y[BUTTON_LOAN]-(playbuttons.h[BUTTON_LOAN]/2*window_scale_y), +LOAN_VALUE, M_PI);
+
     inplay.ID[index] = id;
 
     inplay.x[index] = (WINDOW_WIDTH/2) * window_scale_x;
@@ -1000,12 +1006,12 @@ void sell_card(int inplayIndex) {
     if (inplay.ID[inplayIndex] == CARD_LOAN) {
         // retun loan
         runstats.money -= LOAN_VALUE;
-        start_animation(ANIM_PRESENT_CARD, NULL, NULL, -1, playzones.x[inplay.zoneID[inplayIndex]], playzones.y[inplay.zoneID[inplayIndex]], inplay.ID[inplayIndex], M_PI);
+        start_animation(ANIM_TRANSACTION, NULL, NULL, -1, inplay.x[inplayIndex], inplay.y[inplayIndex]-(CARD_HEIGHT/2*window_scale_x), -LOAN_VALUE, M_PI);
     } else {
         // sell card
         if (runstats.money > 0) {
             runstats.money += cards.sell_price[inplay.ID[inplayIndex]];
-            start_animation(ANIM_PRESENT_CARD, NULL, NULL, -1, playzones.x[inplay.zoneID[inplayIndex]], playzones.y[inplay.zoneID[inplayIndex]], inplay.ID[inplayIndex], M_PI);
+            start_animation(ANIM_TRANSACTION, NULL, NULL, -1, inplay.x[inplayIndex], inplay.y[inplayIndex]-(CARD_HEIGHT/2*window_scale_x), cards.sell_price[inplay.ID[inplayIndex]], M_PI);
         }
         // if (runstats. > 0) {
         //     runstats.money += cards.sell_price[inplay.ID[inplayIndex]];
@@ -1101,21 +1107,21 @@ void callback_new_round() { // midpoint animation
 
 void callback_random_draft_cards() { for (int i = 0; i < 3; i++) { draft_card(rand() % TOTAL_CARDS, random_rarity()); } }
 
-void callback_start_draft() {
-    gamestate = STATE_DRAFT; 
-    state_timer = 0; 
-    
-    // clear draft
-    clear_draft();
-
-    // start_animation(ANIM_TRANSITION_3, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, M_PI); // PAUSE BUTTON
-
-    // FULL WAY
-
-    start_animation(ANIM_DRAFT_PHASE, NULL, NULL, -1, 0, 0, 0, M_PI);
-
-    // tutorials if needed
-}
+// void callback_start_draft() {
+//     gamestate = STATE_DRAFT; 
+//     state_timer = 0; 
+//
+//     // clear draft
+//     clear_draft();
+//
+//     // start_animation(ANIM_TRANSITION_3, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, M_PI); // PAUSE BUTTON
+//
+//     // FULL WAY
+//
+//     start_animation(ANIM_DRAFT_PHASE, NULL, NULL, -1, 0, 0, 0, M_PI);
+//
+//     // tutorials if needed
+// }
 
 void callback_new_run() {
     // reset all the variables
@@ -1123,47 +1129,6 @@ void callback_new_run() {
 
     // start a new round
     callback_new_round();
-}
-
-void new_run() {
-    // clear deck
-    // clear stats
-    // reset other stats
-    // 
-}
-
-void new_round() {
-    // inc round num
-    // reset extra draw price
-    // reset stock
-    // shuffle deck
-    // switch to STATE_PLAY
-    // READY! SET! TRADE animation
-    // draw your number of cards (start_animation)
-}
-
-void reset_stock() {
-    
-    stonk.time_started = SDL_GetTicks() / 1000.0f;
-    for (int i = 0; i < 60; i++) {
-        stonk.h[i] = 0;
-        stonk.o[60] = 0;
-        stonk.c[60] = 0;
-        stonk.l[60] = 0;
-        stonk.integrity = 1.0f;
-    }
-}
-
-void update_stonk() {
-    float price = 10;
-    for (int i = 0; i < 60; i++) {
-        float delta = ((rand() % 2001) - 1000) / 1000.0f; // -10.0 to +10.0
-        price += delta;
-        stonk.c[i] = price;
-        stonk.o[i] = stonk.c[i-1];
-        stonk.h[i] = price+1;
-        stonk.l[i] = price-1;
-    }
 }
 
 // SETUP FUNCTIONS ====================================================================================================
@@ -1225,7 +1190,7 @@ void make_button(Buttons *button, ButtonType type, const char* buttonpath, int x
     button->isClicked[type] = false;
     button->isPressed[type] = false;
     // button->
-    // gamebuttons.[button] = ;
+    // playbuttons.[button] = ;
 }
 
 void load_zones() {
@@ -1261,16 +1226,16 @@ void load_zones() {
     make_zone(&playzones, ZONE_SELL, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 0, 0);
     make_zone(&playzones, ZONE_HAND, "", runstats.hand_slots, WINDOW_WIDTH/2 - 725/2, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, 725, 0);
     make_zone(&playzones, ZONE_EVENT, "", 1, WINDOW_WIDTH-CARD_MARGIN-CARD_SPACING-CARD_WIDTH, CARD_MARGIN, 0, 0);
-    make_button(&gamebuttons, BUTTON_DECK, "resources/textures/play-button-deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
-    make_button(&gamebuttons, BUTTON_LOAN, "", 15, CARD_MARGIN+130, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15), 50);
-    make_button(&gamebuttons, BUTTON_PAUSE, "resources/textures/play-button-pause.png", 15, 15, 30, 30);
-    make_button(&gamebuttons, BUTTON_SELL_STOCK, "resources/textures/play-button-minus.png", 15, CARD_MARGIN+195, 50, 50);
-    make_button(&gamebuttons, BUTTON_BUY_STOCK, "resources/textures/play-button-plus.jpg", 175, CARD_MARGIN+195, 50, 50);
+    make_button(&playbuttons, BUTTON_DECK, "resources/textures/play-button-deck.png", CARD_MARGIN, WINDOW_HEIGHT-CARD_HEIGHT-CARD_SPACING-CARD_MARGIN, CARD_WIDTH+CARD_SPACING, CARD_HEIGHT+CARD_SPACING);
+    make_button(&playbuttons, BUTTON_LOAN, "", 15, CARD_MARGIN+130, (CARD_MARGIN+CARD_SPACING+CARD_WIDTH+CARD_MARGIN-15-15), 50);
+    make_button(&playbuttons, BUTTON_PAUSE, "resources/textures/play-button-pause.png", 15, 15, 30, 30);
+    make_button(&playbuttons, BUTTON_SELL_STOCK, "resources/textures/play-button-minus.png", 15, CARD_MARGIN+195, 50, 50);
+    make_button(&playbuttons, BUTTON_BUY_STOCK, "resources/textures/play-button-plus.jpg", 175, CARD_MARGIN+195, 50, 50);
     // MENU
-    make_button(&menubuttons, BUTTON_NEW_GAME, "resources/textures/menu-button-new-game.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*0, 300, 50);
-    make_button(&menubuttons, BUTTON_SETTINGS, "resources/textures/menu-button-settings.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*1, 300, 50);
-    make_button(&menubuttons, BUTTON_STATS, "", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*2, 300, 50);
-    make_button(&menubuttons, BUTTON_QUIT, "resources/textures/menu-button-quit.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*3, 300, 50);
+    make_button(&menubuttons, BUTTON_MENU_PLAY, "resources/textures/menu-button-play.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*0, 300, 50);
+    make_button(&menubuttons, BUTTON_MENU_SETTINGS, "resources/textures/menu-button-settings.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*1, 300, 50);
+    make_button(&menubuttons, BUTTON_MENU_STATS, "", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*2, 300, 50);
+    make_button(&menubuttons, BUTTON_MENU_QUIT, "resources/textures/menu-button-quit.png", (WINDOW_WIDTH/2)-(300/2), (WINDOW_HEIGHT/2)+(50+20)*3, 300, 50);
     make_zone(&menuzone, ZONE_MENU, "", 1, (WINDOW_WIDTH/2)-((CARD_WIDTH+CARD_SPACING)/2), (WINDOW_HEIGHT/4)-((CARD_HEIGHT+CARD_SPACING)/2), 0, 0);
     // SETTINGS
     make_button(&settingbuttons, BUTTON_SETTINGS_EXIT, "resources/textures/play-button-deck.png", 15, 15, 30, 30);
@@ -1299,7 +1264,8 @@ void load_cards() {
     
     // LOAD CARDS
     // ----------
-    make_card(0, "resources/textures/card1.png", "$100 Loan", "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
+    // stringf("$%d Loan", LOAN_VALUE)
+    make_card(0, "resources/textures/card1.png", stringf("$%d Loan", LOAN_VALUE), "pay off your loans to validate your run as speedrun eligible", floatarr(6, -100.0f, 4, 3, 2, 1, 1));
     make_card(1, "resources/textures/card2.png", "Flame Boy", "For every wooden card you have in your hand, draw an extra card", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
     make_card(2, "resources/textures/card3.png", "Perkeo", "If you are visited by the russians, you recieve $200", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
     make_card(3, "resources/textures/card4.png", "Eg", "WTF you think it is, its an egg", floatarr(6, 5.0f, 4, 3, 2, 1, 1));
@@ -1362,8 +1328,8 @@ bool load_textures() {
     // LOAD TEXTURES FOR BUTTONS
     // -----------------------
     for (int i = 0; i < MAX_BUTTONS; i++) {
-        gamebuttons.buttontexture[i] = IMG_LoadTexture(renderer, gamebuttons.buttonpath[i]);
-        SDL_SetTextureScaleMode(gamebuttons.buttontexture[i], SDL_SCALEMODE_NEAREST);
+        playbuttons.buttontexture[i] = IMG_LoadTexture(renderer, playbuttons.buttonpath[i]);
+        SDL_SetTextureScaleMode(playbuttons.buttontexture[i], SDL_SCALEMODE_NEAREST);
         menubuttons.buttontexture[i] = IMG_LoadTexture(renderer, menubuttons.buttonpath[i]);
         SDL_SetTextureScaleMode(menubuttons.buttontexture[i], SDL_SCALEMODE_NEAREST);
         settingbuttons.buttontexture[i] = IMG_LoadTexture(renderer, settingbuttons.buttonpath[i]);
@@ -1413,20 +1379,11 @@ void setup() {
     // ---------------------
     load_cards();
     load_zones();
-    for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&inplay, NULL); }
-    for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&indeck, NULL); }
-    for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&indraft, NULL); }
     for (int i = 0; i < MAX_CARDS; i++) { clear_cards(&infeature, NULL); }
-    for (int i = 0; i < MAX_BUTTONS; i++) {
-        gamebuttons.isActive[i] = false;
-        gamebuttons.isPressed[i] = false;
-        gamebuttons.ID[i] = -1;
-    }
 
     // ADD CARDS TO DECK
     // ---------------------
     menu_card(rand() % TOTAL_CARDS, random_rarity());
-    for (int i = 0; i < 50; i++) { add_to_deck(rand() % TOTAL_CARDS, random_rarity()); }
 
     // INITIALIZE PROFILE INFO
     // -----------------------
@@ -1462,18 +1419,22 @@ void dev_tools() {
     // 5 - spawn event card
     // --------------------
     if (currKeyState[SDL_SCANCODE_5] && !prevKeyState[SDL_SCANCODE_5]) {
-        start_animation(ANIM_PRESENT_CARD, NULL, NULL, -1, 0, 0, 0, M_PI);
+        deck_to_hand();
     }
 
     // 6 - draw card id to hand
     // --------------------------
-    if (currKeyState[SDL_SCANCODE_6] && !prevKeyState[SDL_SCANCODE_6]) { event_card((rand() % TOTAL_CARDS-1) + 1, random_rarity()); }
+    if (currKeyState[SDL_SCANCODE_R] && !prevKeyState[SDL_SCANCODE_R]) {
+        gamestate = STATE_DECK;
+        start_animation(ANIM_TRANSITION_1, reset_run, NULL, -1, 0, 0, 0, M_PI);
+    }
 
     // 7 - menu / unmenu
     // --------------------------
     if (currKeyState[SDL_SCANCODE_SPACE] && !prevKeyState[SDL_SCANCODE_SPACE]) {
         // callback_change_to_draft_screen();
-        start_animation(ANIM_TRANSITION_1, callback_start_draft, callback_random_draft_cards, -1, 0, 0, 0, M_PI);
+        // start_animation(ANIM_TRANSACTION, NULL, NULL, -1, mousex, mousey, (float)((rand() % 3)-1), M_PI);
+        pause = !pause;
     }
 
 }
@@ -1483,7 +1444,7 @@ void update() {
     load_zones();
 
     if (!(gamestate == STATE_DECK || gamestate == STATE_COLLECTION)) state_timer += dt;
-    if (gamestate == STATE_PLAY) roundstats.timer -= dt/game_speed;
+    if (gamestate == STATE_PLAY && !pause) roundstats.timer -= dt/game_speed;
 
     if (gamestate == STATE_PLAY && roundstats.timer < 0) start_animation(ANIM_TRANSITION_1, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, M_PI);
 
@@ -1518,16 +1479,16 @@ void update() {
     // BUTTON UPDATES
     // --------------
     for (int i = 0; i < MAX_BUTTONS; i++) {
-        if (!gamebuttons.isActive[i] && !menubuttons.isActive[i] && !settingbuttons.isActive[i] && !draftbuttons.isActive[i] && !deckbuttons.isActive[i] && !collectionbuttons.isActive[i]) continue;
+        if (!playbuttons.isActive[i] && !menubuttons.isActive[i] && !settingbuttons.isActive[i] && !draftbuttons.isActive[i] && !deckbuttons.isActive[i] && !collectionbuttons.isActive[i]) continue;
 
-        if (gamebuttons.isPressed[i]) gamebuttons.clickTime[i] = 0;
+        if (playbuttons.isPressed[i]) playbuttons.clickTime[i] = 0;
         if (menubuttons.isPressed[i]) menubuttons.clickTime[i] = 0;
         if (settingbuttons.isPressed[i]) settingbuttons.clickTime[i] = 0;
         if (draftbuttons.isPressed[i]) draftbuttons.clickTime[i] = 0;
         if (deckbuttons.isPressed[i]) deckbuttons.clickTime[i] = 0;
         if (collectionbuttons.isPressed[i]) collectionbuttons.clickTime[i] = 0;
 
-        gamebuttons.clickTime[i] += dt / game_speed;
+        playbuttons.clickTime[i] += dt / game_speed;
         menubuttons.clickTime[i] += dt / game_speed;
         settingbuttons.clickTime[i] += dt / game_speed;
         draftbuttons.clickTime[i] += dt / game_speed;
@@ -1537,14 +1498,14 @@ void update() {
         // CHECK BUTTON CLICKS
         // -------------------
 
-        if (point_box_collision(mousex, mousey, gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i]) && gamestate == STATE_PLAY && gamebuttons.isActive[i] && !isDragging) {
-            if (currMouseState & SDL_BUTTON_LMASK) { gamebuttons.isPressed[i] = true; } else { gamebuttons.isPressed[i] = false; }
-            if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { gamebuttons.isClicked[i] = true; } else { gamebuttons.isClicked[i] = false; }
-            gamebuttons.isHover[i] = true;
+        if (point_box_collision(mousex, mousey, playbuttons.x[i], playbuttons.y[i], playbuttons.w[i], playbuttons.h[i]) && gamestate == STATE_PLAY && playbuttons.isActive[i] && !isDragging) {
+            if (currMouseState & SDL_BUTTON_LMASK) { playbuttons.isPressed[i] = true; } else { playbuttons.isPressed[i] = false; }
+            if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { playbuttons.isClicked[i] = true; } else { playbuttons.isClicked[i] = false; }
+            playbuttons.isHover[i] = true;
         } else {
-            gamebuttons.isPressed[i] = false;
-            gamebuttons.isClicked[i] = false;
-            gamebuttons.isHover[i] = false;
+            playbuttons.isPressed[i] = false;
+            playbuttons.isClicked[i] = false;
+            playbuttons.isHover[i] = false;
         }
 
         if (point_box_collision(mousex, mousey, menubuttons.x[i], menubuttons.y[i], menubuttons.w[i], menubuttons.h[i]) && gamestate == STATE_MENU && menubuttons.isActive[i] && !isDragging) {
@@ -1599,19 +1560,25 @@ void update() {
 
         // BUTTON EVENTS
         // -------------
+        if (!pause) {
+            if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_DECK) deck_to_hand(); // DECK BUTTON
+            if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_LOAN) loan_card(); // LOAN BUTTON
+            if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_BUY_STOCK) ; // MINUS STOCK BUTTON
+            if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_SELL_STOCK) runstats.hand_slots += 1; // PLUSS STOCK BUTTON
 
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_DECK && !pause) deck_to_hand(); // DECK BUTTON
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_LOAN && !pause) loan_card(); // LOAN BUTTON
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_BUY_STOCK && !pause) ; // MINUS STOCK BUTTON
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_SELL_STOCK && !pause) runstats.hand_slots += 1; // PLUSS STOCK BUTTON
-        if (gamebuttons.isClicked[i] && gamebuttons.ID[i] == BUTTON_PAUSE) start_animation(ANIM_TRANSITION_3, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, M_PI); // PAUSE BUTTON
+            if (draftbuttons.isClicked[i] && draftbuttons.ID[i] == BUTTON_DRAFT_CONTINUE) { if (draftzones.num_cards[ZONE_DRAFT_SELECT] != 0) start_animation(ANIM_TRANSITION_3, callback_select_draft_card, NULL, -1, 0, 0, 0, M_PI); } // SELECT DRAFT
+            if (deckbuttons.isClicked[i] && deckbuttons.ID[i] == BUTTON_DECK_CONTINUE) start_animation(ANIM_TRANSITION_1, callback_new_round, NULL, -1, 0, 0, 0, M_PI); // DECK CONTINUE
+            if (collectionbuttons.isClicked[i] && collectionbuttons.ID[i] == BUTTON_COLLECTION_CONTINUE) start_animation(ANIM_TRANSITION_1, callback_change_to_menu_screen, NULL, -1, 0, 0, 0, M_PI); // DECK CONTINUE
+        }
 
-        // if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_NEW_GAME) start_animation(ANIM_TRANSITION_1, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, M_PI); // NEW GAME BUTTON
-        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_NEW_GAME) start_animation(ANIM_TRANSITION_1, callback_new_run, NULL, -1, 0, 0, 0, M_PI); // NEW GAME BUTTON
-        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_SETTINGS) start_animation(ANIM_TRANSITION_1, callback_change_to_settings_screen, NULL, -1, 0, 0, 0, M_PI); // SETTINGS / OPTIONS BUTTON
-        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_STATS) start_animation(ANIM_TRANSITION_1, callback_change_to_collection_screen, NULL, -1, 0, 0, 0, M_PI); // STATS OR STEAM BUTTON
-        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_QUIT) start_animation(ANIM_TRANSITION_1, callback_quit_game, NULL, -1, 0, 0, 0, M_PI); // QUIT BUTTON
-
+        if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_PAUSE) start_animation(ANIM_TRANSITION_3, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, M_PI); // PAUSE BUTTON
+        // MENU GAMESTATE
+        // if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_PLAY) start_animation(ANIM_TRANSITION_1, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, M_PI); // NEW GAME BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_PLAY) start_animation(ANIM_TRANSITION_1, callback_new_run, NULL, -1, 0, 0, 0, M_PI); // NEW GAME BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_SETTINGS) start_animation(ANIM_TRANSITION_1, callback_change_to_settings_screen, NULL, -1, 0, 0, 0, M_PI); // SETTINGS / OPTIONS BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_STATS) start_animation(ANIM_TRANSITION_1, callback_change_to_collection_screen, NULL, -1, 0, 0, 0, M_PI); // STATS OR STEAM BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_QUIT) start_animation(ANIM_TRANSITION_1, callback_quit_game, NULL, -1, 0, 0, 0, M_PI); // QUIT BUTTON
+        // SETTINGS GAMESTATE
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_EXIT) start_animation(ANIM_TRANSITION_3, callback_change_to_menu_screen, NULL, -1, 0, 0, 0, M_PI); // EXIT SETTINGS
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_FULLSCREEN) { if (!isFullscreen) { SDL_SetWindowFullscreen(window, 1); } else { SDL_SetWindowFullscreen(window, 0); } } // TOGGLE FULLSCREEN
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_ASPECT_PREV) { if (aspect_ratio > 0) aspect_ratio -= 1; } // PREVIOUS ASPECT RATIO CHOICE
@@ -1623,13 +1590,6 @@ void update() {
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_FPS_NEXT) { if (TARGET_FPS < 120) TARGET_FPS += 30.0f; }
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_HITBOXES) show_hitboxes = !show_hitboxes; // SHOW HITBOXES 
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_CURSOR) custom_cursor = !custom_cursor; // CUSTOM CURSOR
-
-        if (draftbuttons.isClicked[i] && draftbuttons.ID[i] == BUTTON_DRAFT_CONTINUE) { if (draftzones.num_cards[ZONE_DRAFT_SELECT] != 0) start_animation(ANIM_TRANSITION_3, callback_select_draft_card, NULL, -1, 0, 0, 0, M_PI); } // SELECT DRAFT
-
-        if (deckbuttons.isClicked[i] && deckbuttons.ID[i] == BUTTON_DECK_CONTINUE) start_animation(ANIM_TRANSITION_1, callback_new_round, NULL, -1, 0, 0, 0, M_PI); // DECK CONTINUE
-
-        if (collectionbuttons.isClicked[i] && collectionbuttons.ID[i] == BUTTON_COLLECTION_CONTINUE) start_animation(ANIM_TRANSITION_1, callback_change_to_menu_screen, NULL, -1, 0, 0, 0, M_PI); // DECK CONTINUE
-
     }
 
     // ANIMATIONS
@@ -1977,7 +1937,7 @@ void render() {
                 if(cardsunlocked[i]) {
                 SDL_RenderTextureRotated(renderer, cards.cardtexture[i], NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
                 } else {
-                SDL_RenderTextureRotated(renderer, gamebuttons.buttontexture[BUTTON_DECK], NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, playbuttons.buttontexture[BUTTON_DECK], NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
                 }
 
                 if (!cardsunlocked[i]) {
@@ -2175,7 +2135,7 @@ void render() {
     // BUTTONS TEXTURES / HITBOXES
     // ---------------------------
     for (int i = 0; i < MAX_BUTTONS; i++) {
-        if (!gamebuttons.isActive[i] && !menubuttons.isActive[i] && !settingbuttons.isActive[i] && !draftbuttons.isActive[i] && !deckbuttons.isActive[i] && !collectionbuttons.isActive[i]) continue;
+        if (!playbuttons.isActive[i] && !menubuttons.isActive[i] && !settingbuttons.isActive[i] && !draftbuttons.isActive[i] && !deckbuttons.isActive[i] && !collectionbuttons.isActive[i]) continue;
         
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
@@ -2187,26 +2147,26 @@ void render() {
         if (gamestate == STATE_PLAY) {
             if (show_textures) {
                 
-                sineh = 5 * sin(2.0f * (gamebuttons.clickTime[i]));
+                sineh = 5 * sin(2.0f * (playbuttons.clickTime[i]));
                 sinea = 2.5 * sin(SDL_GetTicks() / 1000.0f + i*0.2);
                 angle = sinea;
 
-                button_grow_w = (gamebuttons.isHover[i]+gamebuttons.isPressed[i]) * CARD_GROW * gamebuttons.w[i];
-                button_grow_h = (gamebuttons.isHover[i]+gamebuttons.isPressed[i]) * CARD_GROW * gamebuttons.h[i];
+                button_grow_w = (playbuttons.isHover[i]+playbuttons.isPressed[i]) * CARD_GROW * playbuttons.w[i];
+                button_grow_h = (playbuttons.isHover[i]+playbuttons.isPressed[i]) * CARD_GROW * playbuttons.h[i];
 
                 buttontexture = (SDL_FRect) {
-                    gamebuttons.x[i] - (button_grow_w/2), 
-                    gamebuttons.y[i] - (button_grow_h/2), 
-                    gamebuttons.w[i] + (button_grow_w*window_scale_x), 
-                    gamebuttons.h[i] + (button_grow_h*window_scale_y)
+                    playbuttons.x[i] - (button_grow_w/2), 
+                    playbuttons.y[i] - (button_grow_h/2), 
+                    playbuttons.w[i] + (button_grow_w*window_scale_x), 
+                    playbuttons.h[i] + (button_grow_h*window_scale_y)
                 };
 
                 center = (SDL_FPoint) {buttontexture.w / 2, buttontexture.h / 2};
-                SDL_RenderTextureRotated(renderer, gamebuttons.buttontexture[i], NULL, &buttontexture, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, playbuttons.buttontexture[i], NULL, &buttontexture, angle, &center, SDL_FLIP_NONE);
             }
             if (show_hitboxes) {
-                if (gamebuttons.isPressed[i]) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-                buttonhitbox = (SDL_FRect) {gamebuttons.x[i], gamebuttons.y[i], gamebuttons.w[i], gamebuttons.h[i]};
+                if (playbuttons.isPressed[i]) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                buttonhitbox = (SDL_FRect) {playbuttons.x[i], playbuttons.y[i], playbuttons.w[i], playbuttons.h[i]};
                 SDL_RenderRect(renderer, &buttonhitbox);
             }
         }
@@ -2842,7 +2802,7 @@ void render() {
             if (spin > 0) {
                 SDL_RenderTextureRotated(renderer, cards.cardtexture[(int)anim.value[i]], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
             } else {
-                SDL_RenderTextureRotated(renderer, gamebuttons.buttontexture[BUTTON_DECK], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
+                SDL_RenderTextureRotated(renderer, playbuttons.buttontexture[BUTTON_DECK], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
             }
         }
 
@@ -2870,6 +2830,38 @@ void render() {
             if (anim.ID[i] == ANIM_COLLECTION_PHASE) SDL_RenderTextureRotated(renderer, cards.cardtexture[4], NULL, &cardtexture, angle, &center, SDL_FLIP_NONE);
         }
 
+        if (anim.ID[i] == ANIM_TRANSACTION) {
+
+            char text[256];
+
+            SDL_Color color = {0};
+            SDL_Surface *textSurface = NULL;
+            SDL_Texture *textTexture = {0};
+            SDL_FRect textQuad = {0};
+
+            float timeMag = anim.runtime[i]/anim.maxtime[i];
+
+            float yoffset = timeMag*50;
+
+            if (anim.value[i] > 0) {
+                color = {0, 255, 0, 255};
+            } else if (anim.value[i] < 0) {
+                color = {255, 0, 0, 255};
+            } else {
+                color = {180, 180, 180, 255};
+            }
+            color.a = 255-timeMag*250;
+            
+            strcpy(text, stringf("$%.2f", anim.value[i]));
+            textSurface = TTF_RenderText_Solid(fontBalatro, text, strlen(text), color);
+            textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+            textQuad = (SDL_FRect) { anim.x[i]-textSurface->w/2*window_scale_x, anim.y[i]-(textSurface->h/2+yoffset)*window_scale_y, (float)(textSurface->w)*window_scale_x, (float)(textSurface->h)*window_scale_y };
+            SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+            SDL_DestroyTexture(textTexture);
+            SDL_DestroySurface(textSurface);
+            
+        }
+
     }
 
     // PAUSE OVERLAY
@@ -2890,7 +2882,7 @@ void render() {
 
         SDL_FRect cursorbox = {mousex, mousey, 30.0f * window_scale_x, 30.0f * window_scale_y};
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        if (show_textures) SDL_RenderTexture(renderer, gamebuttons.buttontexture[0], NULL, &cursorbox);
+        if (show_textures) SDL_RenderTexture(renderer, playbuttons.buttontexture[0], NULL, &cursorbox);
         if (show_hitboxes) SDL_RenderRect(renderer, &cursorbox);
 
     } else { SDL_ShowCursor(); }
@@ -2945,6 +2937,16 @@ void debug() {
     
     elenum = -2;
     strcpy(text, stringf("ROUND -> time %.2f, ", roundstats.timer));
+    textSurface = TTF_RenderText_Solid(fontBalatro, text, strlen(text), color);
+    textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    textQuad = (SDL_FRect) { (mousex-(textSurface->w+border)/2*window_scale_x), (mousey-(textSurface->h+border+10)*elenum*window_scale_y), (float)(textSurface->w+border)*window_scale_x, (float)(textSurface->h+border)*window_scale_y };
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 200);
+    SDL_RenderFillRect(renderer, &textQuad);
+    textQuad = (SDL_FRect) { (mousex-textSurface->w/2*window_scale_x), (mousey-(textSurface->h+border+9)*elenum*window_scale_y), (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+    SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+
+    elenum = -3;
+    strcpy(text, stringf("seed: %d", seed));
     textSurface = TTF_RenderText_Solid(fontBalatro, text, strlen(text), color);
     textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
     textQuad = (SDL_FRect) { (mousex-(textSurface->w+border)/2*window_scale_x), (mousey-(textSurface->h+border+10)*elenum*window_scale_y), (float)(textSurface->w+border)*window_scale_x, (float)(textSurface->h+border)*window_scale_y };

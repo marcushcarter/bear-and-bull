@@ -16,7 +16,7 @@
 - *2025-05-18* some formatting, settings page, asspect ratio fixing, added card present anim, added draft state, added deck state, collection state,
 - *2025-05-19* rarities, issellable and rarity overlays, random rarity level table
 - *2025-05-20* deck and collection states show text for names
-- *2025-05-21* deck/collection scrolling when kp, 
+- *2025-05-21* deck/collection scrolling when kp, organization, i dont even remember i have so much i did and very few commits for this day
 
 ### NEW idea
 

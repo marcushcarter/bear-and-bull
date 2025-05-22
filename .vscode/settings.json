@@ -24,7 +24,8 @@
         "istream": "c",
         "ostream": "c",
         "system_error": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "cstdlib": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
