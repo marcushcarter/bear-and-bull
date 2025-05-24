@@ -41,8 +41,8 @@ float state_timer = 0;
 
 #define MAX_CARDS 100
 #define MAX_ZONES 20
-// #define TOTAL_CARDS 50
-#define TOTAL_CARDS 11
+#define TOTAL_CARDS 50
+// #define TOTAL_CARDS 11
 #define MAX_BUTTONS 50
 #define MAX_ANIMATIONS 20
 
@@ -326,7 +326,7 @@ DeviceStats devicestats;
 RunStats runstats;
 RoundStats roundstats;
 
-int gamestate = STATE_GAME_SELECT;
+int gamestate = STATE_MENU;
 bool pause = false;
 bool can_scroll = true;
 
@@ -456,9 +456,9 @@ void control_fps(float target_fps) {
 void start_animation(int id, void (*at_midpoint)(void), void (*on_complete)(void), int targetstate, float x, float y, float value, float seconds) {
 
     for (int i = 0; i < MAX_ANIMATIONS; i++) { // duplicate transitions
-        if (anim.ID[i] == ANIM_TRANSITION_SLIDE_DOUBLE && anim.isActive[i] && id == ANIM_TRANSITION_SLIDE_DOUBLE) return;
-        if (anim.ID[i] == ANIM_TRANSITION_SLIDE_LEFT && anim.isActive[i] && id == ANIM_TRANSITION_SLIDE_LEFT) return;
-        if (anim.ID[i] == ANIM_TRANSITION_SLIDE_RIGHT && anim.isActive[i] && id == ANIM_TRANSITION_SLIDE_RIGHT) return;
+        if (anim.ID[i] == ANIM_TRANSITION_SLIDE_DOUBLE && anim.isActive[i] && id == ANIM_TRANSITION_SLIDE_DOUBLE && anim.runtime[i] < anim.maxtime[i]/2) return;
+        if (anim.ID[i] == ANIM_TRANSITION_SLIDE_LEFT && anim.isActive[i] && id == ANIM_TRANSITION_SLIDE_LEFT && anim.runtime[i] < anim.maxtime[i]/2) return;
+        if (anim.ID[i] == ANIM_TRANSITION_SLIDE_RIGHT && anim.isActive[i] && id == ANIM_TRANSITION_SLIDE_RIGHT && anim.runtime[i] < anim.maxtime[i]/2) return;
     }
 
     int index = -1;
@@ -1137,16 +1137,6 @@ void sell_card(int inplayIndex) {
 
 // CALLBACKS ====================================================================================================
 
-void callback_change_to_play_screen() { gamestate = STATE_PLAY; state_timer = 0; 
-    start_animation(ANIM_BLANK, NULL, deck_to_hand, -1, 0, 0, 0, 3.0f);
-    start_animation(ANIM_BLANK, NULL, deck_to_hand, -1, 0, 0, 0, 3.25f);
-    start_animation(ANIM_BLANK, NULL, deck_to_hand, -1, 0, 0, 0, 3.5f);
-}
-void callback_change_to_menu_screen() { gamestate = STATE_MENU; state_timer = 0; }
-void callback_change_to_settings_screen() { gamestate = STATE_SETTINGS; state_timer = 0; }
-void callback_change_to_deck_screen() { shuffle_hand(); gamestate = STATE_DECK; state_timer = 0; can_scroll = true; }
-void callback_change_to_collection_screen() { gamestate = STATE_COLLECTION; state_timer = 0; can_scroll = true; }
-
 void callback_change_to_draft_screen() { gamestate = STATE_DRAFT; state_timer = 0; clear_draft(); }
 void callback_select_draft_card() { 
     shuffle_hand();
@@ -1167,8 +1157,6 @@ void callback_quit_game() { running = false; }
 // ROUND FUNCTIONS ====================================================================================================
 
 void callback_new_round() { // midpoint animation
-    gamestate = STATE_PLAY;
-    state_timer = 0;
 
     // shuffle hand
     shuffle_hand();
@@ -1486,7 +1474,7 @@ void inputs() {
     currMouseState = SDL_GetMouseState(&mousex, &mousey);
 
     if (currKeyState[SDL_SCANCODE_ESCAPE] && !prevKeyState[SDL_SCANCODE_ESCAPE]) SDL_SetWindowFullscreen(window, 0);
-    if (currKeyState[SDL_SCANCODE_TAB] && !prevKeyState[SDL_SCANCODE_TAB]) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, callback_change_to_menu_screen, NULL, -1, 0, 0, 0, M_PI);
+    if (currKeyState[SDL_SCANCODE_TAB] && !prevKeyState[SDL_SCANCODE_TAB]) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, NULL, NULL, STATE_MENU, 0, 0, 0, M_PI);
 
     adjust_window_size();
 }
@@ -1496,7 +1484,7 @@ void dev_tools() {
     // 4 - shuffle hand into deck
     // --------------------------
     if (currKeyState[SDL_SCANCODE_4] && !prevKeyState[SDL_SCANCODE_4]) {
-        start_animation(ANIM_DRAFT_PHASE, callback_change_to_play_screen, NULL, -1, 0, 0, 0, M_PI);
+        start_animation(ANIM_DRAFT_PHASE, NULL, NULL, STATE_PLAY, 0, 0, 0, M_PI);
     }
 
     // 5 - spawn event card
@@ -1709,6 +1697,7 @@ void update() {
             anim.atMidpoint[i] = NULL;
             if (anim.targetState[i] != -1) {
                 gamestate = anim.targetState[i];
+                can_scroll = true;
                 state_timer = 0;
                 anim.targetState[i] = -1;
             }
@@ -2013,44 +2002,42 @@ void render() {
         SDL_FRect cardtexture = {0};
         SDL_FPoint center = {0};
         float sineh, angle;
+        int num_collected = 0;
 
         char text[256] = "brotato salad";
         for (int i = 0; i < TOTAL_CARDS; i++) {
 
-            if (settings.show_textures) {
+            sineh = 5 *  sin(2 * SDL_GetTicks()/1000.0f + i*0.1);
+            angle = 2.5f * sin(SDL_GetTicks()/1000.0f + i*0.1);
+            if (!cardsunlocked[i]) { sineh /= 2.0f; angle = 0.0f; } else { num_collected+=1; }
 
-                sineh = 5 *  sin(2 * SDL_GetTicks()/1000.0f + i*0.1);
-                angle = 2.5f * sin(SDL_GetTicks()/1000.0f + i*0.1);
-                if (!cardsunlocked[i]) { sineh /= 2.0f; angle = 0.0f; }
+            float xpos = CARD_SPACING*2 + (CARD_WIDTH+CARD_SPACING) * (i % 9);
+            float ypos = CARD_SPACING + (floor((i/9)) + 0.1) * (CARD_HEIGHT+CARD_SPACING) - state_timer*5;
 
-                float xpos = CARD_SPACING*2 + (CARD_WIDTH+CARD_SPACING) * (i % 9);
-                float ypos = CARD_SPACING + (floor((i/9)) + 0.1) * (CARD_HEIGHT+CARD_SPACING) - state_timer*5;
-
-                cardtexture = (SDL_FRect) {  
-                    (settings.window_width/2) + (xpos - 1190/2) * window_scale_x,
-                    ypos * window_scale_y,
-                    CARD_WIDTH*window_scale_x, 
-                    CARD_HEIGHT*window_scale_y
-                };
-
-                center = (SDL_FPoint) {cardtexture.w / 2, cardtexture.h / 2};
-                if(cardsunlocked[i]) {
+            cardtexture = (SDL_FRect) {  
+                (settings.window_width/2) + (xpos - 1190/2) * window_scale_x,
+                ypos * window_scale_y,
+                CARD_WIDTH*window_scale_x, 
+                CARD_HEIGHT*window_scale_y
+            };
+            center = (SDL_FPoint) {cardtexture.w / 2, cardtexture.h / 2};
+            
+            if(cardsunlocked[i]) {
                 SDL_RenderTextureRotated(renderer, cards.cardtexture[i], NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
-                } else {
+            } else {
                 SDL_RenderTextureRotated(renderer, playbuttons.buttontexture[BUTTON_PLAY_DECK], NULL, &cardtexture, (double)angle, &center, SDL_FLIP_NONE);
-                }
+            }
 
-                if (!cardsunlocked[i]) {
-                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 200);
-                    SDL_RenderFillRect(renderer, &cardtexture);
-                }
+            if (!cardsunlocked[i]) {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 200);
+                SDL_RenderFillRect(renderer, &cardtexture);
+            }
 
-                if (point_box_collision(mousex, mousey, (settings.window_width/2) + (xpos - 1190/2) * window_scale_x, ypos * window_scale_y, CARD_WIDTH*window_scale_x, CARD_HEIGHT*window_scale_y)) {
-                    if (cardsunlocked[i]) { 
-                        strcpy(text, cards.name[i]); 
-                    } else {
-                        strcpy(text, "LOCKED");
-                    }
+            if (point_box_collision(mousex, mousey, (settings.window_width/2) + (xpos - 1190/2) * window_scale_x, ypos * window_scale_y, CARD_WIDTH*window_scale_x, CARD_HEIGHT*window_scale_y)) {
+                if (cardsunlocked[i]) { 
+                    strcpy(text, cards.name[i]); 
+                } else {
+                    strcpy(text, "LOCKED");
                 }
             }
         }
@@ -2063,19 +2050,27 @@ void render() {
 
         color = {255, 255, 255, 255};
 
-        // ASPECT RATIO TITLE
+        // TARGET CARD NAME
         if (strcmp(text, "brotato salad") != 0) {
             textSurface = TTF_RenderText_Solid(font.Balatro, text, strlen(text), color);
             textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-
-            textQuad = (SDL_FRect) { (mousex-(textSurface->w+border)/2*window_scale_x), (mousey-(textSurface->h+border+10)*window_scale_y), (float)(textSurface->w+border)*window_scale_x, (float)(textSurface->h+border)*window_scale_y };
+            textQuad = (SDL_FRect) { mousex - (textSurface->w/2 + border/2)*window_scale_x, mousey - (textSurface->h/2+border/2+20)*window_scale_y, (textSurface->w+border)*window_scale_x, (textSurface->h+border)*window_scale_y };
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 200);
             SDL_RenderFillRect(renderer, &textQuad);
-
-            textQuad = (SDL_FRect) { (mousex-textSurface->w/2*window_scale_x), (mousey-(textSurface->h+border+9)*window_scale_y), (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
+            textQuad = (SDL_FRect) { mousex - textSurface->w/2*window_scale_x, mousey - (textSurface->h/2+20)*window_scale_y, textSurface->w*window_scale_x, textSurface->h*window_scale_y };
             SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+            SDL_DestroyTexture(textTexture);
+            SDL_DestroySurface(textSurface);
         }
 
+        strcpy(text, stringf(" %d / %d", num_collected, TOTAL_CARDS));
+        textSurface = TTF_RenderText_Solid(font.Balatro, text, strlen(text), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textQuad = (SDL_FRect) { (15+border/2)*window_scale_x, (15-border/2)*window_scale_y, (textSurface->w+border)*window_scale_x, (textSurface->h+border)*window_scale_y };
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 200);
+        SDL_RenderFillRect(renderer, &textQuad);
+        textQuad = (SDL_FRect) { 15*window_scale_x, 15*window_scale_y, textSurface->w*window_scale_x, textSurface->h*window_scale_y };
+        SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
         SDL_DestroyTexture(textTexture);
         SDL_DestroySurface(textSurface);
 
@@ -3015,7 +3010,7 @@ void render() {
 
 }
 
-void debug() {
+void debug_info() {
 
     char text[256];
 
@@ -3170,7 +3165,7 @@ int main() {
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
         render();
-        debug();
+        debug_info();
         SDL_RenderPresent(renderer);
 
         SDL_memcpy(prevKeyState, currKeyState, NUM_KEYS);
