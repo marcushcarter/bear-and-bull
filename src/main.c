@@ -238,8 +238,15 @@ typedef enum ButtonType {
     // DECK
     BUTTON_PLAY_DECK_CONTINUE,
 
-    // ALL CARDS
+    // COLLECTION
     BUTTON_COLLECTION_CONTINUE,
+
+    // STATE GAME SELECT
+    BUTTON_GAME_SELECT_NEW_RUN,
+    BUTTON_GAME_SELECT_CONTINUE_RUN,
+    BUTTON_GAME_SELECT_SEEDED_RUN,
+    BUTTON_GAME_SELECT_EXIT,
+    
 
 } ButtonType;
 
@@ -268,6 +275,7 @@ typedef enum GameState {
     STATE_DRAFT,
     STATE_DECK,
     STATE_COLLECTION,
+    STATE_GAME_SELECT,
 } GameState;
 
 typedef enum AspectRatio {
@@ -309,20 +317,21 @@ Buttons settingbuttons;
 Buttons draftbuttons;
 Buttons deckbuttons;
 Buttons collectionbuttons;
-
-int gamestate = STATE_MENU;
-bool pause = false;
-bool can_scroll = true;
+Buttons gameselectbuttons;
 
 Animation anim;
-
-int card_rarity_table[100];
-int rarity_table_num = 0;
 
 Settings settings;
 DeviceStats devicestats;
 RunStats runstats;
 RoundStats roundstats;
+
+int gamestate = STATE_GAME_SELECT;
+bool pause = false;
+bool can_scroll = true;
+
+int card_rarity_table[100];
+int rarity_table_num = 0;
 
 // COMMON FUNCTIONS ====================================================================================================
 
@@ -1334,7 +1343,12 @@ void load_zones() {
     make_button(&deckbuttons, BUTTON_PLAY_DECK_CONTINUE, "resources/textures/general-right.png", settings.SET_WINDOW_WIDTH-150-CARD_MARGIN, settings.SET_WINDOW_HEIGHT-30-CARD_MARGIN, 150, 40);
     // COLLECTION
     make_button(&collectionbuttons, BUTTON_COLLECTION_CONTINUE, "resources/textures/general-right.png", settings.SET_WINDOW_WIDTH-150-CARD_MARGIN, settings.SET_WINDOW_HEIGHT-30-CARD_MARGIN, 150, 40);
-    
+    // GAME SELECT
+    make_button(&gameselectbuttons, BUTTON_GAME_SELECT_NEW_RUN, "resources/textures/menu-button-play.png", (settings.SET_WINDOW_WIDTH/2)-(300/2), (settings.SET_WINDOW_HEIGHT/2)+(50+20)*0, 300, 50);
+    make_button(&gameselectbuttons, BUTTON_GAME_SELECT_CONTINUE_RUN, "resources/textures/menu-button-settings.png", (settings.SET_WINDOW_WIDTH/2)-(300/2), (settings.SET_WINDOW_HEIGHT/2)+(50+20)*1, 300, 50);
+    make_button(&gameselectbuttons, BUTTON_GAME_SELECT_SEEDED_RUN, "resources/textures/menu-button-settings.png", (settings.SET_WINDOW_WIDTH/2)-(300/2), (settings.SET_WINDOW_HEIGHT/2)+(50+20)*2, 300, 50);
+    make_button(&gameselectbuttons, BUTTON_GAME_SELECT_EXIT, "resources/textures/play-button-deck.png", 15, 15, 30, 30);
+   
 }
 
 void load_cards() {
@@ -1411,6 +1425,8 @@ bool load_textures() {
         SDL_SetTextureScaleMode(deckbuttons.buttontexture[i], SDL_SCALEMODE_NEAREST);
         collectionbuttons.buttontexture[i] = IMG_LoadTexture(renderer, collectionbuttons.buttonpath[i]);
         SDL_SetTextureScaleMode(collectionbuttons.buttontexture[i], SDL_SCALEMODE_NEAREST);
+        gameselectbuttons.buttontexture[i] = IMG_LoadTexture(renderer, gameselectbuttons.buttonpath[i]);
+        SDL_SetTextureScaleMode(gameselectbuttons.buttontexture[i], SDL_SCALEMODE_NEAREST);
     }
 
     // LOAD TEXTURES FOR ZONES
@@ -1546,7 +1562,7 @@ void update() {
     // BUTTON UPDATES
     // --------------
     for (int i = 0; i < MAX_BUTTONS; i++) {
-        if (!playbuttons.isActive[i] && !menubuttons.isActive[i] && !settingbuttons.isActive[i] && !draftbuttons.isActive[i] && !deckbuttons.isActive[i] && !collectionbuttons.isActive[i]) continue;
+        if (!playbuttons.isActive[i] && !menubuttons.isActive[i] && !settingbuttons.isActive[i] && !draftbuttons.isActive[i] && !deckbuttons.isActive[i] && !collectionbuttons.isActive[i] && !gameselectbuttons.isActive[i]) continue;
 
         if (playbuttons.isPressed[i]) playbuttons.clickTime[i] = 0;
         if (menubuttons.isPressed[i]) menubuttons.clickTime[i] = 0;
@@ -1554,6 +1570,7 @@ void update() {
         if (draftbuttons.isPressed[i]) draftbuttons.clickTime[i] = 0;
         if (deckbuttons.isPressed[i]) deckbuttons.clickTime[i] = 0;
         if (collectionbuttons.isPressed[i]) collectionbuttons.clickTime[i] = 0;
+        if (gameselectbuttons.isPressed[i]) gameselectbuttons.clickTime[i] = 0;
 
         playbuttons.clickTime[i] += dt / settings.game_speed;
         menubuttons.clickTime[i] += dt / settings.game_speed;
@@ -1561,6 +1578,7 @@ void update() {
         draftbuttons.clickTime[i] += dt / settings.game_speed;
         deckbuttons.clickTime[i] += dt / settings.game_speed;
         collectionbuttons.clickTime[i] += dt / settings.game_speed;
+        gameselectbuttons.clickTime[i] += dt / settings.game_speed;
 
         // CHECK BUTTON CLICKS
         // -------------------
@@ -1624,29 +1642,39 @@ void update() {
             collectionbuttons.isClicked[i] = false;
             collectionbuttons.isHover[i] = false;
         }
+        
+        if (point_box_collision(mousex, mousey, gameselectbuttons.x[i], gameselectbuttons.y[i], gameselectbuttons.w[i], gameselectbuttons.h[i]) && gamestate == STATE_GAME_SELECT && gameselectbuttons.isActive[i] && !isDragging) {
+            if (currMouseState & SDL_BUTTON_LMASK) { gameselectbuttons.isPressed[i] = true; } else { gameselectbuttons.isPressed[i] = false; }
+            if ((currMouseState & SDL_BUTTON_LMASK) && !(prevMouseState & SDL_BUTTON_LMASK)) { gameselectbuttons.isClicked[i] = true; } else { gameselectbuttons.isClicked[i] = false; }
+            gameselectbuttons.isHover[i] = true;
+        } else {
+            gameselectbuttons.isPressed[i] = false;
+            gameselectbuttons.isClicked[i] = false;
+            gameselectbuttons.isHover[i] = false;
+        }
 
         // BUTTON EVENTS
         // -------------
         if (!pause) {
             if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_PLAY_DECK) deck_to_hand(); // DECK BUTTON
             if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_PLAY_LOAN) loan_card(); // LOAN BUTTON
-            if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_PLAY_BUY) ; // MINUS STOCK BUTTON
+            if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_PLAY_BUY) runstats.money += 50; // MINUS STOCK BUTTON
             if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_PLAY_SELL) runstats.hand_slots += 1; // PLUSS STOCK BUTTON
 
             if (draftbuttons.isClicked[i] && draftbuttons.ID[i] == BUTTON_DRAFT_CONTINUE) { if (draftzones.num_cards[ZONE_DRAFT_SELECT] != 0) start_animation(ANIM_TRANSITION_SLIDE_RIGHT, callback_select_draft_card, NULL, -1, 0, 0, 0, M_PI); } // SELECT DRAFT
             if (deckbuttons.isClicked[i] && deckbuttons.ID[i] == BUTTON_PLAY_DECK_CONTINUE) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, callback_new_round, NULL, -1, 0, 0, 0, M_PI); // DECK CONTINUE
-            if (collectionbuttons.isClicked[i] && collectionbuttons.ID[i] == BUTTON_COLLECTION_CONTINUE) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, callback_change_to_menu_screen, NULL, -1, 0, 0, 0, M_PI); // DECK CONTINUE
+            if (collectionbuttons.isClicked[i] && collectionbuttons.ID[i] == BUTTON_COLLECTION_CONTINUE) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, NULL, NULL, STATE_MENU, 0, 0, 0, M_PI); // DECK CONTINUE
         }
 
-        if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_PLAY_PAUSE) start_animation(ANIM_TRANSITION_SLIDE_RIGHT, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, M_PI); // PAUSE BUTTON
+        if (playbuttons.isClicked[i] && playbuttons.ID[i] == BUTTON_PLAY_PAUSE) start_animation(ANIM_TRANSITION_SLIDE_RIGHT, NULL, callback_random_draft_cards, STATE_DRAFT, 0, 0, 0, M_PI); // PAUSE BUTTON
         // MENU GAMESTATE
         // if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_PLAY) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, callback_change_to_draft_screen, callback_random_draft_cards, -1, 0, 0, 0, M_PI); // NEW GAME BUTTON
-        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_PLAY) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, callback_new_run, NULL, -1, 0, 0, 0, M_PI); // NEW GAME BUTTON
-        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_SETTINGS) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, callback_change_to_settings_screen, NULL, -1, 0, 0, 0, M_PI); // SETTINGS / OPTIONS BUTTON
-        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_STATS) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, callback_change_to_collection_screen, NULL, -1, 0, 0, 0, M_PI); // STATS OR STEAM BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_PLAY) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, NULL, NULL, STATE_GAME_SELECT, 0, 0, 0, M_PI); // NEW GAME BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_SETTINGS) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, NULL, NULL, STATE_SETTINGS, 0, 0, 0, M_PI); // SETTINGS / OPTIONS BUTTON
+        if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_STATS) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, NULL, NULL, STATE_COLLECTION, 0, 0, 0, M_PI); // STATS OR STEAM BUTTON
         if (menubuttons.isClicked[i] && menubuttons.ID[i] == BUTTON_MENU_QUIT) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, callback_quit_game, NULL, -1, 0, 0, 0, M_PI); // QUIT BUTTON
         // SETTINGS GAMESTATE
-        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_EXIT) start_animation(ANIM_TRANSITION_SLIDE_RIGHT, callback_change_to_menu_screen, NULL, -1, 0, 0, 0, M_PI); // EXIT SETTINGS
+        if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_EXIT) start_animation(ANIM_TRANSITION_SLIDE_RIGHT, NULL, NULL, STATE_MENU, 0, 0, 0, M_PI); // EXIT SETTINGS
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_FULLSCREEN) { if (!settings.isFullscreen) { SDL_SetWindowFullscreen(window, 1); } else { SDL_SetWindowFullscreen(window, 0); } } // TOGGLE FULLSCREEN
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_ASPECT_PREV) { if (settings.aspect_ratio > 0) settings.aspect_ratio -= 1; } // PREVIOUS ASPECT RATIO CHOICE
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_ASPECT_NEXT)  { if (settings.aspect_ratio < TOTAL_ASPECTS) settings.aspect_ratio += 1; } // NEXT ASPECT RATIO CHOICE
@@ -1657,6 +1685,11 @@ void update() {
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_FPS_NEXT) { if (settings.TARGET_FPS < 120) settings.TARGET_FPS += 30.0f; }
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_HITBOXES) settings.show_hitboxes = !settings.show_hitboxes; // SHOW HITBOXES 
         if (settingbuttons.isClicked[i] && settingbuttons.ID[i] == BUTTON_SETTINGS_CURSOR) settings.custom_cursor = !settings.custom_cursor; // CUSTOM CURSOR
+        // GAME SELECT
+        if (gameselectbuttons.isClicked[i] && gameselectbuttons.ID[i] == BUTTON_GAME_SELECT_NEW_RUN) settings.custom_cursor = !settings.custom_cursor; // CUSTOM CURSOR
+        if (gameselectbuttons.isClicked[i] && gameselectbuttons.ID[i] == BUTTON_GAME_SELECT_CONTINUE_RUN) settings.custom_cursor = !settings.custom_cursor; // CUSTOM CURSOR
+        if (gameselectbuttons.isClicked[i] && gameselectbuttons.ID[i] == BUTTON_GAME_SELECT_SEEDED_RUN) settings.custom_cursor = !settings.custom_cursor; // CUSTOM CURSOR
+        if (gameselectbuttons.isClicked[i] && gameselectbuttons.ID[i] == BUTTON_GAME_SELECT_EXIT) start_animation(ANIM_TRANSITION_SLIDE_DOUBLE, NULL, NULL, STATE_MENU, 0, 0, 0, M_PI); // CUSTOM CURSOR
     }
 
     // ANIMATIONS
@@ -1674,6 +1707,11 @@ void update() {
         if (anim.runtime[i] > anim.maxtime[i]/2) {
             if (anim.atMidpoint[i]) anim.atMidpoint[i]();
             anim.atMidpoint[i] = NULL;
+            if (anim.targetState[i] != -1) {
+                gamestate = anim.targetState[i];
+                state_timer = 0;
+                anim.targetState[i] = -1;
+            }
         }
 
         anim.runtime[i] += dt;
@@ -2036,11 +2074,10 @@ void render() {
 
             textQuad = (SDL_FRect) { (mousex-textSurface->w/2*window_scale_x), (mousey-(textSurface->h+border+9)*window_scale_y), (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
             SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
-
-            SDL_DestroyTexture(textTexture);
-            SDL_DestroySurface(textSurface);
         }
 
+        SDL_DestroyTexture(textTexture);
+        SDL_DestroySurface(textSurface);
 
     }
 
@@ -2103,7 +2140,6 @@ void render() {
 
         color = {255, 255, 255, 255};
 
-        // ASPECT RATIO TITLE
         if (strcmp(text, "brotato salad") != 0) {
             textSurface = TTF_RenderText_Solid(font.Balatro, text, strlen(text), color);
             textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
@@ -2114,10 +2150,10 @@ void render() {
 
             textQuad = (SDL_FRect) { (mousex-textSurface->w/2*window_scale_x), (mousey-(textSurface->h+border+9)*window_scale_y), (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
             SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
-
-            SDL_DestroyTexture(textTexture);
-            SDL_DestroySurface(textSurface);
         }
+        
+        SDL_DestroyTexture(textTexture);
+        SDL_DestroySurface(textSurface);
     }
 
     // DRAFT GAMESTATE OTHER THINGS
@@ -2197,7 +2233,7 @@ void render() {
     // BUTTONS TEXTURES / HITBOXES
     // ---------------------------
     for (int i = 0; i < MAX_BUTTONS; i++) {
-        if (!playbuttons.isActive[i] && !menubuttons.isActive[i] && !settingbuttons.isActive[i] && !draftbuttons.isActive[i] && !deckbuttons.isActive[i] && !collectionbuttons.isActive[i]) continue;
+        if (!playbuttons.isActive[i] && !menubuttons.isActive[i] && !settingbuttons.isActive[i] && !draftbuttons.isActive[i] && !deckbuttons.isActive[i] && !collectionbuttons.isActive[i] && !gameselectbuttons.isActive[i]) continue;
         
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
@@ -2369,6 +2405,34 @@ void render() {
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
                 if (collectionbuttons.isPressed[i]) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
                 buttonhitbox = (SDL_FRect) {collectionbuttons.x[i], collectionbuttons.y[i], collectionbuttons.w[i], collectionbuttons.h[i]};
+                SDL_RenderRect(renderer, &buttonhitbox);
+            }
+        }
+
+        if (gamestate == STATE_GAME_SELECT) {
+            if (settings.show_textures) {
+                sineh = 5 * sin(2.0f * gameselectbuttons.clickTime[i]);
+                sinea = sin(SDL_GetTicks() / 1000.0f + i*0.2);
+                // if (gameselectbuttons.isPressed[i]) sinea = 0;
+                angle = sinea;
+
+                button_grow_w = (gameselectbuttons.isHover[i]+gameselectbuttons.isPressed[i]) * CARD_GROW * gameselectbuttons.w[i];
+                button_grow_h = (gameselectbuttons.isHover[i]+gameselectbuttons.isPressed[i]) * CARD_GROW * gameselectbuttons.h[i];
+
+                buttontexture = (SDL_FRect) {
+                    gameselectbuttons.x[i] - (button_grow_w/2), 
+                    gameselectbuttons.y[i] - (button_grow_h/2), 
+                    gameselectbuttons.w[i] + (button_grow_w*window_scale_x), 
+                    gameselectbuttons.h[i] + (button_grow_h*window_scale_y)
+                };
+
+                center = (SDL_FPoint) {buttontexture.w / 2, buttontexture.h / 2};
+                SDL_RenderTextureRotated(renderer, gameselectbuttons.buttontexture[i], NULL, &buttontexture, angle, &center, SDL_FLIP_NONE);
+            }
+            if (settings.show_hitboxes) {
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                if (gameselectbuttons.isPressed[i]) SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                buttonhitbox = (SDL_FRect) {gameselectbuttons.x[i], gameselectbuttons.y[i], gameselectbuttons.w[i], gameselectbuttons.h[i]};
                 SDL_RenderRect(renderer, &buttonhitbox);
             }
         }
@@ -2964,11 +3028,9 @@ void debug() {
     color = {255, 255, 255, 255};
 
     for (int i = 0; i < MAX_CARDS; i++) {
-        if (!inplay.isDragging[i]) continue;
+        if (!inplay.isHover[i]) continue;
 
         strcpy(text, stringf("%d %s -> sell: %d, i: %d", inplay.ID[i], cards.name[inplay.ID[i]], inplay.isSellable[i], i));
-        // strcpy(text, stringf("$ , ", inplay.ID[i], cards.name[inplay.ID[i]], inplay.isSellable[i], i));
-        // strcpy(text, "WINDOWMODE");
 
         textSurface = TTF_RenderText_Solid(font.Balatro, text, strlen(text), color);
         textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
@@ -2986,7 +3048,7 @@ void debug() {
     }
 
     for (int i = 0; i < MAX_CARDS; i++) {
-        if (!indraft.isDragging[i]) continue;
+        if (!indraft.isHover[i]) continue;
 
         strcpy(text, stringf("%d %s -> sell: %d, i: %d", indraft.ID[i], cards.name[indraft.ID[i]], indraft.isSellable[i], i));
         // strcpy(text, stringf("$ , ", indraft.ID[i], cards.name[indraft.ID[i]], indraft.isSellable[i], i));
@@ -3018,6 +3080,8 @@ void debug() {
     SDL_RenderFillRect(renderer, &textQuad);
     textQuad = (SDL_FRect) { (mousex-textSurface->w/2*window_scale_x), (mousey-(textSurface->h+border+9)*elenum*window_scale_y), (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
     SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+    SDL_DestroyTexture(textTexture);
+    SDL_DestroySurface(textSurface);
     
     elenum = -2;
     strcpy(text, stringf("ROUND -> time %.2f, ", roundstats.timer));
@@ -3028,6 +3092,8 @@ void debug() {
     SDL_RenderFillRect(renderer, &textQuad);
     textQuad = (SDL_FRect) { (mousex-textSurface->w/2*window_scale_x), (mousey-(textSurface->h+border+9)*elenum*window_scale_y), (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
     SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+    SDL_DestroyTexture(textTexture);
+    SDL_DestroySurface(textSurface);
 
     elenum = -3;
     strcpy(text, stringf("runstats.seed: %d", runstats.seed));
@@ -3038,6 +3104,8 @@ void debug() {
     SDL_RenderFillRect(renderer, &textQuad);
     textQuad = (SDL_FRect) { (mousex-textSurface->w/2*window_scale_x), (mousey-(textSurface->h+border+9)*elenum*window_scale_y), (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
     SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
+    SDL_DestroyTexture(textTexture);
+    SDL_DestroySurface(textSurface);
 
     // elenum = -3;
     // strcpy(text, stringf("$ , "));
@@ -3048,9 +3116,6 @@ void debug() {
     // SDL_RenderFillRect(renderer, &textQuad);
     // textQuad = (SDL_FRect) { (mousex-textSurface->w/2*window_scale_x), (mousey-(textSurface->h+border+9)*elenum*window_scale_y), (float)textSurface->w*window_scale_x, (float)textSurface->h*window_scale_y };
     // SDL_RenderTexture(renderer, textTexture, NULL, &textQuad);
-
-    SDL_DestroyTexture(textTexture);
-    SDL_DestroySurface(textSurface);
 
     // printf("%d/%d\n", playzones.num_cards[ZONE_PLAY_HAND], playzones.max_cards[ZONE_PLAY_HAND]);
 

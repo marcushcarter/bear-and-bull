@@ -17,7 +17,7 @@
 - *2025-05-19* rarities, issellable and rarity overlays, random rarity level table
 - *2025-05-20* deck and collection states show text for names
 - *2025-05-21* deck/collection scrolling when kp, organization, i dont even remember i have so much i did and very few commits for this day
-- *2025-05-23* Renamed a bunch of stuff, fixed draft sellable bug
+- *2025-05-23* Renamed a bunch of stuff, fixed draft sellable bug, fixed memory leaks in debug and added game select screen
 
 ### NEW idea
 
